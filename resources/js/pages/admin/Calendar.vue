@@ -12,11 +12,11 @@ import {
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { Head, router } from '@inertiajs/vue3';
+import { Head } from '@inertiajs/vue3';
 import type { BreadcrumbItem } from '@/types';
 import { toast } from 'vue-sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useEcho, useEchoPublic } from '@laravel/echo-vue';
+import { useEchoPublic } from '@laravel/echo-vue';
 
 const breadcrumbs: BreadcrumbItem[] = [
   {
@@ -42,8 +42,7 @@ const calendarOptions = ref({
   initialView: 'dayGridMonth',
   events: calendarEvents.value,
   dateClick(info) {
-    return;
-    alert(`Date clicked: ${info.dateStr}`);
+    return; // alert(`Date clicked: ${info.dateStr}`);
   },
   editable: true,
   eventDrop(info) {
