@@ -8,9 +8,19 @@ import {
   Dialog,
   DialogContent,
   DialogTitle,
-  DialogDescription,
+  DialogDescription
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
+import { BreadcrumbItem } from '@/types';
+import AppLayout from '@/layouts/AppLayout.vue';
+import { Head } from '@inertiajs/vue3';
+
+const breadcrumbs: BreadcrumbItem[] = [
+  {
+    title: 'My Leave Requests',
+    href: '/leave-requests'
+  }
+];
 
 const calendarEvents = ref([]);
 const selectedEvent = ref(null);
@@ -56,28 +66,34 @@ onMounted(fetchCalendarEvents);
 </script>
 
 <template>
-  <FullCalendar :options="calendarOptions" />
 
-  <Dialog v-model:open="isDialogOpen">
-    <DialogContent>
-      <DialogTitle>Leave Request Details</DialogTitle>
-      <DialogDescription v-if="selectedEvent">
-        <p><strong>Title:</strong> {{ selectedEvent.title }}</p>
-        <p><strong>Status:</strong>
-          <Badge
-            :variant="selectedEvent.status === 'approved' ? 'success' : selectedEvent.status === 'pending' ? 'warning' : 'destructive'">
-            {{ selectedEvent.status }}
-          </Badge>
-        </p>
+  <Head title="My leave requests" />
 
-        <div>
-          <p><strong>Reason:</strong></p>
-          <div>{{ selectedEvent.reason }}</div>
-        </div>
-        
-        <p><strong>Start Date:</strong> {{ selectedEvent.start }}</p>
-        <p><strong>End Date:</strong> {{ selectedEvent.end }}</p>
-      </DialogDescription>
-    </DialogContent>
-  </Dialog>
+  <AppLayout :breadcrumbs="breadcrumbs">
+
+    <FullCalendar :options="calendarOptions" />
+
+    <Dialog v-model:open="isDialogOpen">
+      <DialogContent>
+        <DialogTitle>Leave Request Details</DialogTitle>
+        <DialogDescription v-if="selectedEvent">
+          <p><strong>Title:</strong> {{ selectedEvent.title }}</p>
+          <p><strong>Status:</strong>
+            <Badge
+              :variant="selectedEvent.status === 'approved' ? 'success' : selectedEvent.status === 'pending' ? 'warning' : 'destructive'">
+              {{ selectedEvent.status }}
+            </Badge>
+          </p>
+
+          <div>
+            <p><strong>Reason:</strong></p>
+            <div>{{ selectedEvent.reason }}</div>
+          </div>
+
+          <p><strong>Start Date:</strong> {{ selectedEvent.start }}</p>
+          <p><strong>End Date:</strong> {{ selectedEvent.end }}</p>
+        </DialogDescription>
+      </DialogContent>
+    </Dialog>
+  </AppLayout>
 </template>

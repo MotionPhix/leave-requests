@@ -3,12 +3,36 @@
 use App\Http\Controllers\Employee\NotificationController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth:sanctum'])->group(function() {
+Route::middleware(['auth:sanctum'])->group(function () {
+
   // Admin routes
-  Route::get(
-    '/admin/calendar',
-    [\App\Http\Controllers\Admin\Api\CalendarController::class, 'index']
-  )->name('api.admin.calendar');
+  Route::prefix('admin')->group(function () {
+
+    Route::get('/calendar',
+      [\App\Http\Controllers\Admin\Api\CalendarController::class, 'index']
+    )->name('api.admin.calendar');
+
+    Route::patch('/calendar/u/{leaveRequest}',
+      [\App\Http\Controllers\Admin\Api\CalendarController::class, 'update']
+    )->name('api.admin.calendar.update');
+
+    Route::get('/stats',
+      [\App\Http\Controllers\Admin\Api\DashboardController::class, 'stats']
+    )->name('api.admin.stats');
+
+    Route::get('/users',
+      function () {
+        return \App\Models\User::all(['id', 'name']);
+      }
+    )->name('api.admin.users');
+
+    Route::get('/leave-types',
+      function () {
+        return \App\Models\LeaveType::all(['id', 'name']);
+      }
+    )->name('api.admin.leave-types');
+
+  });
 
   // Employee routes
   Route::get(

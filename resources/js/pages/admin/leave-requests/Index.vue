@@ -11,7 +11,7 @@ defineProps({ leaveRequests: Array });
 
 const breadcrumbs: BreadcrumbItem[] = [
   {
-    title: 'Request Leave',
+    title: 'All Leave requests',
     href: '/admin/leave-requests'
   }
 ];
@@ -30,14 +30,14 @@ const reject = (id) => {
 </script>
 
 <template>
-  <Head title="My leave requests" />
+  <Head title="Employee leave requests" />
 
   <AppLayout :breadcrumbs="breadcrumbs">
 
     <div class="space-y-6 p-6">
 
       <h1 class="text-xl">
-        Employees Leave Requests
+        Leave Requests
       </h1>
 
       <Table>

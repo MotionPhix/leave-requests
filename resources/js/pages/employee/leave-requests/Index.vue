@@ -55,9 +55,11 @@ function resetFilters() {
 
   <AppLayout :breadcrumbs="breadcrumbs">
 
-    <div class="space-y-6 p-6">
+    <div class="space-y-6 p-6 max-w-4xl">
+
       <div class="flex gap-x-6 items-center">
         <h1 class="text-xl">My Leave Requests</h1>
+
         <div>
           <Button
             size="sm"
@@ -69,8 +71,11 @@ function resetFilters() {
         </div>
       </div>
 
-      <div class="bg-white p-4 rounded-lg shadow-md">
-        <h2 class="text-lg font-semibold mb-4">Filter Leave Requests</h2>
+      <div class="bg-white p-4 rounded-lg shadow-md shadow-2xs dark:bg-secondary">
+
+        <h2 class="text-lg font-semibold mb-4">
+          Filter Leave Requests
+        </h2>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
           <Select

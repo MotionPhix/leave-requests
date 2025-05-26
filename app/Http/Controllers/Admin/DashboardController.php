@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\LeaveRequest;
 use App\Models\LeaveType;
 use App\Services\LeaveBalanceService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -30,4 +31,5 @@ class DashboardController extends Controller
 
     return Inertia::render('admin/Dashboard', compact('chartData'));
   }
+
 }
