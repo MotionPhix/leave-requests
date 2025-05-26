@@ -12,10 +12,11 @@ import {
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { Head } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
 import type { BreadcrumbItem } from '@/types';
 import { toast } from 'vue-sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useEcho, useEchoPublic } from '@laravel/echo-vue';
 
 const breadcrumbs: BreadcrumbItem[] = [
   {
@@ -44,8 +45,12 @@ const calendarOptions = ref({
     return;
     alert(`Date clicked: ${info.dateStr}`);
   },
+  editable: true,
   eventDrop(info) {
     handleEventDrop(info);
+  },
+  eventDrag(info) {
+    handleEventDrop(info)
   },
   eventClick(info) {
     selectedEvent.value = {
@@ -78,7 +83,7 @@ async function fetchCalendarEvents() {
 
 async function handleEventDrop(info) {
   try {
-    await axios.patch(`/api/calendar/u/${info.event.id}`, {
+    await axios.patch(`/api/admin/calendar/u/${info.event.id}`, {
       start: info.event.startStr,
       end: info.event.endStr
     });
@@ -98,6 +103,15 @@ async function loadLeaveTypes() {
   const { data } = await axios.get('/api/admin/leave-types');
   leaveTypes.value = data;
 }
+
+useEchoPublic(
+  `leave-requests`,
+  'LeaveRequestUpdated',
+  (e) => {
+    toast(`Leave "${e.title}" updated.`);
+    loadLeaveTypes()
+  }
+);
 
 onMounted(() => {
   fetchCalendarEvents();

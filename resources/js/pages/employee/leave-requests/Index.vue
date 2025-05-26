@@ -10,6 +10,8 @@ import DatePicker from '@/components/DatePicker.vue';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowRightIcon, ArrowLeftIcon, PlusIcon} from 'lucide-vue-next';
 import { formatDate } from '@/lib/utils';
+import { useEchoPublic } from '@laravel/echo-vue';
+import { toast } from 'vue-sonner';
 
 const breadcrumbs: BreadcrumbItem[] = [
   {
@@ -24,8 +26,6 @@ const leaveTypes = props.leaveTypes
 const initialFilters = props.filters
 const filters = ref({ ...initialFilters })
 const isLoading = ref(false)
-
-console.log(props);
 
 // Computed properties for formatted filters
 const formattedFilters = computed(() => ({
@@ -47,6 +47,17 @@ function resetFilters() {
   filters.value = { status: '', leave_type_id: '', date_from: '', date_to: '' }
   applyFilters()
 }
+
+useEchoPublic(
+  `leave-requests`,
+  'LeaveRequestUpdated',
+  (e) => {
+    toast(`Leave "${e.title}" updated.`);
+    router.visit(route('leave-requests.index'), {
+      only: ['leaveRequests'],
+    })
+  }
+);
 </script>
 
 <template>

@@ -2,16 +2,12 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Events\LeaveRequestUpdated;
 use App\Http\Controllers\Controller;
 use App\Models\LeaveRequest;
-use App\Models\LeaveType;
-use App\Notifications\LeaveStatusChanged;
-use App\Services\LeaveBalanceService;
-use App\Enums\LeaveStatus;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
-use Illuminate\Support\Facades\Auth;
 
 class LeaveRequestController extends Controller
 {
@@ -26,13 +22,17 @@ class LeaveRequestController extends Controller
     ]);
   }
 
-  public function show(LeaveRequest $leaveRequest): Response
+  public function show(LeaveRequest $leaveRequest): Response|\Illuminate\Http\RedirectResponse
   {
-    $this->authorize('view', $leaveRequest);
+    if (auth()->user()->can('view leave')) {
 
-    return Inertia::render('admin/leave-requests/Show', [
-      'leaveRequest' => $leaveRequest->load('leaveType', 'user'),
-    ]);
+      return Inertia::render('admin/leave-requests/Show', [
+        'leaveRequest' => $leaveRequest->load('leaveType', 'user'),
+      ]);
+
+    }
+
+    return back();
   }
 
   public function approve(Request $request, LeaveRequest $leaveRequest): \Illuminate\Http\RedirectResponse
@@ -46,7 +46,9 @@ class LeaveRequestController extends Controller
         'comment' => $leaveRequest->comment
       ]);
 
-      $request->user()->notify(new LeaveStatusChanged($request, $request->status));
+      // $request->user()->notify(new LeaveStatusChanged($request, $request->status));
+
+      broadcast(new LeaveRequestUpdated($leaveRequest))->toOthers();
 
       return back()->with('success', 'Leave approved.');
     }
@@ -65,7 +67,9 @@ class LeaveRequestController extends Controller
         'comment' => $leaveRequest->comment
       ]);
 
-      auth()->user()->notify(new LeaveStatusChanged($request, $request->status));
+      // auth()->user()->notify(new LeaveStatusChanged($request, $request->status));
+
+      broadcast(new LeaveRequestUpdated($leaveRequest))->toOthers();
 
       return back()->with('success', 'Leave rejected.');
     }

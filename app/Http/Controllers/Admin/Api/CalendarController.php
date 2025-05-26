@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin\Api;
 
+use App\Events\LeaveRequestUpdated;
 use App\Http\Controllers\Controller;
 use App\Models\LeaveRequest;
 use Illuminate\Http\Request;
@@ -35,10 +36,12 @@ class CalendarController extends Controller
             'approved' => '#4CAF50',   // Green
             'rejected' => '#F44336',   // Red
             'pending' => '#FFC107',    // Yellow
-          },
+          }, // 'color' => $leave->leaveType->color,
           'extendedProps' => [
-            'status' => $leave->status,
-            'reason' => $leave->reason,
+            'status'  => $leave->status,
+            'type'    => $leave->leaveType->name,
+            'reason'  => $leave->reason,
+            'comment' => $leave->comment,
           ],
         ];
       });
@@ -58,6 +61,8 @@ class CalendarController extends Controller
       'start_date' => $request->start,
       'end_date' => $request->end,
     ]);
+
+    broadcast(new LeaveRequestUpdated($leaveRequest))->toOthers();
 
     return response()->json(['message' => 'Leave dates updated.']);
   }

@@ -14,6 +14,8 @@ import { Badge } from '@/components/ui/badge';
 import { BreadcrumbItem } from '@/types';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head } from '@inertiajs/vue3';
+import { useEchoPublic } from '@laravel/echo-vue';
+import { toast } from 'vue-sonner';
 
 const breadcrumbs: BreadcrumbItem[] = [
   {
@@ -31,7 +33,7 @@ const calendarOptions = ref({
   initialView: 'dayGridMonth',
   events: calendarEvents.value,
   dateClick(info) {
-    alert(`Date clicked: ${info.dateStr}`);
+    return; // alert(`Date clicked: ${info.dateStr}`);
   },
   eventClick(info) {
     selectedEvent.value = {
@@ -47,7 +49,7 @@ const calendarOptions = ref({
     const colorClass = status === 'approved' ? 'bg-blue-500 text-white'
       : status === 'pending' ? 'bg-yellow-400 text-black'
         : 'bg-red-500 text-white';
-    return { html: `<div class="px-1 py-0.5 rounded ${colorClass}">${arg.event.title}</div>` };
+    return { html: `<div class="px-1 py-0.5 rounded ${colorClass}">${arg.event.extendedProps.dates}<br>-> ${arg.event.extendedProps.type}</div>` };
   },
   height: 'auto'
 });
@@ -62,7 +64,18 @@ async function fetchCalendarEvents() {
   }
 }
 
-onMounted(fetchCalendarEvents);
+useEchoPublic(
+  `leave-requests`,
+  'LeaveRequestUpdated',
+  (e) => {
+    toast(`Leave "${e.title}" updated.`);
+    fetchCalendarEvents();
+  }
+);
+
+onMounted(() => {
+  fetchCalendarEvents();
+});
 </script>
 
 <template>
@@ -71,7 +84,9 @@ onMounted(fetchCalendarEvents);
 
   <AppLayout :breadcrumbs="breadcrumbs">
 
-    <FullCalendar :options="calendarOptions" />
+    <div class="p-6">
+      <FullCalendar :options="calendarOptions" />
+    </div>
 
     <Dialog v-model:open="isDialogOpen">
       <DialogContent>

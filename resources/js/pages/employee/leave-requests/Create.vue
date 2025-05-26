@@ -76,6 +76,16 @@ const submit = () => {
     })
     .post(route('leave-requests.store'), {
       onError: function(err) {
+        if (err.insufficient) {
+          const type = props.leaveTypes[form.leave_type_id]
+
+          toast.error(err.insufficient, {
+            description: `You are out of your ${type.name} days!`
+          });
+
+          return;
+        }
+
         toast.error('Please fix the form errors.');
       },
 
