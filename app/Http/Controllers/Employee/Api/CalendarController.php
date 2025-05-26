@@ -10,18 +10,26 @@ class CalendarController extends Controller
 {
   public function index()
   {
-    $leaveRequests = LeaveRequest::where('user_id', Auth::id())->get();
+    $userId = Auth::id();
 
+    // Fetch leave requests with leaveType relationship
+    $leaveRequests = LeaveRequest::where('user_id', $userId)
+      ->with('leaveType') // eager load leaveType
+      ->get(['id', 'leave_type_id', 'comment', 'reason', 'start_date', 'end_date', 'status']);
+
+    // Transform into FullCalendar format
     $events = $leaveRequests->map(function ($leave) {
       return [
         'id' => $leave->id,
-        'title' => "{$leave->type}",
+        'title' => $leave->leaveType->name ?? 'Leave', // fallback if missing
         'start' => $leave->start_date,
         'end' => $leave->end_date,
-        'color' => $leave->status === 'approved' ? '#1e40af' : '#fbbf24',
+        'color' => $leave->status === 'approved' ? '#22c55e' : '#f97316',
+        'reason' => $leave->reason,
+        'comment' => $leave->comment,
         'extendedProps' => [
           'status' => $leave->status,
-          'reason' => $leave->reason,
+          'type' => $leave->leaveType->name ?? 'Leave',
         ],
       ];
     });

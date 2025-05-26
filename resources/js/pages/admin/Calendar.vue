@@ -4,7 +4,12 @@ import axios from 'axios';
 import FullCalendar from '@fullcalendar/vue3';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import { Dialog, DialogTrigger, DialogContent, DialogTitle, DialogDescription, DialogClose } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 
 const calendarEvents = ref([]);
@@ -19,8 +24,12 @@ const calendarOptions = ref({
     alert(`Date clicked: ${info.dateStr}`);
   },
   eventClick(info) {
-    selectedEvent.value = info.event.extendedProps;
-    selectedEvent.value.title = info.event.title;
+    selectedEvent.value = {
+      ...info.event.extendedProps,
+      title: info.event.title,
+      start: info.event.startStr,
+      end: info.event.endStr
+    };
     isDialogOpen.value = true;
   },
   eventContent(arg) {
@@ -54,12 +63,16 @@ onMounted(fetchCalendarEvents);
       <DialogTitle>Leave Request Details</DialogTitle>
       <DialogDescription v-if="selectedEvent">
         <p><strong>Title:</strong> {{ selectedEvent.title }}</p>
-        <p><strong>Status:</strong> <Badge :variant="selectedEvent.status === 'approved' ? 'success' : selectedEvent.status === 'pending' ? 'warning' : 'destructive'">{{ selectedEvent.status }}</Badge></p>
+        <p><strong>Status:</strong>
+          <Badge
+            :variant="selectedEvent.status === 'approved' ? 'success' : selectedEvent.status === 'pending' ? 'warning' : 'destructive'">
+            {{ selectedEvent.status }}
+          </Badge>
+        </p>
         <p><strong>Reason:</strong> {{ selectedEvent.reason }}</p>
         <p><strong>Start Date:</strong> {{ selectedEvent.start }}</p>
         <p><strong>End Date:</strong> {{ selectedEvent.end }}</p>
       </DialogDescription>
-      <DialogClose>Close</DialogClose>
     </DialogContent>
   </Dialog>
 </template>
