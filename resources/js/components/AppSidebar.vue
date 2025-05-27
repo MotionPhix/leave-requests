@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { CalendarIcon, LayoutGrid } from 'lucide-vue-next';
+import { CalendarIcon, LayoutGrid, UsersIcon, ShieldIcon, DoorOpenIcon } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 
 const user = usePage().props.auth.user
@@ -31,6 +31,33 @@ const mainNavItems: NavItem[] = [
   }
 ];
 
+// Admin-only navigation items
+const adminNavItems: NavItem[] = [
+  {
+    title: 'User Management',
+    href: '/admin/users',
+    icon: UsersIcon,
+  },
+  {
+    title: 'Roles & Permissions',
+    href: '/admin/roles',
+    icon: ShieldIcon,
+  },
+  {
+    title: 'Leave Types',
+    href: '/admin/leave-types',
+    icon: DoorOpenIcon,
+  }
+];
+
+// Filter admin items based on permissions
+// const filteredAdminItems = adminNavItems.filter(item => item.show);
+
+// Combine navigation items based on user role
+const combinedNavItems = user?.isEmployee
+  ? mainNavItems
+  : [...mainNavItems, ...adminNavItems];
+
 const footerNavItems: NavItem[] = [
   {
     title: 'Calendar',
@@ -46,7 +73,10 @@ const footerNavItems: NavItem[] = [
       <SidebarMenu>
         <SidebarMenuItem>
           <SidebarMenuButton size="lg" as-child>
-            <Link :href="route('dashboard')">
+            <Link
+              :href="user?.isEmployee
+              ? route('dashboard')
+              : route('admin.dashboard')">
               <AppLogo />
             </Link>
           </SidebarMenuButton>
@@ -55,7 +85,7 @@ const footerNavItems: NavItem[] = [
     </SidebarHeader>
 
     <SidebarContent>
-      <NavMain :items="mainNavItems" />
+      <NavMain :items="combinedNavItems" />
     </SidebarContent>
 
     <SidebarFooter>
