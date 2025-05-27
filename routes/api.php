@@ -12,7 +12,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
       [\App\Http\Controllers\Admin\Api\CalendarController::class, 'index']
     )->name('api.admin.calendar');
 
-    Route::patch('/calendar/u/{leaveRequest}',
+    Route::put('/calendar/u/{leaveRequest}',
       [\App\Http\Controllers\Admin\Api\CalendarController::class, 'update']
     )->name('api.admin.calendar.update');
 
@@ -22,7 +22,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::get('/users',
       function () {
-        return \App\Models\User::all(['id', 'name']);
+        return \App\Models\User::role('Employee')
+        ->select(['id', 'uuid', 'name'])
+        ->orderBy('name')
+        ->get();
       }
     )->name('api.admin.users');
 

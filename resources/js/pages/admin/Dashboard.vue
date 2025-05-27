@@ -3,7 +3,8 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/vue3';
 import ApexCharts from 'vue3-apexcharts';
-import { onMounted, ref } from 'vue';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { onMounted, ref, computed } from 'vue';
 import axios from 'axios';
 
 const props = defineProps({ chartData: Object });
@@ -21,22 +22,53 @@ const leaveTypes = ref([]);
 const leaveCounts = ref([]);
 const topUsers = ref([]);
 
-const series = [
-  props.chartData?.approved,
-  props.chartData?.rejected,
-  props.chartData?.pending
-];
+// Computed properties for stats
+const totalRequests = computed(() => props.chartData?.total || 0);
+const approvalRate = computed(() => {
+  const approved = props.chartData?.approved || 0;
+  const total = totalRequests.value;
+  return total > 0 ? Math.round((approved / total) * 100) : 0;
+});
 
+// Chart options
 const donutOptions = {
   chart: { type: 'donut' },
   labels: ['Approved', 'Rejected', 'Pending'],
-  colors: ['#22c55e', '#ef4444', '#facc15']
+  colors: ['#22c55e', '#ef4444', '#facc15'],
+  plotOptions: {
+    pie: {
+      donut: {
+        labels: {
+          show: true,
+          total: {
+            show: true,
+            label: 'Total',
+            formatter: () => totalRequests.value
+          }
+        }
+      }
+    }
+  }
 };
 
 const barOptions = {
   chart: { type: 'bar' },
+  plotOptions: {
+    bar: { horizontal: false, columnWidth: '55%', borderRadius: 4 }
+  },
+  dataLabels: { enabled: false },
+  stroke: { show: true, width: 2, colors: ['transparent'] },
   xaxis: {
     categories: props.chartData?.byType.map(t => t.name)
+  },
+  yaxis: { title: { text: 'Requests' } },
+  fill: { opacity: 1 },
+  tooltip: {
+    y: {
+      formatter: function (val) {
+        return val + " requests"
+      }
+    }
   },
   colors: ['#3b82f6']
 };
@@ -64,26 +96,95 @@ onMounted(() => {
   <Head title="Admin Dashboard" />
 
   <AppLayout :breadcrumbs="breadcrumbs">
-    <div class="p-6">
-      <h1 class="text-xl">Admin leave overview</h1>
+    <div class="p-6 space-y-6">
+      <!-- Stats Overview -->
+      <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader>
+            <CardTitle class="text-sm font-medium">Total Requests</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div class="text-2xl font-bold">{{ chartData.total }}</div>
+          </CardContent>
+        </Card>
 
-      <ApexCharts
-        :options="donutOptions"
-        :series="series"
-        type="donut" width="380" />
+        <Card>
+          <CardHeader>
+            <CardTitle class="text-sm font-medium">Approval Rate</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div class="text-2xl font-bold">{{ approvalRate }}%</div>
+          </CardContent>
+        </Card>
 
-      <div class="mt-4">
-        Total requests: {{ chartData?.total }}
+        <Card>
+          <CardHeader>
+            <CardTitle class="text-sm font-medium">Pending Requests</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div class="text-2xl font-bold text-yellow-500">{{ chartData.pending }}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle class="text-sm font-medium">Most Used Leave</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div class="text-lg font-bold">{{ chartData.byType[0]?.name }}</div>
+            <div class="text-sm text-muted-foreground">{{ chartData.byType[0]?.percentage }}% of total</div>
+          </CardContent>
+        </Card>
       </div>
 
-      <h2 class="mt-8 text-xl">
-        Requests by type
-      </h2>
+      <!-- Charts -->
+      <div class="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Leave Status Distribution</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ApexCharts
+              :options="donutOptions"
+              :series="[chartData.approved, chartData.rejected, chartData.pending]"
+              type="donut"
+              height="350"
+            />
+          </CardContent>
+        </Card>
 
-      <ApexCharts
-        :options="barOptions"
-        :series="barSeries" type="bar"
-        height="350" />
+        <Card>
+          <CardHeader>
+            <CardTitle>Leaves by Type</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ApexCharts
+              :options="barOptions"
+              :series="[{ name: 'Requests', data: chartData.byType.map(t => t.count) }]"
+              type="bar"
+              height="350"
+            />
+          </CardContent>
+        </Card>
+      </div>
+
+      <!-- Top Employees -->
+      <Card v-if="chartData.topEmployees?.length">
+        <CardHeader>
+          <CardTitle>Top Leave Takers</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div class="space-y-4">
+            <div v-for="employee in chartData.topEmployees" :key="employee.name" class="flex items-center">
+              <div class="flex-1">
+                <div class="text-sm font-medium">{{ employee.name }}</div>
+                <div class="text-xs text-muted-foreground">{{ employee.approved }} approved / {{ employee.count }} total</div>
+              </div>
+              <div class="text-sm font-medium">{{ Math.round((employee.approved / employee.count) * 100) }}%</div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
 
     <!--stuf to skip-->

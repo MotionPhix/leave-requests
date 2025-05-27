@@ -4,12 +4,7 @@ import axios from 'axios';
 import FullCalendar from '@fullcalendar/vue3';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogDescription
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head } from '@inertiajs/vue3';
@@ -17,11 +12,12 @@ import type { BreadcrumbItem } from '@/types';
 import { toast } from 'vue-sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useEchoPublic } from '@laravel/echo-vue';
+import { UserIcon } from 'lucide-vue-next';
 
 const breadcrumbs: BreadcrumbItem[] = [
   {
-    title: 'My Leave Requests',
-    href: '/leave-requests'
+    title: 'Leave Calendar',
+    href: '/admin/calendar'
   }
 ];
 
@@ -30,6 +26,9 @@ const selectedEvent = ref(null);
 const isDialogOpen = ref(false);
 const users = ref([]);
 const leaveTypes = ref([]);
+const isLoading = ref(false);
+const error = ref(null);
+const calendarRef = ref(null);
 
 const filters = ref({
   status: 'all',
@@ -40,157 +39,249 @@ const filters = ref({
 const calendarOptions = ref({
   plugins: [dayGridPlugin, interactionPlugin],
   initialView: 'dayGridMonth',
+  headerToolbar: {
+    left: 'prev,today,next',
+    center: 'title',
+    right: 'dayGridMonth,dayGridWeek'
+  },
   events: calendarEvents.value,
-  dateClick(info) {
-    return; // alert(`Date clicked: ${info.dateStr}`);
+  eventDidMount(info) {
+    // Apply status-based styling
+    const status = info.event.extendedProps.status;
+    info.el.classList.add(`status-${status}`);
+    console.log('It got mounted');
+
   },
   editable: true,
-  eventDrop(info) {
-    handleEventDrop(info);
-  },
-  eventDrag(info) {
-    handleEventDrop(info)
-  },
+  eventDrop: handleEventDrop,
+  eventResize: handleEventDrop,
   eventClick(info) {
     selectedEvent.value = {
       ...info.event.extendedProps,
+      id: info.event.id,
       title: info.event.title,
       start: info.event.startStr,
-      end: info.event.endStr
+      end: info.event.endStr,
+      color: info.event.backgroundColor,
+      range: info.event.extendedProps.range,
+      period: info.event.extendedProps.period,
     };
     isDialogOpen.value = true;
   },
   eventContent(arg) {
     const status = arg.event.extendedProps.status;
-    const colorClass = status === 'approved' ? 'bg-blue-500 text-white'
-      : status === 'pending' ? 'bg-yellow-400 text-black'
-        : 'bg-red-500 text-white';
-    return { html: `<div class="px-1 py-0.5 rounded ${colorClass}">${arg.event.title}</div>` };
+    return {
+      html: `
+        <div class="p-1 rounded shadow-sm overflow-hidden">
+          <div class="text-xs font-medium">${arg.event.extendedProps.user}</div>
+          <div class="text-xs">${arg.event.extendedProps.type}</div>
+          <div class="text-xs italic">${status}</div>
+        </div>
+      `
+    };
   },
   height: 'auto'
 });
 
 async function fetchCalendarEvents() {
   try {
-    const response = await axios.get('/api/admin/calendar', { params: filters.value });
+    const response = await axios.get('/api/admin/calendar', {
+      params: filters.value
+    });
+
     calendarEvents.value = response.data;
-    calendarOptions.value.events = calendarEvents.value;
+
+    // Important: Update the calendar's events
+    const calendarApi = calendarRef.value.getApi();
+
+    calendarApi.removeAllEvents();
+    calendarApi.addEventSource(calendarEvents.value);
   } catch (error) {
-    console.error('Error fetching events', error);
+    console.error('Error fetching calendar events:', error);
+    toast.error('Failed to fetch calendar events');
   }
 }
 
 async function handleEventDrop(info) {
+  if (info.event.extendedProps.status === 'approved') {
+    info.revert();
+    toast.error("Cannot modify approved leave dates");
+    return;
+  }
+
   try {
-    await axios.patch(`/api/admin/calendar/u/${info.event.id}`, {
+    isLoading.value = true;
+    error.value = null;
+
+    await axios.put(`/api/admin/calendar/u/${info.event.id}`, {
       start: info.event.startStr,
       end: info.event.endStr
     });
-    toast.success('Leave rescheduled successfully!');
-  } catch (error) {
-    toast.error('Error updating leave dates.');
-    info.revert(); // Revert the drag
+
+    toast.success('Leave dates updated successfully');
+    await fetchCalendarEvents();
+  } catch (err) {
+    error.value = err.response?.data?.message || 'Failed to update leave dates';
+    info.revert();
+    toast.error(error.value);
+  } finally {
+    isLoading.value = false;
   }
 }
 
-async function loadUsers() {
-  const { data } = await axios.get('/api/admin/users');
-  users.value = data;
-}
+watch(filters, async () => {
+  await fetchCalendarEvents();
+}, { deep: true });
 
-async function loadLeaveTypes() {
-  const { data } = await axios.get('/api/admin/leave-types');
-  leaveTypes.value = data;
-}
+onMounted(async () => {
+  await fetchCalendarEvents();
 
-useEchoPublic(
-  `leave-requests`,
-  'LeaveRequestUpdated',
-  (e) => {
-    toast(`Leave "${e.title}" updated.`);
-    loadLeaveTypes()
-  }
-);
+  // Fetch users and leave types for filters
+  const [usersResponse, typesResponse] = await Promise.all([
+    axios.get('/api/admin/users'),
+    axios.get('/api/admin/leave-types')
+  ]);
 
-onMounted(() => {
-  fetchCalendarEvents();
-  loadLeaveTypes();
-  loadUsers();
+  users.value = usersResponse.data;
+  leaveTypes.value = typesResponse.data;
 });
 
-watch(filters, fetchCalendarEvents, { deep: true });
+// Listen for real-time updates
+useEchoPublic('leave-requests', 'LeaveRequestUpdated', () => {
+  fetchCalendarEvents();
+});
 </script>
 
 <template>
-
-  <Head title="My leave requests" />
-
   <AppLayout :breadcrumbs="breadcrumbs">
 
-    <div class="mb-4 flex flex-wrap gap-2 p-6">
-      <Select
-        v-model="filters.status">
-        <SelectTrigger>
-          <SelectValue placeholder="Filter by status" />
-        </SelectTrigger>
+    <Head title="Leave Calendar" />
 
-        <SelectContent>
-          <SelectItem value="all">All Statuses</SelectItem>
-          <SelectItem value="approved">Approved</SelectItem>
-          <SelectItem value="pending">Pending</SelectItem>
-          <SelectItem value="rejected">Rejected</SelectItem>
-        </SelectContent>
-      </Select>
+    <div class="space-y-6 p-6">
+      <!-- Filters -->
+      <div class="flex items-center gap-4">
+        <Select v-model="filters.status">
+          <SelectTrigger class="w-40">
+            <SelectValue placeholder="Filter by status" />
+          </SelectTrigger>
 
-      <Select
-        v-model="filters.type">
-        <SelectTrigger>
-          <SelectValue placeholder="Filter by leave type" />
-        </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="pending">Pending</SelectItem>
+            <SelectItem value="approved">Approved</SelectItem>
+            <SelectItem value="rejected">Rejected</SelectItem>
+          </SelectContent>
+        </Select>
 
-        <SelectContent>
-          <SelectItem value="all">All Types</SelectItem>
-          <SelectItem v-for="leave in leaveTypes" :key="leave.id" :value="leave.id">
-            {{ leave.name }}
-          </SelectItem>
-        </SelectContent>
-      </Select>
+        <Select v-model="filters.type">
+          <SelectTrigger class="w-40">
+            <SelectValue placeholder="Filter by type" />
+          </SelectTrigger>
 
-      <Select
-        v-if="users.length" v-model="filters.user_id">
-        <SelectTrigger>
-          <SelectValue placeholder="Filter by user" />
-        </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Types</SelectItem>
+            <SelectItem
+              v-for="type in leaveTypes"
+              :key="type.id"
+              :value="type.id">
+              {{ type.name }}
+            </SelectItem>
+          </SelectContent>
+        </Select>
 
-        <SelectContent>
-          <SelectItem value="all">All Users</SelectItem>
-          <SelectItem v-for="user in users" :key="user.id" :value="user.id">
-            {{ user.name }}
-          </SelectItem>
-        </SelectContent>
-      </Select>
+        <Select v-model="filters.user_id">
+          <SelectTrigger class="w-56">
+            <SelectValue placeholder="Filter by employee" />
+          </SelectTrigger>
+
+          <SelectContent>
+            <SelectItem value="all">All Employees</SelectItem>
+
+            <SelectItem
+              v-for="user in users"
+              :key="user.id"
+              :value="user.id">
+              {{ user.name }}
+            </SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <!-- Calendar -->
+      <FullCalendar ref="calendarRef" :options="calendarOptions" />
+
+      <!-- Leave Details Dialog -->
+      <Dialog v-model:open="isDialogOpen">
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Leave Request Details</DialogTitle>
+          </DialogHeader>
+
+          <DialogDescription class="flex items-center gap-2">
+            <UserIcon class="size-4" />
+
+            <span>
+              <strong>{{ selectedEvent.user }}</strong>'s <span class="lowercase">{{ selectedEvent.type }}</span> details.
+            </span>
+          </DialogDescription>
+
+          <div v-if="selectedEvent" class="space-y-4 border-t pt-4">
+            <div class="grid gap-4 divide-y divide-gray-200 dark:divide-gray-700">
+              <div class="pb-3">
+                <p class="text-sm font-medium text-gray-500">Leave Type</p>
+                <p class="text-lg font-semibold">{{ selectedEvent.type }}</p>
+              </div>
+
+              <div class="pb-3">
+                <p class="text-sm font-medium text-gray-500">Status</p>
+                <p class="capitalize text-lg font-semibold">{{ selectedEvent.status }}</p>
+              </div>
+
+              <div class="pb-3">
+                <p class="text-sm font-medium text-gray-500">Duration</p>
+                <p class="text-lg">
+                  <span class="font-semibold">{{ selectedEvent.range }}</span>
+                  |
+                  <span class="font-light">{{ selectedEvent.period }} days</span>
+                </p>
+              </div>
+
+              <div v-if="selectedEvent.reason">
+                <p class="text-sm font-medium text-gray-500">Reason</p>
+                <p class="mt-1">{{ selectedEvent.reason }}</p>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
-
-    <div class="p-6">
-      <FullCalendar :options="calendarOptions" />
-    </div>
-
-    <Dialog v-model:open="isDialogOpen">
-      <DialogContent>
-        <DialogTitle>Leave Request Details</DialogTitle>
-        <DialogDescription v-if="selectedEvent">
-          <p><strong>Title:</strong> {{ selectedEvent.title }}</p>
-          <p><strong>Status:</strong>
-            <Badge
-              :variant="selectedEvent.status === 'approved' ? 'success' : selectedEvent.status === 'pending' ? 'warning' : 'destructive'">
-              {{ selectedEvent.status }}
-            </Badge>
-          </p>
-          <p><strong>Reason:</strong> {{ selectedEvent.reason }}</p>
-          <p><strong>Start Date:</strong> {{ selectedEvent.start }}</p>
-          <p><strong>End Date:</strong> {{ selectedEvent.end }}</p>
-        </DialogDescription>
-      </DialogContent>
-    </Dialog>
   </AppLayout>
 </template>
+
+<style>
+.fc-event {
+  cursor: pointer;
+  padding: 2px 4px;
+}
+
+.status-approved {
+  background-color: #4CAF50 !important;
+  border-color: #45a049 !important;
+}
+
+.status-rejected {
+  background-color: #F44336 !important;
+  border-color: #e53935 !important;
+}
+
+.status-pending {
+  background-color: #FFC107 !important;
+  border-color: #ffb300 !important;
+}
+
+/* Improve event text visibility */
+.fc-event-title {
+  color: white;
+  font-weight: 500;
+}
+</style>

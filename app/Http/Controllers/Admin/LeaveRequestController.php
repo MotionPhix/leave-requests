@@ -5,20 +5,36 @@ namespace App\Http\Controllers\Admin;
 use App\Events\LeaveRequestUpdated;
 use App\Http\Controllers\Controller;
 use App\Models\LeaveRequest;
+use App\Models\LeaveType;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class LeaveRequestController extends Controller
 {
-  public function index(): Response
+  public function index(Request $request): Response
   {
-    $leaveRequests = LeaveRequest::with('leaveType', 'user')
-      ->latest()
-      ->get();
+    $query = LeaveRequest::with(['leaveType', 'user'])
+      ->when($request->status, function ($query, $status) {
+        return $query->where('status', $status);
+      })
+      ->when($request->search, function ($query, $search) {
+        return $query->whereHas('user', function ($q) use ($search) {
+          $q->where('name', 'like', "%{$search}%");
+        });
+      })
+      ->when($request->type, function ($query, $type) {
+        return $query->where('leave_type_id', $type);
+      })
+      ->latest();
+
+    $leaveRequests = $query->paginate(10)->withQueryString();
+    $leaveTypes = LeaveType::all();
 
     return Inertia::render('admin/leave-requests/Index', [
-      'leaveRequests' => $leaveRequests
+      'leaveRequests' => $leaveRequests,
+      'leaveTypes' => $leaveTypes,
+      'filters' => $request->only(['search', 'status', 'type'])
     ]);
   }
 
@@ -29,7 +45,6 @@ class LeaveRequestController extends Controller
       return Inertia::render('admin/leave-requests/Show', [
         'leaveRequest' => $leaveRequest->load('leaveType', 'user'),
       ]);
-
     }
 
     return back();

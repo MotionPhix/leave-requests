@@ -15,11 +15,43 @@ class DashboardController extends Controller
 {
   public function index(LeaveBalanceService $leaveBalanceService): Response
   {
-    $requests = LeaveRequest::all();
+    $requests = LeaveRequest::whereYear('created_at', now()->year)->get();
 
-    $byType = LeaveType::withCount('leaveRequests')->get()->map(function($type) {
-      return ['name' => $type->name, 'count' => $type->leave_requests_count];
-    });
+    // Get requests by type with percentage
+    $byType = LeaveType::withCount('leaveRequests')
+      ->get()
+      ->map(function ($type) use ($requests) {
+        $percentage = $requests->count() > 0
+          ? round(($type->leave_requests_count / $requests->count()) * 100, 1)
+          : 0;
+        return [
+          'name' => $type->name,
+          'count' => $type->leave_requests_count,
+          'percentage' => $percentage
+        ];
+      });
+
+    // Get monthly stats
+    $monthlyStats = $requests->groupBy(function ($request) {
+      return $request->created_at->format('m');
+    })->map->count();
+
+    // Get top employees with most leaves
+    $topEmployees = LeaveRequest::with('user')
+      ->whereYear('created_at', now()->year)
+      ->get()
+      ->groupBy('user_id')
+      ->map(function ($items) {
+        $user = $items->first()->user;
+        return [
+          'name' => $user->name,
+          'count' => $items->count(),
+          'approved' => $items->where('status', 'approved')->count()
+        ];
+      })
+      ->sortByDesc('count')
+      ->take(5)
+      ->values();
 
     $chartData = [
       'total' => $requests->count(),
@@ -27,9 +59,10 @@ class DashboardController extends Controller
       'rejected' => $requests->where('status', 'rejected')->count(),
       'pending' => $requests->where('status', 'pending')->count(),
       'byType' => $byType,
+      'monthly' => $monthlyStats,
+      'topEmployees' => $topEmployees
     ];
 
     return Inertia::render('admin/Dashboard', compact('chartData'));
   }
-
 }
