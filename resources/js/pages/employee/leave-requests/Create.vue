@@ -1,16 +1,44 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue'
+import { type BreadcrumbItem } from '@/types';
 import { Head, router, useForm } from '@inertiajs/vue3'
 import { computed, watch } from 'vue'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form'
 import { Textarea } from '@/components/ui/textarea'
-import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card'
+import { Card, CardHeader, CardDescription, CardTitle, CardContent, CardFooter } from '@/components/ui/card'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'
 import DateRangePicker from '@/components/DateRangePicker.vue'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { toast } from 'vue-sonner'
 import { formatDate } from '@/lib/utils'
+import InputError from '@/components/InputError.vue'
 
-const props = defineProps({ leaveTypes: Array })
+const props = defineProps<{
+  leaveTypes: Array<{
+    id: number;
+    name: string;
+    max_days_per_year: number;
+  }>
+}>()
+
+const breadcrumbs: BreadcrumbItem[] = [
+  {
+    title: 'New Leave Request',
+    href: '/leave-requests/create'
+  }
+];
+
 const form = useForm({
   leave_type_id: '',
   date_range: { start: null, end: null },
@@ -57,42 +85,100 @@ function submit() {
     onFinish: () => form.processing = false
   })
 }
+
+// Calculate minimum date (today)
+const minDate = new Date().toISOString().split('T')[0];
 </script>
 
 <template>
-  <Head title="Request Leave" />
-  <AppLayout>
-    <div class="max-w-2xl mx-auto p-4 space-y-6">
-      <h1 class="text-2xl font-bold">New Leave Request</h1>
 
+  <Head title="New Leave Request" />
+
+  <AppLayout :breadcrumbs="breadcrumbs">
+    <div class="max-w-2xl mx-auto p-6">
       <Card>
         <CardHeader>
-          <h2 class="font-semibold text-lg">Leave Details</h2>
+          <CardTitle>Leave Details</CardTitle>
+
+          <CardDescription>
+            Submit a new leave request for approval
+          </CardDescription>
         </CardHeader>
 
-        <CardContent class="space-y-4">
-          <Select v-model="form.leave_type_id">
-            <SelectTrigger>
-              <SelectValue placeholder="Select Leave Type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem v-for="type in props.leaveTypes" :key="type.id" :value="type.id">
-                {{ type.name }} (Max: {{ type.max_days_per_year }} days)
-              </SelectItem>
-            </SelectContent>
-          </Select>
-          <span v-if="selectedLeaveType">Max allowed: {{ selectedLeaveType.max_days_per_year }} days</span>
+        <CardContent class="space-y-6">
 
-          <DateRangePicker v-model="form.date_range" placeholder="Select Date Range" />
+          <div>
+            <!-- Error Messages -->
+            <Alert
+              v-if="form.errors.insufficient || form.errors.overlap"
+              variant="destructive">
 
-          <p v-if="estimatedDays">Estimated working days: {{ estimatedDays }}</p>
+              <AlertDescription>
+                {{ form.errors.insufficient || form.errors.overlap }}
+              </AlertDescription>
+            </Alert>
+          </div>
 
-          <Textarea v-model="form.reason" placeholder="Reason for leave" class="w-full" />
+          <div>
+            <Label class="mb-2">Leave Type</Label>
 
-          <div v-if="form.errors.insufficient" class="text-red-500">{{ form.errors.insufficient }}</div>
+            <Select v-model="form.leave_type_id">
+              <SelectTrigger class="w-full">
+                <SelectValue placeholder="Select Leave Type" />
+              </SelectTrigger>
+
+              <SelectContent>
+                <SelectItem v-for="type in props.leaveTypes" :key="type.id" :value="type.id">
+                  {{ type.name }} ({{ type.max_days_per_year }} days/year)
+                </SelectItem>
+              </SelectContent>
+            </Select>
+
+            <span v-if="selectedLeaveType" class="text-sm text-gray-500 mt-1">
+              Max allowed: {{ selectedLeaveType.max_days_per_year }} days/year
+            </span>
+          </div>
+
+          <div>
+            <DateRangePicker
+              v-model="form.date_range"
+              placeholder="Select your preferred leave days"
+            />
+
+            <div class="mt-1">
+              <p v-if="estimatedDays && !(form.errors?.start_date || form.errors?.end_date)" class="text-sm text-gray-500">
+                Estimated working days: {{ estimatedDays }}
+              </p>
+
+              <InputError :message="form.errors?.start_date" />
+
+              <InputError :message="form.errors?.end_date" />
+            </div>
+          </div>
+
+          <div>
+            <Label class="mb-2">Reason for Leave</Label>
+
+            <Textarea
+              v-model="form.reason"
+              placeholder="Please provide a reason for your leave request"
+              class="w-full"
+            />
+          </div>
+
+          <div>
+            <InputError :message="form.errors.insufficient" />
+          </div>
         </CardContent>
 
-        <CardFooter>
+        <CardFooter class="flex justify-end space-x-4">
+          <Button
+            type="button"
+            variant="outline"
+            :href="route('leave-requests.index')">
+            Cancel
+          </Button>
+
           <Button :disabled="form.processing" @click="submit">
             <span v-if="form.processing">Submitting...</span>
             <span v-else>Submit Request</span>

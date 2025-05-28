@@ -26,8 +26,9 @@ class StoreLeaveRequest extends FormRequest
     return [
       'leave_type_id.required' => 'Please select a leave type.',
       'start_date.required' => 'Start date is required.',
+      'start_date.after_or_equal' => 'Leave cannot be requested for past dates.',
       'end_date.required' => 'End date is required.',
+      'end_date.after_or_equal' => 'End date must be after or equal to start date.',
     ];
   }
 }
-

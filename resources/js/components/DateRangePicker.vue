@@ -39,7 +39,7 @@ const df = new DateFormatter('en-MW', { dateStyle: 'medium' })
       <Button
         variant="outline"
         :class="cn(
-          'w-[280px] justify-start text-left font-normal',
+          'w-full justify-start text-left font-normal',
           !value?.start && 'text-muted-foreground'
         )"
       >

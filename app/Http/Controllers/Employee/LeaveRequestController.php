@@ -63,7 +63,13 @@ class LeaveRequestController extends Controller
 
   public function store(StoreLeaveRequest $request)
   {
-    $daysRequested = now()->parse($request->start_date)->diffInDaysFiltered(fn($date) => !$date->isWeekend(), now()->parse($request->end_date)) + 1;
+    // Calculate business days (excluding weekends)
+    $daysRequested = now()
+      ->parse($request->start_date)
+      ->diffInDaysFiltered(
+        fn($date) => !$date->isWeekend(),
+        now()->parse($request->end_date)
+      ) + 1;
 
     $canTake = app(LeaveBalanceService::class)->hasSufficientBalance(
       Auth::id(),
@@ -72,7 +78,25 @@ class LeaveRequestController extends Controller
     );
 
     if (!$canTake) {
-      return back()->withErrors(['insufficient' => 'Insufficient leave balance.']);
+      return back()->with(
+        'error', 'Insufficient leave balance.'
+      )->withInput();
+    }
+
+    // Check for overlapping leaves
+    $hasOverlap = LeaveRequest::query()
+      ->where('user_id', Auth::id())
+      ->where('status', '!=', LeaveStatus::Rejected->value)
+      ->where(function ($query) use ($request) {
+          $query->whereBetween('start_date', [$request->start_date, $request->end_date])
+              ->orWhereBetween('end_date', [$request->start_date, $request->end_date]);
+      })
+        ->exists();
+
+    if ($hasOverlap) {
+      return back()->with(
+        'error', 'You have overlapping leave requests for the selected dates.'
+      )->withInput();
     }
 
     LeaveRequest::create([
