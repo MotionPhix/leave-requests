@@ -1,19 +1,30 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { getLocalTimeZone, parseDate } from '@internationalized/date';
+import { CalendarDate } from '@internationalized/date';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatDate(dateValue: any): string | null {
-  if (!dateValue) return null
+// Accepts CalendarDate or any object with year/month/day properties
+export function formatDate(dateValue: CalendarDate | { year: number, month: number, day: number } | null | undefined): string | null {
+  if (!dateValue) return null;
 
-  const date = dateValue.toDate(getLocalTimeZone())
+  let year: number, month: number, day: number;
 
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
+  if (dateValue instanceof CalendarDate) {
+    year = dateValue.year;
+    month = dateValue.month;
+    day = dateValue.day;
+  } else if ('year' in dateValue && 'month' in dateValue && 'day' in dateValue) {
+    year = dateValue.year;
+    month = dateValue.month;
+    day = dateValue.day;
+  } else {
+    console.warn('Unsupported date format provided to formatDate');
+    return null;
+  }
 
-  return `${year}-${month}-${day}`
+  return `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 }
+

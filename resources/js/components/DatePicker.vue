@@ -5,11 +5,10 @@ import {
   getLocalTimeZone, parseDate
 } from '@internationalized/date';
 import { CalendarIcon } from 'lucide-vue-next'
-import { cn, formatDate } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { computed } from 'vue';
 
 defineProps<{
   placeholder?: string
