@@ -43,7 +43,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
     [\App\Http\Controllers\Employee\Api\CalendarController::class, 'index']
   )->name('api.calendar');
 
-
   Route::get('/notifications', [NotificationController::class, 'index']);
   Route::post('/notifications/read', [NotificationController::class, 'markAsRead']);
 
