@@ -2,7 +2,7 @@
 import UserInfo from '@/components/UserInfo.vue';
 import { DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import type { User } from '@/types';
-import { Link, router, usePage } from '@inertiajs/vue3';
+import { Link, router } from '@inertiajs/vue3';
 import { LogOut, Settings } from 'lucide-vue-next';
 
 interface Props {
@@ -14,6 +14,8 @@ const handleLogout = () => {
 };
 
 defineProps<Props>();
+
+
 </script>
 
 <template>
@@ -27,7 +29,7 @@ defineProps<Props>();
         <DropdownMenuItem :as-child="true">
             <Link
               class="block w-full"
-              :href="isEmployee ? route('profile.edit') : route('admin.profile.edit')"
+              :href="$page.props.auth.user.isEmployee ? route('profile.edit') : route('admin.profile.edit')"
               prefetch as="button">
                 <Settings class="mr-2 h-4 w-4" />
                 Settings
