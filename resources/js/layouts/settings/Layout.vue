@@ -15,17 +15,17 @@ const user = page.props.auth.user
 const sidebarNavItems: NavItem[] = [
     {
         title: 'Profile',
-        href: '/settings/profile',
+        href: user.isEmployee ? '/settings/profile' : '/admin/settings/profile',
     icon: ContactIcon,
     },
     {
         title: 'Password',
-        href: '/settings/password',
+        href: user.isEmployee ? '/settings/password' : '/admin/settings/password',
     icon: LockIcon,
     },
     {
         title: 'Appearance',
-        href: '/settings/appearance',
+        href: user.isEmployee ? '/settings/appearance' : '/admin/settings/appearance',
     icon: PaletteIcon,
     },
 ];
@@ -34,12 +34,8 @@ const adminSidebarNavItems: NavItem[] = [
 
     {
         title: 'Active Sessions',
-        href: '/settings/appearance',
+        href: '/admin/settings/sessions',
     icon: HourglassIcon,
-    },
-    {
-        title: 'API Tokens',
-        href: '/settings/api-tokens',
     },
 ];
 
