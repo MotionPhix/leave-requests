@@ -5,13 +5,14 @@ import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import dayjs from 'dayjs';
 import { Table, TableHeader, TableHead, TableRow, TableBody, TableCell } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import DatePicker from '@/components/DatePicker.vue';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowRightIcon, ArrowLeftIcon, PlusIcon} from 'lucide-vue-next';
+import { ArrowRightIcon, ArrowLeftIcon, PlusIcon, SlidersHorizontalIcon} from 'lucide-vue-next';
 import { formatDate } from '@/lib/utils';
 import { useEchoPublic } from '@laravel/echo-vue';
 import { toast } from 'vue-sonner';
+import { debounce } from 'lodash';
 
 const breadcrumbs: BreadcrumbItem[] = [
   {
@@ -47,6 +48,10 @@ function resetFilters() {
   filters.value = { status: '', leave_type_id: '', date_from: '', date_to: '' }
   applyFilters()
 }
+
+watch(filters.value, debounce(() => {
+  applyFilters();
+}, 300));
 
 useEchoPublic(
   `leave-requests`,
@@ -84,9 +89,22 @@ useEchoPublic(
 
       <div class="bg-white p-4 rounded-lg shadow-md shadow-2xs dark:bg-secondary">
 
-        <h2 class="text-lg font-semibold mb-4">
-          Filter Leave Requests
-        </h2>
+        <div class="flex items-center justify-between mb-4">
+
+          <h2 class="text-lg font-semibold">
+            Filter leave requests
+          </h2>
+
+          <div>
+            <Button
+              size="icon"
+              variant="outline"
+              @click="resetFilters">
+             <SlidersHorizontalIcon />
+            </Button>
+          </div>
+
+        </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
           <Select
@@ -127,9 +145,6 @@ useEchoPublic(
         </div>
 
         <div class="mt-4 flex gap-2">
-          <Button size="sm" @click="applyFilters">Apply Filters</Button>
-          <Button size="sm" @click="resetFilters">Reset</Button>
-
           <span v-if="isLoading" class="text-sm text-blue-600">Loading...</span>
         </div>
       </div>

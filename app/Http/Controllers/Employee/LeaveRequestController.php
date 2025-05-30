@@ -17,13 +17,6 @@ class LeaveRequestController extends Controller
 {
   public function index(Request $request): Response
   {
-    /*$leaveRequests = LeaveRequest::with('leaveType', 'user')
-      ->where('user_id', auth()->user()->id)
-      ->latest()
-      ->get();*/
-
-    // dd($request->all());
-
     $query = LeaveRequest::query()->with(['leaveType', 'user']);
 
     // Filters
@@ -37,6 +30,10 @@ class LeaveRequestController extends Controller
 
     if ($request->filled('date_from') && $request->filled('date_to')) {
       $query->whereBetween('start_date', [$request->date_from, $request->date_to]);
+    }
+
+    if ($request->filled('date_from') && ! $request->filled('date_to')) {
+      $query->where('start_date', '>=', $request->date_from);
     }
 
     // Role-based filtering

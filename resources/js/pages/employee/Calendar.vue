@@ -182,7 +182,7 @@ useEchoPublic('leave-requests', 'LeaveRequestUpdated', () => {
         <div>
           <DateRangePicker
             v-model="filters.date_range"
-            placeholder="Select your preferred leave days"
+            placeholder="Filter by leave start and end date"
           />
         </div>
       </div>

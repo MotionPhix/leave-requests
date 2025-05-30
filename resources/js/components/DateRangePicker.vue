@@ -1,13 +1,10 @@
 <script setup lang="ts">
 import type { DateRange } from 'reka-ui'
 import {
-  CalendarDate,
   DateFormatter,
   getLocalTimeZone,
 } from '@internationalized/date'
-
 import { CalendarIcon } from 'lucide-vue-next'
-import { ref, watchEffect } from 'vue'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -19,17 +16,15 @@ defineProps<{
 
 const value = defineModel<DateRange>({ required: true })
 
-// Initialize value with default if undefined
-watchEffect(() => {
+/*watchEffect(() => {
   if (!value.value?.start || !value.value?.end) {
     const today = new Date()
     const start = new CalendarDate(today.getFullYear(), today.getMonth() + 1, today.getDate())
     const end = start.add({ days: 5 })
     value.value = { start, end }
   }
-})
+})*/
 
-// Date formatter
 const df = new DateFormatter('en-MW', { dateStyle: 'medium' })
 </script>
 
