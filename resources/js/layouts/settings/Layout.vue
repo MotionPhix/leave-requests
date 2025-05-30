@@ -4,25 +4,48 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
+import { ContactIcon, LockIcon, PaletteIcon, HourglassIcon } from 'lucide-vue-next';
+
+const page = usePage();
+
+const currentPath = page.props.ziggy?.location ? new URL(page.props.ziggy.location).pathname : '';
+
+const user = page.props.auth.user
 
 const sidebarNavItems: NavItem[] = [
     {
         title: 'Profile',
         href: '/settings/profile',
+    icon: ContactIcon,
     },
     {
         title: 'Password',
         href: '/settings/password',
+    icon: LockIcon,
     },
     {
         title: 'Appearance',
         href: '/settings/appearance',
+    icon: PaletteIcon,
     },
 ];
 
-const page = usePage();
+const adminSidebarNavItems: NavItem[] = [
 
-const currentPath = page.props.ziggy?.location ? new URL(page.props.ziggy.location).pathname : '';
+    {
+        title: 'Active Sessions',
+        href: '/settings/appearance',
+    icon: HourglassIcon,
+    },
+    {
+        title: 'API Tokens',
+        href: '/settings/api-tokens',
+    },
+];
+
+const combinedSidebarNavItems = user?.isEmployee
+  ? sidebarNavItems
+  : [...sidebarNavItems, ...adminSidebarNavItems];
 </script>
 
 <template>
@@ -33,14 +56,14 @@ const currentPath = page.props.ziggy?.location ? new URL(page.props.ziggy.locati
             <aside class="w-full max-w-xl lg:w-48">
                 <nav class="flex flex-col space-x-0 space-y-1">
                     <Button
-                        v-for="item in sidebarNavItems"
+                        v-for="item in combinedSidebarNavItems"
                         :key="item.href"
                         variant="ghost"
                         :class="['w-full justify-start', { 'bg-muted': currentPath === item.href }]"
                         as-child
                     >
                         <Link :href="item.href">
-                            {{ item.title }}
+                          <component :is="item.icon" />  {{ item.title }}
                         </Link>
                     </Button>
                 </nav>

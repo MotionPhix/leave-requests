@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Settings;
+namespace App\Http\Controllers\Employee\Settings;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
@@ -18,7 +18,7 @@ class ProfileController extends Controller
    */
   public function edit(Request $request): Response
   {
-    return Inertia::render('settings/Profile', [
+    return Inertia::render('employee/settings/Profile', [
       'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
       'status' => $request->session()->get('status'),
     ]);
