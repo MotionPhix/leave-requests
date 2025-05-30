@@ -57,6 +57,12 @@ Route::group([
       Route::put('/password', 'update')->name('admin.password.update');
     });
 
+    Route::controller(\App\Http\Controllers\Admin\Settings\ActiveSessionController::class)->group(function () {
+      Route::get('/sessions', 'index')->name('admin.sessions.index');
+      Route::get('/sessions/new', 'create')->name('admin.sessions.create');
+      Route::post('/sessions', 'store')->name('admin.sessions.store');
+    });
+
     Route::get('/appearance', function () {
       return Inertia::render('admin/settings/Appearance');
     })->name('appearance');
