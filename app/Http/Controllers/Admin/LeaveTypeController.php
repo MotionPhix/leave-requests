@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\LeaveType\StoreLeaveTypeRequest;
+use App\Http\Requests\LeaveType\UpdateLeaveTypeRequest;
 use App\Models\LeaveType;
-use Illuminate\Http\Request;
+use App\Services\LeaveBalanceService;
 use Inertia\Inertia;
 
 class LeaveTypeController extends Controller
@@ -17,6 +19,7 @@ class LeaveTypeController extends Controller
         ->get()
         ->map(fn($type) => [
           'id' => $type->id,
+          'uuid' => $type->uuid,
           'name' => $type->name,
           'max_days_per_year' => $type->max_days_per_year,
           'requires_documentation' => $type->requires_documentation,
@@ -33,21 +36,9 @@ class LeaveTypeController extends Controller
     return Inertia::render('admin/leave-types/Create');
   }
 
-  public function store(Request $request)
+  public function store(StoreLeaveTypeRequest $request)
   {
-    $validated = $request->validate([
-      'name' => 'required|string|max:255|unique:leave_types',
-      'description' => 'nullable|string',
-      'max_days_per_year' => 'required|integer|min:0',
-      'requires_documentation' => 'boolean',
-      'gender_specific' => 'boolean',
-      'gender' => 'required|in:male,female,any',
-      'frequency_years' => 'required|integer|min:1',
-      'pay_percentage' => 'required|numeric|min:0|max:100',
-      'minimum_notice_days' => 'required|integer|min:0',
-    ]);
-
-    LeaveType::create($validated);
+    LeaveType::create($request->validated());
 
     return redirect()->route('admin.leave-types.index')
       ->with('success', 'Leave type created successfully');
@@ -71,24 +62,67 @@ class LeaveTypeController extends Controller
     ]);
   }
 
-  public function update(Request $request, LeaveType $leaveType)
+  public function update(UpdateLeaveTypeRequest $request, LeaveType $leaveType)
   {
-    $validated = $request->validate([
-      'name' => 'required|string|max:255|unique:leave_types,name,' . $leaveType->id,
-      'description' => 'nullable|string',
-      'max_days_per_year' => 'required|integer|min:0',
-      'requires_documentation' => 'boolean',
-      'gender_specific' => 'boolean',
-      'gender' => 'required|in:male,female,any',
-      'frequency_years' => 'required|integer|min:1',
-      'pay_percentage' => 'required|numeric|min:0|max:100',
-      'minimum_notice_days' => 'required|integer|min:0',
-    ]);
-
-    $leaveType->update($validated);
+    $leaveType->update($request->validated());
 
     return redirect()->route('admin.leave-types.index')
       ->with('success', 'Leave type updated successfully');
+  }
+
+  public function show(LeaveType $leaveType, LeaveBalanceService $leaveService)
+  {
+    $stats = [
+      'total_requests' => $leaveType->leaveRequests()->count(),
+      'approved_requests' => $leaveType->leaveRequests()->where('status', 'approved')->count(),
+      'pending_requests' => $leaveType->leaveRequests()->where('status', 'pending')->count(),
+      'rejected_requests' => $leaveType->leaveRequests()->where('status', 'rejected')->count(),
+      'total_days_taken' => $leaveType->leaveRequests()
+        ->where('status', 'approved')
+        ->get()
+        ->sum(function ($request) {
+          return $this->calculateWorkingDays($request->start_date, $request->end_date);
+        }),
+    ];
+
+    $monthlyStats = $leaveType->leaveRequests()
+      ->where('status', 'approved')
+      ->whereYear('created_at', now()->year)
+      ->selectRaw('MONTH(created_at) as month, COUNT(*) as total')
+      ->groupBy('month')
+      ->get()
+      ->pluck('total', 'month')
+      ->toArray();
+
+    $employeeStats = $leaveType->leaveRequests()
+      ->with('user:id,name')
+      ->where('status', 'approved')
+      ->whereYear('created_at', now()->year)
+      ->get()
+      ->groupBy('user.name')
+      ->map(function ($requests) {
+        return $requests->sum(function ($request) {
+          return $this->calculateWorkingDays($request->start_date, $request->end_date);
+        });
+      })
+      ->toArray();
+
+    return Inertia::render('admin/leave-types/Show', [
+      'leaveType' => [
+        'id' => $leaveType->id,
+        'name' => $leaveType->name,
+        'description' => $leaveType->description,
+        'max_days_per_year' => $leaveType->max_days_per_year,
+        'requires_documentation' => $leaveType->requires_documentation,
+        'gender_specific' => $leaveType->gender_specific,
+        'gender' => $leaveType->gender,
+        'frequency_years' => $leaveType->frequency_years,
+        'pay_percentage' => $leaveType->pay_percentage,
+      ],
+      'stats' => $stats,
+      'monthlyStats' => $monthlyStats,
+      'employeeStats' => $employeeStats,
+    ]);
   }
 
   public function destroy(LeaveType $leaveType)

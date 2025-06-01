@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import type { BreadcrumbItem } from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -52,6 +52,9 @@ const form = useForm('post', '/admin/employees', {
       <Card class="max-w-2xl mx-auto">
         <CardHeader>
           <CardTitle>New Employee</CardTitle>
+          <CardDescription>
+            Fill in the details below to create a new employee.
+          </CardDescription>
         </CardHeader>
 
         <CardContent>

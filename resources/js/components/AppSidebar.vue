@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { CalendarIcon, LayoutGrid, UsersIcon, ShieldIcon, DoorOpenIcon } from 'lucide-vue-next';
+import { CalendarIcon, CalendarDaysIcon, LayoutGrid, UsersIcon, ShieldIcon, DoorOpenIcon } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 
 const user = usePage().props.auth.user
@@ -34,7 +34,7 @@ const mainNavItems: NavItem[] = [
 // Admin-only navigation items
 const adminNavItems: NavItem[] = [
   {
-    title: 'Employee Management',
+    title: 'Employees',
     href: '/admin/employees',
     icon: UsersIcon,
   },
@@ -47,6 +47,11 @@ const adminNavItems: NavItem[] = [
     title: 'Leave Types',
     href: '/admin/leave-types',
     icon: DoorOpenIcon,
+  },
+  {
+    title: 'Holidays',
+    href: route('admin.holidays.index'),
+    icon: CalendarDaysIcon,
   }
 ];
 

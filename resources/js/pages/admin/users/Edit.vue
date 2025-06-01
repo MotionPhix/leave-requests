@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import type { BreadcrumbItem } from '@/types';
 
 const props = defineProps<{
@@ -59,6 +59,9 @@ const form = useForm(
       <Card class="max-w-2xl mx-auto">
         <CardHeader>
           <CardTitle>Edit Employee</CardTitle>
+          <CardDescription>
+            Update the employee's details below.
+          </CardDescription>
         </CardHeader>
 
         <CardContent>

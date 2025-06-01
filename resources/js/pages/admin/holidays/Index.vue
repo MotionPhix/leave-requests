@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
 import {
@@ -19,101 +18,101 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Card, CardContent } from '@/components/ui/card';
-import { MoreHorizontalIcon, PencilIcon, TrashIcon } from 'lucide-vue-next';
+import { PencilIcon, TrashIcon, MoreHorizontalIcon } from 'lucide-vue-next';
 import type { BreadcrumbItem } from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
   {
-    title: 'Employees',
-    href: '/admin/employees'
+    title: 'Holidays',
+    href: route('admin.holidays.index')
   }
 ];
 
 defineProps<{
-  users: {
-    data: Array<{
-      id: number;
-      name: string;
-      email: string;
-      gender: string;
-      role: string;
-      created_at: string;
-    }>;
-    links: Array<{
-      url: string | null;
-      label: string;
-      active: boolean;
-    }>;
-  };
+  holidays: Array<{
+    uuid: string;
+    name: string;
+    date: string;
+    description: string | null;
+    type: string;
+    is_recurring: boolean;
+  }>;
 }>();
+
+const deleteHoliday = (uuid: string) => {
+  if (confirm('Are you sure you want to delete this holiday?')) {
+    router.delete(route('admin.holidays.destroy', uuid));
+  }
+};
 </script>
 
 <template>
   <AppLayout :breadcrumbs="breadcrumbs">
 
-    <Head title="Employees" />
+    <Head title="Holidays" />
 
     <div class="p-6">
       <div class="flex justify-between items-start mb-6">
-        <div class="max-w-md">
-          <h1 class="text-2xl font-bold">Employees</h1>
-          <p class="text-sm text-muted-foreground mb-4">
-            Manage your employees here. You can edit or delete existing employees.
+        <div>
+          <h1 class="text-2xl font-bold">Holidays</h1>
+          <p class="text-sm text-muted-foreground mb-4 max-w-md">
+            Manage your holiday days here, both public and company holidays.
           </p>
         </div>
 
-        <Link :href="route('admin.employees.create')">
-        <Button>New</Button>
-        </Link>
+        <Button @click="router.visit(route('admin.holidays.create'))">
+          Add Holiday
+        </Button>
       </div>
 
       <Card>
         <CardContent>
+
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
-                <TableHead>Gender</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Created</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Recurring</TableHead>
+                <TableHead>Description</TableHead>
                 <TableHead class="w-[70px]"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              <TableRow v-for="user in users.data"
-                        :key="user.id">
+              <TableRow v-for="holiday in holidays"
+                        :key="holiday.uuid">
+                <TableCell>{{ holiday.name }}</TableCell>
                 <TableCell>
-                  <div class="font-medium">
-                    {{ user.name }}
-                  </div>
-                  <div class="text-sm text-muted-foreground">
-                    {{ user.email }}
-                  </div>
+                  {{ new Date(holiday.date).toLocaleDateString() }}
                 </TableCell>
-
-                <TableCell class="capitalize">{{ user.gender }}</TableCell>
                 <TableCell>
-                  <Badge>{{ user.role }}</Badge>
+                  <Badge :variant="holiday.type === 'Public Holiday' ? 'default' : 'secondary'">
+                    {{ holiday.type }}
+                  </Badge>
                 </TableCell>
-                <TableCell>{{ user.created_at }}</TableCell>
+                <TableCell>
+                  <Badge :variant="holiday.is_recurring ? 'success' : 'secondary'">
+                    {{ holiday.is_recurring ? 'Recurring' : 'One-time' }}
+                  </Badge>
+                </TableCell>
+                <TableCell class="max-w-[300px] truncate">
+                  {{ holiday.description }}
+                </TableCell>
                 <TableCell>
                   <DropdownMenu>
-                    <DropdownMenuTrigger as="div">
+                    <DropdownMenuTrigger asChild>
                       <Button variant="ghost"
                               size="icon">
                         <MoreHorizontalIcon class="w-4 h-4" />
                       </Button>
                     </DropdownMenuTrigger>
-
                     <DropdownMenuContent align="end">
-                      <Link :href="route('admin.employees.edit', user)">
-                      <DropdownMenuItem>
+                      <DropdownMenuItem @click="router.visit(route('admin.holidays.edit', holiday.uuid))">
                         <PencilIcon class="w-4 h-4 mr-2" />
                         Edit
                       </DropdownMenuItem>
-                      </Link>
-
-                      <DropdownMenuItem @click="router.delete(route('admin.employees.delete', user.uuid))"
+                      <DropdownMenuItem @click="deleteHoliday(holiday.uuid)"
                                         class="text-red-600">
                         <TrashIcon class="w-4 h-4 mr-2" />
                         Delete
@@ -124,6 +123,7 @@ defineProps<{
               </TableRow>
             </TableBody>
           </Table>
+
         </CardContent>
       </Card>
     </div>

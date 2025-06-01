@@ -60,7 +60,7 @@ class UserController extends Controller
     $role = \Spatie\Permission\Models\Role::find($validated['role_id']);
     $user->assignRole($role);
 
-    return redirect()->route('admin.users.index')
+    return redirect()->route('admin.employess.index')
       ->with('success', 'User created successfully');
   }
 
@@ -102,7 +102,7 @@ class UserController extends Controller
     $role = \Spatie\Permission\Models\Role::find($validated['role_id']);
     $user->syncRoles([$role]);
 
-    return redirect()->route('admin.users.index')
+    return redirect()->route('admin.employess.index')
       ->with('success', 'User updated successfully');
   }
 
@@ -110,7 +110,7 @@ class UserController extends Controller
   {
     $user->delete();
 
-    return redirect()->route('admin.users.index')
+    return redirect()->route('admin.employees.index')
       ->with('success', 'User deleted successfully');
   }
 }

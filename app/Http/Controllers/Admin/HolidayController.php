@@ -12,7 +12,17 @@ class HolidayController extends Controller
 {
   public function index(): Response
   {
-    $holidays = Holiday::orderBy('date')->get();
+    $holidays = Holiday::query()
+      ->orderBy('date')
+      ->get()
+      ->map(fn($holiday) => [
+        'id' => $holiday->id,
+        'uuid' => $holiday->uuid,
+        'name' => $holiday->name,
+        'date' => $holiday->date->format('Y-m-d'),
+        'description' => $holiday->description,
+        'is_recurring' => $holiday->is_recurring,
+      ]);
 
     return Inertia::render('admin/holidays/Index', [
       'holidays' => $holidays
@@ -30,6 +40,7 @@ class HolidayController extends Controller
       'name' => 'required|string|max:255',
       'date' => 'required|date',
       'type' => 'required|string|in:Public Holiday,Company Holiday',
+      'is_recurring' => 'boolean',
       'description' => 'nullable|string'
     ]);
 
@@ -52,6 +63,7 @@ class HolidayController extends Controller
       'name' => 'required|string|max:255',
       'date' => 'required|date',
       'type' => 'required|string|in:Public Holiday,Company Holiday',
+      'is_recurring' => 'boolean',
       'description' => 'nullable|string'
     ]);
 

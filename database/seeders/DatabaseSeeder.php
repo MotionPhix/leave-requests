@@ -21,16 +21,20 @@ class DatabaseSeeder extends Seeder
       LeaveTypeSeeder::class,
     ]);
 
+    $gender = fake()->randomElement(['male', 'female']);
+
     $user = User::factory()->create([
-      'name' => 'Employee User',
+      'name' => fake('MW')->name($gender),
       'email' => 'employee@example.com',
+      'gender' => $gender,
     ]);
 
     $user->assignRole('Employee');
 
     $user = User::factory()->create([
-      'name' => 'Manager User',
+      'name' => fake('MW')->name($gender),
       'email' => 'manager@example.com',
+      'gender' => $gender,
     ]);
 
     $user->assignRole('Manager');

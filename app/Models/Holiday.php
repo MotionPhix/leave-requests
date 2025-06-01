@@ -10,9 +10,10 @@ class Holiday extends Model
 {
   use HasFactory, HasUuid;
 
-  protected $fillable = ['name', 'date', 'type', 'description'];
+  protected $fillable = ['name', 'date', 'type', 'description', 'is_recurring'];
 
   protected $casts = [
     'date' => 'date',
+    'is_recurring' => 'boolean',
   ];
 }

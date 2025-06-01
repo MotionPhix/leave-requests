@@ -33,6 +33,27 @@ Route::group([
       )->name('admin.leave-requests.reject');
     });
 
+  Route::controller(\App\Http\Controllers\Admin\LeaveTypeController::class)->group(function () {
+    Route::get('/leave-types', 'index')->name('admin.leave-types.index');
+
+    Route::get('/leave-types/create', 'create')->name('admin.leave-types.create');
+
+    Route::post('/leave-types', 'store')
+      ->name('admin.leave-types.store')
+      ->middleware(HandlePrecognitiveRequests::class);
+
+    Route::get('/leave-types/{leaveType:uuid}/edit', 'edit')->name('admin.leave-types.edit');
+
+    Route::get('/leave-types/{leaveType:uuid}', 'show')
+      ->name('admin.leave-types.show');
+
+    Route::put('/leave-types/{leaveType}', 'update')
+      ->name('admin.leave-types.update')
+      ->middleware(HandlePrecognitiveRequests::class);
+
+    Route::delete('/leave-types/{leaveType:uuid}', 'destroy')->name('admin.leave-types.destroy');
+  });
+
   Route::controller(\App\Http\Controllers\Admin\DashboardController::class)->group(function () {
     Route::get(
       'dashboard',
@@ -75,15 +96,19 @@ Route::group([
       Route::get('/', 'index')->name('admin.holidays.index');
 
       Route::get('/create', 'create')->name('admin.holidays.create');
-      Route::post('/', 'store')->name('admin.holidays.store');
+
+      Route::post('/', 'store')
+      ->name('admin.holidays.store')
+      ->middleware(HandlePrecognitiveRequests::class);
 
       Route::get('/{holiday:uuid}/edit', 'edit')->name('admin.holidays.edit');
 
-      Route::put('/{holiday}', 'update')->name('admin.holidays.update');
+      Route::put('/{holiday}', 'update')
+      ->name('admin.holidays.update')
+      ->middleware(HandlePrecognitiveRequests::class);
 
       Route::delete('/{holiday}', 'destroy')->name('admin.holidays.destroy');
     });
-
   });
 
   Route::prefix('employees')->group(function () {
@@ -92,20 +117,18 @@ Route::group([
       Route::get('/create', 'create')->name('admin.employees.create');
 
       Route::post('/', 'store')
-      ->name('admin.employees.store')
-      ->middleware(HandlePrecognitiveRequests::class);
+        ->name('admin.employees.store')
+        ->middleware(HandlePrecognitiveRequests::class);
 
       Route::get('/e/{user:uuid}', 'edit')->name('admin.employees.edit');
 
       Route::put('/{user}', 'update')
-      ->name('admin.employees.update')
-      ->middleware(HandlePrecognitiveRequests::class);
+        ->name('admin.employees.update')
+        ->middleware(HandlePrecognitiveRequests::class);
 
       Route::delete('/{user:uuid}', 'destroy')->name('admin.employees.destroy');
 
       Route::get('/', 'index')->name('admin.employees.index');
     });
-
   });
-
 });

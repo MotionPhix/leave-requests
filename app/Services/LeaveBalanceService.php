@@ -49,5 +49,19 @@ class LeaveBalanceService
   protected function isHoliday(Carbon $date): bool
   {
     return \App\Models\Holiday::where('date', $date->format('Y-m-d'))->exists();
+
+    /*
+    static $holidays = null;
+
+        // Cache holidays for the current request
+        if ($holidays === null) {
+            $holidays = \App\Models\Holiday::pluck('date')
+                ->map(fn($date) => Carbon::parse($date)->format('Y-m-d'))
+                ->flip()
+                ->toArray();
+        }
+
+        return isset($holidays[$date->format('Y-m-d')]);
+        */
   }
 }

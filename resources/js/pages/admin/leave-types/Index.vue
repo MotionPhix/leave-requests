@@ -17,7 +17,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { PencilIcon, TrashIcon, MoreHorizontalIcon } from 'lucide-vue-next';
+import { Card, CardContent } from '@/components/ui/card';
+import { PencilIcon, InfoIcon, TrashIcon, MoreHorizontalIcon } from 'lucide-vue-next';
 import type { BreadcrumbItem } from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -49,6 +50,7 @@ const deleteLeaveType = (id: number) => {
 
 <template>
   <AppLayout :breadcrumbs="breadcrumbs">
+
     <Head title="Leave Types" />
 
     <div class="p-6">
@@ -60,56 +62,68 @@ const deleteLeaveType = (id: number) => {
       </div>
 
       <Card>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Days/Year</TableHead>
-              <TableHead>Documentation</TableHead>
-              <TableHead>Gender</TableHead>
-              <TableHead>Frequency</TableHead>
-              <TableHead>Pay %</TableHead>
-              <TableHead class="w-[70px]"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            <TableRow v-for="type in leaveTypes" :key="type.id">
-              <TableCell>{{ type.name }}</TableCell>
-              <TableCell>{{ type.max_days_per_year }}</TableCell>
-              <TableCell>
-                <Badge :variant="type.requires_documentation ? 'default' : 'secondary'">
-                  {{ type.requires_documentation ? 'Required' : 'Not Required' }}
-                </Badge>
-              </TableCell>
-              <TableCell class="capitalize">
-                {{ type.gender_specific ? type.gender : 'Any' }}
-              </TableCell>
-              <TableCell>
-                {{ type.frequency_years > 1 ? `Every ${type.frequency_years} years` : 'Yearly' }}
-              </TableCell>
-              <TableCell>{{ type.pay_percentage }}%</TableCell>
-              <TableCell>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                      <MoreHorizontalIcon class="w-4 h-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem @click="router.visit(route('admin.leave-types.edit', type.id))">
-                      <PencilIcon class="w-4 h-4 mr-2" />
-                      Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuItem @click="deleteLeaveType(type.id)" class="text-red-600">
-                      <TrashIcon class="w-4 h-4 mr-2" />
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
+        <CardContent>
+
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Days/Year</TableHead>
+                <TableHead>Documentation</TableHead>
+                <TableHead>Gender</TableHead>
+                <TableHead>Frequency</TableHead>
+                <TableHead>Pay %</TableHead>
+                <TableHead class="w-[70px]"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow v-for="type in leaveTypes"
+                        :key="type.id">
+                <TableCell>{{ type.name }}</TableCell>
+                <TableCell>{{ type.max_days_per_year }}</TableCell>
+                <TableCell>
+                  <Badge :variant="type.requires_documentation ? 'default' : 'secondary'">
+                    {{ type.requires_documentation ? 'Required' : 'Not Required' }}
+                  </Badge>
+                </TableCell>
+                <TableCell class="capitalize">
+                  {{ type.gender_specific ? type.gender : 'Any' }}
+                </TableCell>
+                <TableCell>
+                  {{ type.frequency_years > 1 ? `Every ${type.frequency_years} years` : 'Yearly' }}
+                </TableCell>
+                <TableCell>{{ type.pay_percentage }}%</TableCell>
+                <TableCell>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost"
+                              size="icon">
+                        <MoreHorizontalIcon class="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem @click="router.visit(route('admin.leave-types.show', type.uuid))">
+                        <InfoIcon class="w-4 h-4 mr-2" />
+                        Details
+                      </DropdownMenuItem>
+
+                      <DropdownMenuItem @click="router.visit(route('admin.leave-types.edit', type.uuid))">
+                        <PencilIcon class="w-4 h-4 mr-2" />
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem @click="deleteLeaveType(type.id)"
+                                        class="text-red-600">
+                        <TrashIcon class="w-4 h-4 mr-2" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+
+        </CardContent>
       </Card>
     </div>
   </AppLayout>

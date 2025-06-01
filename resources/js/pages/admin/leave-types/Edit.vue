@@ -19,27 +19,42 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { BreadcrumbItem } from '@/types';
 
+const props = defineProps<{
+  leaveType: {
+    id: number;
+    name: string;
+    description: string;
+    max_days_per_year: number;
+    requires_documentation: boolean;
+    gender_specific: boolean;
+    gender: string;
+    frequency_years: number;
+    pay_percentage: number;
+    minimum_notice_days: number;
+  };
+}>();
+
 const breadcrumbs: BreadcrumbItem[] = [
   {
     title: 'Leave Types',
     href: route('admin.leave-types.index')
   },
   {
-    title: 'Create Leave Type',
-    href: route('admin.leave-types.create')
+    title: 'Edit Leave Type',
+    href: route('admin.leave-types.edit', props.leaveType.id)
   }
 ];
 
-const form = useForm('post', route('admin.leave-types.store'), {
-  name: '',
-  description: '',
-  max_days_per_year: 0,
-  requires_documentation: false,
-  gender_specific: false,
-  gender: 'any',
-  frequency_years: 1,
-  pay_percentage: 100,
-  minimum_notice_days: 0,
+const form = useForm('put', route('admin.leave-types.update', props.leaveType.id), {
+  name: props.leaveType.name,
+  description: props.leaveType.description,
+  max_days_per_year: props.leaveType.max_days_per_year,
+  requires_documentation: props.leaveType.requires_documentation,
+  gender_specific: props.leaveType.gender_specific,
+  gender: props.leaveType.gender,
+  frequency_years: props.leaveType.frequency_years,
+  pay_percentage: props.leaveType.pay_percentage,
+  minimum_notice_days: props.leaveType.minimum_notice_days,
 });
 
 const genderSpecificToggled = (value: boolean) => {
@@ -53,12 +68,12 @@ const genderSpecificToggled = (value: boolean) => {
 <template>
   <AppLayout :breadcrumbs="breadcrumbs">
 
-    <Head title="Create Leave Type" />
+    <Head :title="`Edit ${leaveType.name}`" />
 
     <div class="p-6">
       <Card class="max-w-2xl mx-auto">
         <CardHeader>
-          <CardTitle>Add New Leave Type</CardTitle>
+          <CardTitle>Edit Leave Type</CardTitle>
         </CardHeader>
 
         <CardContent>
@@ -153,7 +168,7 @@ const genderSpecificToggled = (value: boolean) => {
               </Button>
               <Button type="submit"
                       :disabled="form.processing">
-                Create Leave Type
+                Update Leave Type
               </Button>
             </div>
           </form>

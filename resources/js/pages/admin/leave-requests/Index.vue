@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import {Card, CardContent} from '@/components/ui/card'
 
 const props = defineProps({
   leaveRequests: Object,
@@ -67,7 +68,16 @@ const reject = (id) => {
     <div class="space-y-6 p-6">
       <!-- Header -->
       <div class="grid gap-y-4">
-        <h1 class="text-xl font-semibold">Leave Requests</h1>
+        <div class="mb-6">
+
+        <h1 class="text-xl font-semibold">
+          Leave Requests
+        </h1>
+
+        <p class="text-sm text-muted-foreground">
+          A list of employee leave requests.
+        </p>
+        </div>
 
         <!-- Filters -->
         <div class="flex items-center space-x-4">
@@ -111,11 +121,12 @@ const reject = (id) => {
       </div>
 
       <!-- Table -->
-      <Table>
-        <TableCaption>A list of employee leave requests.</TableCaption>
+       <Card>
+        <CardContent>
 
+      <Table>
         <TableHeader>
-          <TableRow class="bg-gray-100">
+          <TableRow>
             <TableHead>Employee</TableHead>
             <TableHead>Type</TableHead>
             <TableHead>Duration</TableHead>
@@ -228,6 +239,8 @@ const reject = (id) => {
           />
         </div>
       </div>
+        </CardContent>
+       </Card>
     </div>
   </AppLayout>
 </template>
