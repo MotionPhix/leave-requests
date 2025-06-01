@@ -4,10 +4,11 @@ namespace App\Services;
 
 use App\Models\LeaveRequest;
 use App\Models\LeaveType;
+use Carbon\Carbon;
 
 class LeaveBalanceService
 {
-  public function getUsedDays(int $userId, int $leaveTypeId, int $year = null): int
+  public function getUsedDays(int $userId, int $leaveTypeId, int $year): int
   {
     $year = $year ?? now()->year;
 
@@ -15,12 +16,10 @@ class LeaveBalanceService
       ->where('user_id', $userId)
       ->where('leave_type_id', $leaveTypeId)
       ->whereYear('start_date', $year)
-      ->whereIn('status', ['approved'])
+      ->where('status', 'approved')
       ->get()
       ->sum(function ($leave) {
-        return now()
-            ->parse($leave->start_date)
-            ->diffInDaysFiltered(fn ($date) => !$date->isWeekend(), now()->parse($leave->end_date)) + 1;
+        return $this->calculateWorkingDays($leave->start_date, $leave->end_date);
       });
   }
 
@@ -32,8 +31,23 @@ class LeaveBalanceService
     return max(0, $leaveType->max_days_per_year - $usedDays);
   }
 
+  protected function calculateWorkingDays(string $startDate, string $endDate): float
+  {
+    $start = Carbon::parse($startDate);
+    $end = Carbon::parse($endDate);
+
+    return $start->diffInDaysFiltered(function (Carbon $date) {
+      return !$date->isWeekend() && !$this->isHoliday($date);
+    }, $end) + 1;
+  }
+
   public function hasSufficientBalance(int $userId, int $leaveTypeId, int $daysRequested): bool
   {
     return $this->getRemainingDays($userId, $leaveTypeId) >= $daysRequested;
+  }
+
+  protected function isHoliday(Carbon $date): bool
+  {
+    return \App\Models\Holiday::where('date', $date->format('Y-m-d'))->exists();
   }
 }

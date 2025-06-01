@@ -20,7 +20,8 @@ return new class extends Migration {
       $table->date('end_date');
       $table->text('reason')->nullable();
       $table->string('status')->default(LeaveStatus::Pending->value);
-      $table->foreignId('approved_by')->nullable()->constrained('users')->nullOnDelete();
+      $table->foreignId('reviewed_by')->nullable()->constrained('users')->nullOnDelete();
+      $table->timestamp('reviewed_at')->nullable();
       $table->text('comment')->nullable();
       $table->timestamps();
     });

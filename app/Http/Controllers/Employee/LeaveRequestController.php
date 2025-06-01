@@ -51,10 +51,35 @@ class LeaveRequestController extends Controller
     ]);
   }
 
-  public function create(): Response
+  public function create(LeaveBalanceService $leaveBalanceService): Response
   {
+    $user = auth()->user();
+
+    // Get available leave types with balances
+    $leaveTypes = LeaveType::all()->map(function ($type) use ($leaveBalanceService, $user) {
+      return [
+        'id' => $type->id,
+        'name' => $type->name,
+        'description' => $type->description,
+        'requires_documentation' => $type->requires_documentation,
+        'minimum_notice_days' => $type->minimum_notice_days,
+        'gender_specific' => $type->gender_specific,
+        'gender' => $type->gender,
+        'frequency_years' => $type->frequency_years,
+        'available_days' => $leaveBalanceService->getRemainingDays($user->id, $type->id),
+        'pay_percentage' => $type->pay_percentage,
+      ];
+    })->filter(function ($type) use ($user) {
+      // Filter out gender-specific leaves that don't match user's gender
+      if ($type['gender_specific'] && $type['gender'] !== $user->gender) {
+        return false;
+      }
+      return true;
+    })->values();
+
     return Inertia::render('employee/leave-requests/Create', [
-      'leaveTypes' => LeaveType::all(['id', 'name', 'max_days_per_year'])
+      'leaveTypes' => $leaveTypes,
+      'holidays' => $this->getUpcomingHolidays(),
     ]);
   }
 
@@ -76,7 +101,8 @@ class LeaveRequestController extends Controller
 
     if (!$canTake) {
       return back()->with(
-        'error', 'Insufficient leave balance.'
+        'error',
+        'Insufficient leave balance.'
       )->withInput();
     }
 
@@ -85,14 +111,15 @@ class LeaveRequestController extends Controller
       ->where('user_id', Auth::id())
       ->where('status', '!=', LeaveStatus::Rejected->value)
       ->where(function ($query) use ($request) {
-          $query->whereBetween('start_date', [$request->start_date, $request->end_date])
-              ->orWhereBetween('end_date', [$request->start_date, $request->end_date]);
+        $query->whereBetween('start_date', [$request->start_date, $request->end_date])
+          ->orWhereBetween('end_date', [$request->start_date, $request->end_date]);
       })
-        ->exists();
+      ->exists();
 
     if ($hasOverlap) {
       return back()->with(
-        'error', 'You have overlapping leave requests for the selected dates.'
+        'error',
+        'You have overlapping leave requests for the selected dates.'
       )->withInput();
     }
 
@@ -104,6 +131,13 @@ class LeaveRequestController extends Controller
       'reason' => $request->reason,
       'status' => LeaveStatus::Pending->value,
     ]);
+
+    if ($request->hasFile('supporting_documents')) {
+      foreach ($request->file('supporting_documents') as $file) {
+        $leaveRequest->addMedia($file)
+          ->toMediaCollection('supporting_documents');
+      }
+    }
 
     return redirect()->route('leave-requests.index')->with('success', 'Leave request submitted.');
   }
@@ -133,5 +167,18 @@ class LeaveRequestController extends Controller
     ]);
 
     return back()->with('success', 'Leave request updated.');
+  }
+
+  protected function getUpcomingHolidays(): array
+  {
+    return \App\Models\Holiday::where('date', '>=', now())
+      ->where('date', '<=', now()->addMonths(3))
+      ->orderBy('date')
+      ->get()
+      ->map(fn($holiday) => [
+        'date' => $holiday->date,
+        'name' => $holiday->name,
+      ])
+      ->toArray();
   }
 }

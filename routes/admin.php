@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Foundation\Http\Middleware\HandlePrecognitiveRequests;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -66,6 +67,45 @@ Route::group([
     Route::get('/appearance', function () {
       return Inertia::render('admin/settings/Appearance');
     })->name('appearance');
+  });
+
+  Route::prefix('holidays')->group(function () {
+
+    Route::controller(\App\Http\Controllers\Admin\HolidayController::class)->group(function () {
+      Route::get('/', 'index')->name('admin.holidays.index');
+
+      Route::get('/create', 'create')->name('admin.holidays.create');
+      Route::post('/', 'store')->name('admin.holidays.store');
+
+      Route::get('/{holiday:uuid}/edit', 'edit')->name('admin.holidays.edit');
+
+      Route::put('/{holiday}', 'update')->name('admin.holidays.update');
+
+      Route::delete('/{holiday}', 'destroy')->name('admin.holidays.destroy');
+    });
+
+  });
+
+  Route::prefix('employees')->group(function () {
+
+    Route::controller(\App\Http\Controllers\Admin\UserController::class)->group(function () {
+      Route::get('/create', 'create')->name('admin.employees.create');
+
+      Route::post('/', 'store')
+      ->name('admin.employees.store')
+      ->middleware(HandlePrecognitiveRequests::class);
+
+      Route::get('/e/{user:uuid}', 'edit')->name('admin.employees.edit');
+
+      Route::put('/{user}', 'update')
+      ->name('admin.employees.update')
+      ->middleware(HandlePrecognitiveRequests::class);
+
+      Route::delete('/{user:uuid}', 'destroy')->name('admin.employees.destroy');
+
+      Route::get('/', 'index')->name('admin.employees.index');
+    });
+
   });
 
 });

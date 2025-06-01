@@ -34,8 +34,8 @@ const mainNavItems: NavItem[] = [
 // Admin-only navigation items
 const adminNavItems: NavItem[] = [
   {
-    title: 'User Management',
-    href: '/admin/users',
+    title: 'Employee Management',
+    href: '/admin/employees',
     icon: UsersIcon,
   },
   {

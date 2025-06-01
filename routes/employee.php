@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Requests\StoreLeaveRequest;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Foundation\Http\Middleware\HandlePrecognitiveRequests;
 use Inertia\Inertia;
 
 Route::group(['middleware' => 'auth'], function () {
@@ -20,7 +22,8 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post(
       '/leave-requests',
       'store'
-    )->name('leave-requests.store');
+    )->name('leave-requests.store')
+      ->middleware([HandlePrecognitiveRequests::class]);
   });
 
   Route::controller(\App\Http\Controllers\Employee\DashboardController::class)->group(function () {
