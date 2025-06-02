@@ -6,6 +6,7 @@ use App\Events\LeaveRequestUpdated;
 use App\Http\Controllers\Controller;
 use App\Models\LeaveRequest;
 use App\Models\LeaveType;
+use App\Notifications\LeaveRequestStatusUpdated;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -79,45 +80,27 @@ class LeaveRequestController extends Controller
     return back();
   }
 
-  public function approve(Request $request, LeaveRequest $leaveRequest): \Illuminate\Http\RedirectResponse
+  public function update(LeaveRequest $leaveRequest, Request $request): \Illuminate\Http\RedirectResponse
   {
-    if ($request->user()->can('approve leave')) {
+    $request->validate([
+      'status' => ['required', 'in:approved,rejected'],
+      'comment' => ['nullable', 'string', 'max:500'],
+    ]);
 
-      $leaveRequest->update([
-        'status' => 'approved',
-        'approved_by' => auth()->id(),
-        'approved_at' => now(),
-        'comment' => $leaveRequest->comment
-      ]);
+    abort_unless(auth()->user()->can('approve leave'), 403);
 
-      // $request->user()->notify(new LeaveStatusChanged($request, $request->status));
+    $leaveRequest->update([
+      'status' => $request->status,
+      'comment' => $request->comment,
+      'reviewed_by' => auth()->id(),
+      'reviewed_at' => now(),
+    ]);
 
-      broadcast(new LeaveRequestUpdated($leaveRequest))->toOthers();
+    // Send notification only to the employee who requested the leave
+    $leaveRequest->user->notify(new LeaveRequestStatusUpdated($leaveRequest));
 
-      return back()->with('success', 'Leave approved.');
-    }
-
-    return back()->with('error', 'You are not allowed to approve leaves');
-  }
-
-  public function reject(Request $request, LeaveRequest $leaveRequest): \Illuminate\Http\RedirectResponse
-  {
-    if ($request->user()->can('reject leave')) {
-
-      $leaveRequest->update([
-        'status' => 'rejected',
-        'approved_by' => auth()->id(),
-        'approved_at' => now(),
-        'comment' => $leaveRequest->comment
-      ]);
-
-      // auth()->user()->notify(new LeaveStatusChanged($request, $request->status));
-
-      broadcast(new LeaveRequestUpdated($leaveRequest))->toOthers();
-
-      return back()->with('success', 'Leave rejected.');
-    }
-
-    return back()->with('error', 'You are not allowed to reject leaves');
+    return redirect()
+      ->back()
+      ->with('success', "Leave request has been {$request->status}");
   }
 }

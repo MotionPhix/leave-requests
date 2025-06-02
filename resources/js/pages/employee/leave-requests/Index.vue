@@ -3,6 +3,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
 import { Table, TableHeader, TableHead, TableRow, TableBody, TableCell } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { computed, ref, watch } from 'vue';
@@ -13,6 +14,18 @@ import { formatDate } from '@/lib/utils';
 import { useEchoPublic } from '@laravel/echo-vue';
 import { toast } from 'vue-sonner';
 import { debounce } from 'lodash';
+import {
+  Calendar,
+  Clock,
+  AlertCircle,
+  CheckCircle2,
+  XCircle,
+  ChevronRight
+} from 'lucide-vue-next';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+
+dayjs.extend(relativeTime);
 
 const breadcrumbs: BreadcrumbItem[] = [
   {
@@ -63,6 +76,32 @@ useEchoPublic(
     })
   }
 );
+
+const getStatusIcon = (status: string) => {
+  switch (status) {
+    case 'approved':
+      return CheckCircle2;
+    case 'rejected':
+      return XCircle;
+    default:
+      return Clock;
+  }
+};
+
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case 'approved':
+      return 'success';
+    case 'rejected':
+      return 'destructive';
+    default:
+      return 'warning';
+  }
+};
+
+const getDayCount = (start: string, end: string) => {
+  return dayjs(end).diff(dayjs(start), 'day') + 1;
+};
 </script>
 
 <template>
@@ -149,64 +188,106 @@ useEchoPublic(
         </div>
       </div>
 
-      <Table v-if="leaveRequests?.length">
-        <TableHeader>
-          <TableRow>
-            <TableHead>Type</TableHead>
-            <TableHead>Dates</TableHead>
-            <TableHead>Status</TableHead>
-          </TableRow>
-        </TableHeader>
+      <div v-if="leaveRequests?.length" class="space-y-4">
+      <Card v-for="leave in leaveRequests"
+            :key="leave.id"
+            class="hover:shadow-md transition-shadow">
+        <CardContent class="p-6">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-4">
+              <div class="w-12 h-12 rounded-lg bg-muted flex items-center justify-center">
+                <Calendar class="w-6 h-6 text-muted-foreground" />
+              </div>
+              <div>
+                <h3 class="font-medium">{{ leave.leave_type?.name }}</h3>
+                <p class="text-sm text-muted-foreground">
+                  {{ getDayCount(leave.start_date, leave.end_date) }} days
+                </p>
+              </div>
+            </div>
 
-        <TableBody>
-          <TableRow
-            v-for="leave in leaveRequests"
-            :key="leave.id" class="border-t">
-            <TableCell>{{ leave.leave_type?.name }}</TableCell>
+            <Badge :variant="getStatusColor(leave.status)">
+              <component :is="getStatusIcon(leave.status)"
+                        class="w-4 h-4 mr-1" />
+              {{ leave.status }}
+            </Badge>
+          </div>
 
-            <TableCell>
-              {{ dayjs(leave.start_date).format('MMM D') }} - {{ dayjs(leave.end_date).format('MMM D, YYYY') }}
-            </TableCell>
+          <div class="mt-4 grid grid-cols-2 gap-4 pt-4 border-t">
+            <div>
+              <p class="text-sm text-muted-foreground mb-1">Start Date</p>
+              <p class="font-medium">
+                {{ dayjs(leave.start_date).format('MMM D, YYYY') }}
+              </p>
+            </div>
+            <div>
+              <p class="text-sm text-muted-foreground mb-1">End Date</p>
+              <p class="font-medium">
+                {{ dayjs(leave.end_date).format('MMM D, YYYY') }}
+              </p>
+            </div>
+          </div>
 
-            <TableCell>
-              <span class="capitalize" :class="{
-                'text-yellow-600': leave.status === 'pending',
-                'text-green-600': leave.status === 'approved',
-                'text-red-600': leave.status === 'rejected'
-              }">
-                {{ leave.status }}
-              </span>
-            </TableCell>
-          </TableRow>
-        </TableBody>
-      </table>
+          <div v-if="leave.reason" class="mt-4 pt-4 border-t">
+            <p class="text-sm text-muted-foreground mb-1">Reason</p>
+            <p class="text-sm line-clamp-2">{{ leave.reason }}</p>
+          </div>
 
-      <section v-else>
-        <div>You don't have any leave requests yet.</div>
-        <div v-if="$page.props.auth.user.can['create leave']">
-          <Button
-            :as="Link"
-            :href="route('leave-requests.create')">
-            Request leave
-          </Button>
-        </div>
-      </section>
+          <div class="mt-4 pt-4 border-t flex items-center justify-between">
+            <p class="text-sm text-muted-foreground">
+              Submitted {{ dayjs(leave.created_at).fromNow() }}
+            </p>
+            <Link :href="route('leave-requests.show', leave.uuid)"
+                  class="flex items-center text-sm font-medium text-primary hover:underline">
+              View details
+              <ChevronRight class="w-4 h-4 ml-1" />
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
 
       <!-- Pagination -->
-      <div class="flex gap-x-4 mt-4">
-        <Button
-          @click="router.get(props.leaveRequests.prev_page_url)"
-          :disabled="!props.leaveRequests.prev_page_url">
-          <ArrowLeftIcon />
-        </Button>
-
-        <Button
-          @click="router.get(props.leaveRequests.next_page_url)"
-          :disabled="!props.leaveRequests.next_page_url">
-          <ArrowRightIcon />
-        </Button>
+      <div class="flex items-center justify-between pt-4">
+        <p class="text-sm text-muted-foreground">
+          Showing {{ props.leaveRequests.from }} to {{ props.leaveRequests.to }}
+          of {{ props.leaveRequests.total }} requests
+        </p>
+        <div class="flex gap-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            @click="router.get(props.leaveRequests.prev_page_url)"
+            :disabled="!props.leaveRequests.prev_page_url">
+            <ArrowLeftIcon class="w-4 h-4 mr-1" />
+            Previous
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            @click="router.get(props.leaveRequests.next_page_url)"
+            :disabled="!props.leaveRequests.next_page_url">
+            Next
+            <ArrowRightIcon class="w-4 h-4 ml-1" />
+          </Button>
+        </div>
       </div>
     </div>
+
+    <div v-else class="text-center py-12">
+      <AlertCircle class="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+      <h3 class="text-lg font-medium mb-2">No leave requests found</h3>
+      <p class="text-muted-foreground mb-6">
+        You haven't made any leave requests yet.
+      </p>
+      <Button
+        v-if="$page.props.auth.user.can['create leave']"
+        :as="Link"
+        :href="route('leave-requests.create')">
+        <PlusIcon class="w-4 h-4 mr-2" />
+        Request Leave
+      </Button>
+    </div>
+  </div>
 
   </AppLayout>
 </template>

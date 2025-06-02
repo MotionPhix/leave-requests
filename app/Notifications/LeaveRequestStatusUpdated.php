@@ -23,12 +23,15 @@ class LeaveRequestStatusUpdated extends Notification implements ShouldQueue
   public function toMail($notifiable): MailMessage
   {
     $status = strtolower($this->leaveRequest->status);
+
     return (new MailMessage)
       ->subject("Leave Request {$status}")
+      ->greeting("Hello {$notifiable->name},")
       ->line("Your leave request has been {$status}.")
       ->line("Type: {$this->leaveRequest->leaveType->name}")
-      ->line("From: {$this->leaveRequest->start_date}")
-      ->line("To: {$this->leaveRequest->end_date}")
+      ->line("From: {$this->leaveRequest->start_date->format('M d, Y')}")
+      ->line("To: {$this->leaveRequest->end_date->format('M d, Y')}")
+      ->line($this->leaveRequest->comment ? "Comments: {$this->leaveRequest->comment}" : '')
       ->action('View Details', route('leave-requests.show', $this->leaveRequest->uuid))
       ->line($this->leaveRequest->comments ? "Comments: {$this->leaveRequest->comments}" : '');
   }
@@ -41,7 +44,8 @@ class LeaveRequestStatusUpdated extends Notification implements ShouldQueue
       'leave_type' => $this->leaveRequest->leaveType->name,
       'start_date' => $this->leaveRequest->start_date,
       'end_date' => $this->leaveRequest->end_date,
-      'comments' => $this->leaveRequest->comments,
+      'message' => "Your {$this->leaveRequest->leaveType->name} request has been {$this->leaveRequest->status}",
+      'comments' => $this->leaveRequest->comment,
     ];
   }
 
@@ -54,6 +58,7 @@ class LeaveRequestStatusUpdated extends Notification implements ShouldQueue
         'leave_request_id' => $this->leaveRequest->id,
         'status' => $this->leaveRequest->status,
         'leave_type' => $this->leaveRequest->leaveType->name,
+        'message' => "Your {$this->leaveRequest->leaveType->name} request has been {$this->leaveRequest->status}",
         'created_at' => now()->diffForHumans(),
       ]
     ]);

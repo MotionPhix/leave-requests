@@ -4,8 +4,21 @@ import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
 import dayjs from 'dayjs';
-import { ref, watch } from 'vue';
+import relativeTime from 'dayjs/plugin/relativeTime';
+import { ref, watch, computed } from 'vue';
 import debounce from 'lodash/debounce';
+import {
+  Calendar,
+  Users,
+  Filter,
+  Search,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  CalendarDays,
+  MessageSquare,
+} from 'lucide-vue-next';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableHeader, TableHead, TableRow, TableBody, TableCell, TableCaption } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,6 +26,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import {Card, CardContent} from '@/components/ui/card'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+
+// Enable the relativeTime plugin
+dayjs.extend(relativeTime);
 
 const props = defineProps({
   leaveRequests: Object,
@@ -30,12 +53,18 @@ const breadcrumbs: BreadcrumbItem[] = [
 const search = ref(props.filters?.search || '');
 const status = ref(props.filters?.status || '');
 const type = ref(props.filters?.type || '');
+const isLoading = ref(false);
 
 watch([search, status, type], debounce(() => {
+  isLoading.value = true;
   router.get(
     route('admin.leave-requests.index'),
     { search: search.value, status: status.value, type: type.value },
-    { preserveState: true, preserveScroll: true }
+    {
+      preserveState: true,
+      preserveScroll: true,
+      onFinish: () => isLoading.value = false
+    }
   );
 }, 300));
 
@@ -59,188 +88,258 @@ const reject = (id) => {
     onSuccess: () => toast.success('Leave rejected')
   });
 };
+
+const getStatusBadgeVariant = (status: string) => {
+  switch (status) {
+    case 'approved':
+      return 'success';
+    case 'rejected':
+      return 'destructive';
+    default:
+      return 'warning';
+  }
+};
+
+const getDurationInDays = (start: string, end: string) => {
+  return dayjs(end).diff(dayjs(start), 'days') + 1;
+};
+
+const stats = computed(() => ({
+  total: props.leaveRequests.total,
+  pending: props.leaveRequests.data.filter(l => l.status === 'pending').length,
+  approved: props.leaveRequests.data.filter(l => l.status === 'approved').length,
+  rejected: props.leaveRequests.data.filter(l => l.status === 'rejected').length,
+}));
 </script>
 
 <template>
-  <Head title="Employee leave requests" />
-
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="space-y-6 p-6">
-      <!-- Header -->
-      <div class="grid gap-y-4">
-        <div class="mb-6">
+      <!-- Stats Overview -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent class="p-6">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm font-medium text-muted-foreground">Total Requests</p>
+                <p class="text-2xl font-bold">{{ stats.total }}</p>
+              </div>
+              <Users class="w-8 h-8 text-muted-foreground" />
+            </div>
+          </CardContent>
+        </Card>
 
-        <h1 class="text-xl font-semibold">
-          Leave Requests
-        </h1>
+        <Card>
+          <CardContent class="p-6">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm font-medium text-muted-foreground">Pending</p>
+                <p class="text-2xl font-bold text-warning">{{ stats.pending }}</p>
+              </div>
+              <Clock class="w-8 h-8 text-warning" />
+            </div>
+          </CardContent>
+        </Card>
 
-        <p class="text-sm text-muted-foreground">
-          A list of employee leave requests.
-        </p>
-        </div>
+        <Card>
+          <CardContent class="p-6">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm font-medium text-muted-foreground">Approved</p>
+                <p class="text-2xl font-bold text-success">{{ stats.approved }}</p>
+              </div>
+              <CheckCircle2 class="w-8 h-8 text-success" />
+            </div>
+          </CardContent>
+        </Card>
 
-        <!-- Filters -->
-        <div class="flex items-center space-x-4">
-          <Input
-            v-model="search"
-            placeholder="Search employee..."
-            class="w-full max-w-sm"
-          />
-
-          <div class="flex-1"></div>
-
-          <Select v-model="status">
-            <SelectTrigger class="w-60">
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-
-            <SelectContent>
-              <SelectItem :value="null">All Status</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="approved">Approved</SelectItem>
-              <SelectItem value="rejected">Rejected</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select v-model="type">
-            <SelectTrigger class="w-60">
-              <SelectValue placeholder="Filter by type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem :value="null">All Types</SelectItem>
-              <SelectItem
-                v-for="leaveType in leaveTypes"
-                :key="leaveType.id"
-                :value="leaveType.id"
-              >
-                {{ leaveType.name }}
-              </SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        <Card>
+          <CardContent class="p-6">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm font-medium text-muted-foreground">Rejected</p>
+                <p class="text-2xl font-bold text-destructive">{{ stats.rejected }}</p>
+              </div>
+              <XCircle class="w-8 h-8 text-destructive" />
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      <!-- Table -->
-       <Card>
-        <CardContent>
+      <!-- Filters -->
+      <Card>
+        <CardContent class="p-6">
+          <div class="flex flex-col md:flex-row gap-4">
+            <div class="relative flex-1">
+              <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                v-model="search"
+                placeholder="Search by employee name..."
+                class="pl-9"
+              />
+            </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Employee</TableHead>
-            <TableHead>Type</TableHead>
-            <TableHead>Duration</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead></TableHead>
-          </TableRow>
-        </TableHeader>
+            <Select v-model="status">
+              <SelectTrigger class="w-full md:w-[180px]">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem :value="null">All Status</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="approved">Approved</SelectItem>
+                <SelectItem value="rejected">Rejected</SelectItem>
+              </SelectContent>
+            </Select>
 
-        <TableBody>
-          <TableRow
-            v-for="leave in leaveRequests.data"
-            :key="leave.id"
-            class="border-t hover:bg-gray-50">
-            <TableCell class="font-medium">{{ leave.user?.name }}</TableCell>
+            <Select v-model="type">
+              <SelectTrigger class="w-full md:w-[180px]">
+                <SelectValue placeholder="Leave Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem :value="null">All Types</SelectItem>
+                <SelectItem
+                  v-for="leaveType in leaveTypes"
+                  :key="leaveType.id"
+                  :value="leaveType.id"
+                >
+                  {{ leaveType.name }}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
 
-            <TableCell>
-              <Badge
-              :variant="leave.leave_type?.name == 'Annual Leave'
-                ? 'default'
-                : leave.leave_type?.name == 'Sick Leave'
-                ? 'secondary' : 'destructive'">
-                {{ leave.leave_type?.name }}
-              </Badge>
-            </TableCell>
-
-            <TableCell>
-              <div class="flex flex-col">
-                <span>{{ dayjs(leave.start_date).format('MMM D') }} - {{ dayjs(leave.end_date).format('MMM D, YYYY') }}</span>
-                <span class="text-sm text-gray-500">
-                  A total of {{ dayjs(leave.end_date).diff(dayjs(leave.start_date), 'days') + 1 }} days
-                </span>
+      <!-- Replace Table with Cards -->
+      <div v-if="leaveRequests.data.length > 0" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <Card v-for="leave in leaveRequests.data"
+              :key="leave.id"
+              class="hover:shadow-md transition-shadow">
+          <CardContent class="p-6">
+            <!-- Header with Employee Info and Status -->
+            <div class="flex items-center justify-between mb-6">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                  <span class="text-lg font-medium">
+                    {{ leave.user.name.charAt(0) }}
+                  </span>
+                </div>
+                <div>
+                  <h3 class="font-medium">{{ leave.user.name }}</h3>
+                  <p class="text-sm text-muted-foreground">{{ leave.user.email }}</p>
+                </div>
               </div>
-            </TableCell>
-
-            <TableCell>
-              <Badge :class="getStatusColor(leave.status)">
+              <Badge :variant="getStatusBadgeVariant(leave.status)">
+                <component :is="leave.status === 'approved' ? CheckCircle2 :
+                             leave.status === 'rejected' ? XCircle : Clock"
+                         class="w-4 h-4 mr-1.5" />
                 {{ leave.status }}
               </Badge>
-            </TableCell>
+            </div>
 
-            <TableCell>
-              <div v-if="leave.status === 'pending'" class="flex space-x-2">
-                <Button
-                  @click="approve(leave.id)"
-                  variant="outline"
-                  class="text-green-600 hover:bg-green-50">
-                  Approve
-                </Button>
+            <!-- Leave Details -->
+            <div class="grid grid-cols-2 gap-4 mb-6">
+              <div>
+                <p class="text-sm text-muted-foreground mb-1">Leave Type</p>
+                <Badge variant="outline" class="font-medium">
+                  {{ leave.leave_type.name }}
+                </Badge>
+              </div>
+              <div>
+                <p class="text-sm text-muted-foreground mb-1">Duration</p>
+                <p class="font-medium">{{ getDurationInDays(leave.start_date, leave.end_date) }} days</p>
+              </div>
+            </div>
 
-                <Button
-                  @click="reject(leave.id)"
-                  variant="outline"
-                  class="text-red-600 hover:bg-red-50"
-                >
+            <!-- Date Range -->
+            <div class="flex items-start gap-3 mb-6 bg-muted/50 p-3 rounded-lg">
+              <CalendarDays class="w-5 h-5 text-muted-foreground mt-0.5" />
+              <div>
+                <p class="font-medium">
+                  {{ dayjs(leave.start_date).format('MMM D') }} -
+                  {{ dayjs(leave.end_date).format('MMM D, YYYY') }}
+                </p>
+                <p class="text-sm text-muted-foreground mt-1">
+                  Submitted {{ dayjs(leave.created_at).fromNow() }}
+                </p>
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex items-center justify-between pt-4 border-t">
+              <div class="flex gap-2">
+                <Button v-if="leave.status === 'pending'"
+                        variant="outline"
+                        size="sm"
+                        class="text-destructive hover:text-destructive"
+                        @click="reject(leave.id)">
+                  <XCircle class="w-4 h-4 mr-1.5" />
                   Reject
                 </Button>
+                <Button v-if="leave.status === 'pending'"
+                        size="sm"
+                        class="text-success hover:text-success"
+                        @click="approve(leave.id)">
+                  <CheckCircle2 class="w-4 h-4 mr-1.5" />
+                  Approve
+                </Button>
               </div>
+              <Button variant="ghost"
+                      size="sm"
+                      :href="route('admin.leave-requests.show', leave.uuid)">
+                <MessageSquare class="w-4 h-4 mr-1.5" />
+                View Details
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
-              <Dialog v-else>
-                <DialogTrigger>
-                  <Button variant="ghost" size="sm">Details</Button>
-                </DialogTrigger>
+      <!-- Loading State -->
+      <div v-if="isLoading" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <Card v-for="n in 4" :key="n">
+          <CardContent class="p-6">
+            <div class="space-y-4">
+              <Skeleton class="h-12 w-full" />
+              <div class="grid grid-cols-2 gap-4">
+                <Skeleton class="h-8 w-full" />
+                <Skeleton class="h-8 w-full" />
+              </div>
+              <Skeleton class="h-20 w-full" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Leave Request Details</DialogTitle>
-                  </DialogHeader>
+      <!-- Empty State -->
+      <Card v-if="!isLoading && leaveRequests.data.length === 0">
+        <CardContent class="p-12 text-center">
+          <Calendar class="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+          <h3 class="text-lg font-medium mb-2">No leave requests found</h3>
+          <p class="text-muted-foreground">
+            No leave requests match your current filters.
+          </p>
+        </CardContent>
+      </Card>
 
-                  <div class="space-y-4">
-                    <div class="grid grid-cols-2 gap-4">
-                      <div>
-                        <p class="text-sm font-medium text-gray-500">Status</p>
-                        <Badge :class="getStatusColor(leave.status)">
-                          {{ leave.status }}
-                        </Badge>
-                      </div>
-
-                      <div>
-                        <p class="text-sm font-medium text-gray-500">Duration</p>
-                        <p>{{ dayjs(leave.start_date).format('MMM D') }} - {{ dayjs(leave.end_date).format('MMM D, YYYY') }}</p>
-                      </div>
-                    </div>
-
-                    <div v-if="leave.comment" class="mt-4">
-                      <p class="text-sm font-medium text-gray-500">Comment</p>
-                      <p class="mt-1">{{ leave.comment }}</p>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </TableCell>
-          </TableRow>
-        </TableBody>
-      </Table>
-
-      <!-- Pagination -->
+      <!-- Enhanced Pagination -->
       <div class="flex items-center justify-between">
-        <div class="text-sm text-gray-700">
-          Showing {{ leaveRequests.from }} to {{ leaveRequests.to }} of {{ leaveRequests.total }} results
-        </div>
-        <div class="space-x-2">
+        <p class="text-sm text-muted-foreground">
+          Showing {{ leaveRequests.from }} to {{ leaveRequests.to }}
+          of {{ leaveRequests.total }} requests
+        </p>
+        <div class="flex gap-2">
           <Button
             v-for="link in leaveRequests.links"
             :key="link.label"
-            :disabled="!link.url"
-            :class="{ 'bg-primary text-white': link.active }"
-            variant="outline"
+            :disabled="!link.url || isLoading"
+            :variant="link.active ? 'default' : 'outline'"
+            size="sm"
             @click="router.get(link.url)"
             v-html="link.label"
           />
         </div>
       </div>
-        </CardContent>
-       </Card>
     </div>
   </AppLayout>
 </template>

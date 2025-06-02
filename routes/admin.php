@@ -22,15 +22,10 @@ Route::group([
         'show'
       )->name('admin.leave-requests.show');
 
-      Route::put(
-        'leave-requests/{leaveRequest}/approve',
-        'approve'
-      )->name('admin.leave-requests.approve');
-
-      Route::put(
-        'leave-requests/{leaveRequest}/reject',
-        'reject'
-      )->name('admin.leave-requests.reject');
+      Route::post(
+        'leave-requests/u/{leaveRequest:uuid}',
+        'update'
+      )->name('admin.leave-requests.update-status');
     });
 
   Route::controller(\App\Http\Controllers\Admin\LeaveTypeController::class)->group(function () {

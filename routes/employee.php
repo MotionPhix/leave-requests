@@ -19,7 +19,7 @@ Route::group(['middleware' => 'auth'], function () {
     )->name('leave-requests.create');
 
     Route::get(
-      '/leave-requests/s/{leaveRequest:uuid}',
+      '/leave-requests/s/{leaveRequest}',
       'show'
     )->name('leave-requests.show');
 
