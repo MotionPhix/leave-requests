@@ -85,9 +85,6 @@ function submit() {
     onFinish: () => form.processing = false
   })
 }
-
-// Calculate minimum date (today)
-const minDate = new Date().toISOString().split('T')[0];
 </script>
 
 <template>
@@ -95,7 +92,7 @@ const minDate = new Date().toISOString().split('T')[0];
   <Head title="New Leave Request" />
 
   <AppLayout :breadcrumbs="breadcrumbs">
-    <div class="max-w-2xl mx-auto p-6">
+    <div class="max-w-2xl p-6">
       <Card>
         <CardHeader>
           <CardTitle>Leave Details</CardTitle>

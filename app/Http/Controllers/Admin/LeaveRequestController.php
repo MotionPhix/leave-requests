@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Events\LeaveRequestUpdated;
 use App\Http\Controllers\Controller;
 use App\Models\LeaveRequest;
 use App\Models\LeaveType;
 use App\Notifications\LeaveRequestStatusUpdated;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -44,6 +44,8 @@ class LeaveRequestController extends Controller
     if (auth()->user()->can('view leave')) {
 
       $documentation = $leaveRequest->getFirstMedia('documentation');
+      $start = Carbon::parse($leaveRequest->start_date, 'Africa/Blantyre');
+      $end = Carbon::parse($leaveRequest->end_date, 'Africa/Blantyre');
 
       return Inertia::render('admin/leave-requests/Show', [
         'leaveRequest' => [
@@ -52,24 +54,25 @@ class LeaveRequestController extends Controller
             'name' => $leaveRequest->user->name,
             'email' => $leaveRequest->user->email,
             'position' => $leaveRequest->user->position,
-            'department' => $leaveRequest->user->department,
+            'department' => $leaveRequest->user->departmentModel->name,
           ],
           'leave_type' => [
             'name' => $leaveRequest->leaveType->name,
             'requires_documentation' => $leaveRequest->leaveType->requires_documentation,
           ],
-          'start_date' => $leaveRequest->start_date->format('Y-m-d'),
-          'end_date' => $leaveRequest->end_date->format('Y-m-d'),
+          'start_date' => $leaveRequest->start_date->format('d M, Y'),
+          'end_date' => $leaveRequest->end_date->format('d M, Y'),
           'reason' => $leaveRequest->reason,
           'status' => $leaveRequest->status,
-          'comments' => $leaveRequest->comments,
+          'comments' => $leaveRequest->comment,
+          'total_days' => $start->diffInDays($end),
           'documentation' => $documentation ? [
             'name' => $documentation->name,
             'size' => $documentation->size,
             'type' => $documentation->mime_type,
             'url' => $documentation->getUrl(),
           ] : null,
-          'created_at' => $leaveRequest->created_at->format('Y-m-d H:i:s'),
+          'created_at' => $leaveRequest->created_at->format('d M, Y H:i:s'),
           'updated_at' => $leaveRequest->updated_at->format('Y-m-d H:i:s'),
           'reviewed_by' => $leaveRequest->reviewer?->name,
           'reviewed_at' => $leaveRequest->reviewed_at?->format('Y-m-d H:i:s'),

@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { computed } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head } from '@inertiajs/vue3';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { CalendarIcon, CheckCircleIcon, ClockIcon, XCircleIcon } from 'lucide-vue-next';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { CalendarIcon } from 'lucide-vue-next';
 import ApexCharts from 'vue3-apexcharts';
 import { Badge } from '@/components/ui/badge';
 import dayjs from 'dayjs';
@@ -92,7 +91,7 @@ const lineOptions = {
   <AppLayout :breadcrumbs="breadcrumbs">
     <Head title="My Dashboard" />
 
-    <div class="p-6 space-y-6">
+    <div class="p-6 space-y-6 max-w-5xl">
       <!-- Stats Overview -->
       <div class="grid gap-4 md:grid-cols-4">
         <Card>

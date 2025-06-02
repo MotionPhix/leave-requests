@@ -1,22 +1,22 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { Head, Link, router } from '@inertiajs/vue3'
-import AppLayout from '@/layouts/AppLayout.vue'
-import { Button } from '@/components/ui/button'
+import { ref } from 'vue';
+import { Head, Link, router } from '@inertiajs/vue3';
+import AppLayout from '@/layouts/AppLayout.vue';
+import { Button } from '@/components/ui/button';
 import {
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
-  TableRow,
+  TableRow
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger,
+  DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { Card, CardContent } from '@/components/ui/card';
 import Pagination from '@/components/Pagination.vue';
@@ -59,7 +59,7 @@ defineProps<{
 
     <Head title="Employees" />
 
-    <div class="p-6">
+    <div class="p-6 max-w-4xl">
       <div class="flex justify-between items-start mb-6">
         <div class="max-w-md">
           <h1 class="text-2xl font-bold">Employees</h1>
@@ -69,7 +69,7 @@ defineProps<{
         </div>
 
         <Link :href="route('admin.employees.create')">
-        <Button>New</Button>
+          <Button>New</Button>
         </Link>
       </div>
 
@@ -85,28 +85,39 @@ defineProps<{
                 <TableHead class="w-[70px]"></TableHead>
               </TableRow>
             </TableHeader>
+
             <TableBody>
-              <TableRow v-for="user in users.data"
-                        :key="user.id">
+              <TableRow
+                v-for="user in users.data"
+                :key="user.id">
                 <TableCell>
                   <div class="font-medium">
                     {{ user.name }}
                   </div>
+
                   <div class="text-sm text-muted-foreground">
                     {{ user.email }}
                   </div>
                 </TableCell>
 
-                <TableCell class="capitalize">{{ user.gender }}</TableCell>
+                <TableCell class="capitalize">
+                  {{ user.gender }}
+                </TableCell>
+
                 <TableCell>
                   <Badge>{{ user.role }}</Badge>
                 </TableCell>
-                <TableCell>{{ user.created_at }}</TableCell>
+
+                <TableCell>
+                  {{ user.created_at }}
+                </TableCell>
+
                 <TableCell>
                   <DropdownMenu>
                     <DropdownMenuTrigger as="div">
-                      <Button variant="ghost"
-                              size="icon">
+                      <Button
+                        variant="ghost"
+                        size="icon">
                         <MoreHorizontalIcon class="w-4 h-4" />
                       </Button>
                     </DropdownMenuTrigger>
@@ -120,14 +131,15 @@ defineProps<{
                       </Link>
 
                       <Link :href="route('admin.employees.edit', user)">
-                      <DropdownMenuItem>
-                        <PencilIcon class="w-4 h-4 mr-2" />
-                        Edit
-                      </DropdownMenuItem>
+                        <DropdownMenuItem>
+                          <PencilIcon class="w-4 h-4 mr-2" />
+                          Edit
+                        </DropdownMenuItem>
                       </Link>
 
-                      <DropdownMenuItem @click="router.delete(route('admin.employees.delete', user.uuid))"
-                                        class="text-red-600">
+                      <DropdownMenuItem
+                        @click="router.delete(route('admin.employees.delete', user.uuid))"
+                        class="text-red-600">
                         <TrashIcon class="w-4 h-4 mr-2" />
                         Delete
                       </DropdownMenuItem>

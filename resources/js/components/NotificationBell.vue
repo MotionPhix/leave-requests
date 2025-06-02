@@ -4,13 +4,13 @@ import { Link, usePage } from '@inertiajs/vue3';
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger,
+  PopoverTrigger
 } from '@/components/ui/popover';
 import { Bell } from 'lucide-vue-next';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { useEchoModel } from "@laravel/echo-vue";
+import { useEchoModel } from '@laravel/echo-vue';
 import axios from 'axios';
 
 interface Notification {
@@ -87,46 +87,59 @@ const getNotificationMessage = (notification: Notification): string => {
     <PopoverTrigger class="cursor-pointer">
       <div class="relative">
         <Bell class="w-5 h-5" />
-        <Badge v-if="unreadCount > 0"
-               class="absolute -top-2 -right-2 min-w-[20px] h-5">
+        <Badge
+          v-if="unreadCount > 0"
+          class="absolute -top-2 -right-2 min-w-[20px] h-5">
           {{ unreadCount }}
         </Badge>
       </div>
     </PopoverTrigger>
-    <PopoverContent class="w-[400px]" align="end">
+
+    <PopoverContent class="w-[350px]" align="end">
       <ScrollArea class="h-[400px]">
-        <div v-if="notifications.length" class="space-y-4">
-          <div v-for="notification in notifications"
-               :key="notification.id"
-               class="flex flex-col gap-1 p-4 rounded-lg hover:bg-accent"
-               :class="{ 'bg-accent/50': !notification.read_at }">
+        <div
+          v-if="notifications.length"
+          class="space-y-4">
+          <div
+            v-for="notification in notifications"
+            :key="notification.id"
+            class="flex flex-col gap-1 p-4 rounded-lg hover:bg-accent"
+            :class="{ 'bg-accent/50': !notification.read_at }">
             <div class="flex items-center justify-between">
               <p class="text-sm font-medium">
                 {{ notification.type }}
               </p>
-              <Button v-if="!notification.read_at"
-                      variant="ghost"
-                      size="sm"
-                      @click="markAsRead(notification.id)">
+              <Button
+                v-if="!notification.read_at"
+                variant="ghost"
+                size="sm"
+                @click="markAsRead(notification.id)">
                 Mark as read
               </Button>
             </div>
+
             <p class="text-sm text-muted-foreground">
               {{ getNotificationMessage(notification) }}
             </p>
+
             <div class="flex items-center justify-between mt-2">
               <p class="text-xs text-muted-foreground">
                 {{ notification.created_at }}
               </p>
-              <Link v-if="notification.action_url"
-                    :href="notification.action_url"
-                    class="text-sm font-medium text-primary hover:underline">
+
+              <Link
+                v-if="notification.action_url"
+                :href="notification.action_url"
+                class="text-sm font-medium text-primary hover:underline">
                 View details
               </Link>
             </div>
           </div>
         </div>
-        <div v-else class="text-center py-4 text-muted-foreground">
+
+        <div
+          v-else
+          class="text-center py-4 text-muted-foreground">
           No notifications
         </div>
       </ScrollArea>

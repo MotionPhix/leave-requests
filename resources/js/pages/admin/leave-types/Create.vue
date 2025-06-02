@@ -55,8 +55,8 @@ const genderSpecificToggled = (value: boolean) => {
 
     <Head title="Create Leave Type" />
 
-    <div class="p-6">
-      <Card class="max-w-2xl mx-auto">
+    <div class="max-w-2xl p-6">
+      <Card>
         <CardHeader>
           <CardTitle>Add New Leave Type</CardTitle>
         </CardHeader>

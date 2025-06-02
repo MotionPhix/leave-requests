@@ -65,8 +65,8 @@ const barOptions = {
   fill: { opacity: 1 },
   tooltip: {
     y: {
-      formatter: function (val) {
-        return val + " requests"
+      formatter: function(val) {
+        return val + ' requests';
       }
     }
   },
@@ -96,7 +96,7 @@ onMounted(() => {
   <Head title="Admin Dashboard" />
 
   <AppLayout :breadcrumbs="breadcrumbs">
-    <div class="p-6 space-y-6">
+    <div class="p-6 space-y-6 max-w-5xl">
       <!-- Stats Overview -->
       <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
@@ -178,57 +178,60 @@ onMounted(() => {
             <div v-for="employee in chartData.topEmployees" :key="employee.name" class="flex items-center">
               <div class="flex-1">
                 <div class="text-sm font-medium">{{ employee.name }}</div>
-                <div class="text-xs text-muted-foreground">{{ employee.approved }} approved / {{ employee.count }} total</div>
+                <div class="text-xs text-muted-foreground">{{ employee.approved }} approved / {{ employee.count }}
+                  total
+                </div>
               </div>
               <div class="text-sm font-medium">{{ Math.round((employee.approved / employee.count) * 100) }}%</div>
             </div>
           </div>
         </CardContent>
       </Card>
-    </div>
 
-    <!--stuf to skip-->
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-6">
-      <!-- Monthly Leave Requests -->
-      <div class="bg-white dark:bg-transparent dark:border dark:border-neutral-700 p-4 rounded-lg shadow">
-        <ApexCharts
-          type="line"
-          height="350"
-          :options="{
-          chart: { id: 'monthly-leaves' },
-          xaxis: { categories: monthlyLabels },
-          title: { text: 'Monthly Leave Requests' }
-        }"
-          :series="[{ name: 'Requests', data: monthlyData }]"
-        />
+      <!--stuf to skip-->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <!-- Monthly Leave Requests -->
+        <div class="bg-white dark:bg-transparent dark:border dark:border-neutral-700 p-4 rounded-lg shadow">
+          <ApexCharts
+            type="line"
+            height="350"
+            :options="{
+              chart: { id: 'monthly-leaves' },
+              xaxis: { categories: monthlyLabels },
+              title: { text: 'Monthly Leave Requests' }
+            }"
+            :series="[{ name: 'Requests', data: monthlyData }]"
+          />
+        </div>
+
+        <!-- Leave Types Distribution -->
+        <div class="bg-white dark:bg-transparent dark:border dark:border-neutral-700 p-4 rounded-lg shadow">
+          <ApexCharts
+            type="pie"
+            height="350"
+            :options="{
+              labels: leaveTypes,
+              title: { text: 'Leave Types Distribution' }
+            }"
+            :series="leaveCounts"
+          />
+        </div>
+
+        <!-- Top Users by Leave Days -->
+        <div class="bg-white p-4 rounded-lg shadow col-span-1 md:col-span-2">
+          <ApexCharts
+            type="bar"
+            height="350"
+            :options="{
+              chart: { id: 'top-users' },
+              xaxis: { categories: topUsers.map(u => u.name) },
+              title: { text: 'Top Users by Leave Days' }
+            }"
+            :series="[{ name: 'Days', data: topUsers.map(u => u.days) }]"
+          />
+        </div>
       </div>
 
-      <!-- Leave Types Distribution -->
-      <div class="bg-white dark:bg-transparent dark:border dark:border-neutral-700 p-4 rounded-lg shadow">
-        <ApexCharts
-          type="pie"
-          height="350"
-          :options="{
-          labels: leaveTypes,
-          title: { text: 'Leave Types Distribution' }
-        }"
-          :series="leaveCounts"
-        />
-      </div>
-
-      <!-- Top Users by Leave Days -->
-      <div class="bg-white p-4 rounded-lg shadow col-span-1 md:col-span-2">
-        <ApexCharts
-          type="bar"
-          height="350"
-          :options="{
-          chart: { id: 'top-users' },
-          xaxis: { categories: topUsers.map(u => u.name) },
-          title: { text: 'Top Users by Leave Days' }
-        }"
-          :series="[{ name: 'Days', data: topUsers.map(u => u.days) }]"
-        />
-      </div>
     </div>
   </AppLayout>
 </template>

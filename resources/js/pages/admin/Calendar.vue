@@ -156,7 +156,7 @@ useEchoPublic('leave-requests', 'LeaveRequestUpdated', () => {
 
     <Head title="Leave Calendar" />
 
-    <div class="space-y-6 p-6">
+    <div class="space-y-6 p-6 max-w-5xl">
       <!-- Filters -->
       <div class="flex items-center gap-4">
         <Select v-model="filters.status">

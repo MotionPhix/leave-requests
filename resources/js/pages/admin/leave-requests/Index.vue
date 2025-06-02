@@ -16,7 +16,7 @@ import {
   CheckCircle2,
   XCircle,
   CalendarDays,
-  MessageSquare,
+  MessageSquare
 } from 'lucide-vue-next';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableHeader, TableHead, TableRow, TableBody, TableCell, TableCaption } from '@/components/ui/table';
@@ -25,13 +25,13 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import {Card, CardContent} from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuTrigger,
+  DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 
 // Enable the relativeTime plugin
@@ -108,13 +108,13 @@ const stats = computed(() => ({
   total: props.leaveRequests.total,
   pending: props.leaveRequests.data.filter(l => l.status === 'pending').length,
   approved: props.leaveRequests.data.filter(l => l.status === 'approved').length,
-  rejected: props.leaveRequests.data.filter(l => l.status === 'rejected').length,
+  rejected: props.leaveRequests.data.filter(l => l.status === 'rejected').length
 }));
 </script>
 
 <template>
   <AppLayout :breadcrumbs="breadcrumbs">
-    <div class="space-y-6 p-6">
+    <div class="space-y-6 p-6 max-w-5xl">
       <!-- Stats Overview -->
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
@@ -167,54 +167,60 @@ const stats = computed(() => ({
       </div>
 
       <!-- Filters -->
-      <Card>
-        <CardContent class="p-6">
-          <div class="flex flex-col md:flex-row gap-4">
-            <div class="relative flex-1">
-              <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                v-model="search"
-                placeholder="Search by employee name..."
-                class="pl-9"
-              />
-            </div>
+      <div class="flex flex-col md:flex-row gap-4">
+        <div class="relative w-full max-w-md">
+          <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            v-model="search"
+            placeholder="Search by employee name..."
+            class="pl-9"
+          />
+        </div>
 
-            <Select v-model="status">
-              <SelectTrigger class="w-full md:w-[180px]">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem :value="null">All Status</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="approved">Approved</SelectItem>
-                <SelectItem value="rejected">Rejected</SelectItem>
-              </SelectContent>
-            </Select>
+        <div class="flex-1"></div>
 
-            <Select v-model="type">
-              <SelectTrigger class="w-full md:w-[180px]">
-                <SelectValue placeholder="Leave Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem :value="null">All Types</SelectItem>
-                <SelectItem
-                  v-for="leaveType in leaveTypes"
-                  :key="leaveType.id"
-                  :value="leaveType.id"
-                >
-                  {{ leaveType.name }}
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+        <Select v-model="status">
+          <SelectTrigger class="w-full md:w-[180px]">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+
+          <SelectContent>
+            <SelectItem :value="null">All Status</SelectItem>
+            <SelectItem value="pending">Pending</SelectItem>
+            <SelectItem value="approved">Approved</SelectItem>
+            <SelectItem value="rejected">Rejected</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select v-model="type">
+          <SelectTrigger class="w-full md:w-[180px]">
+            <SelectValue placeholder="Leave Type" />
+          </SelectTrigger>
+
+          <SelectContent>
+            <SelectItem
+              :value="null">
+              All Types
+            </SelectItem>
+
+            <SelectItem
+              v-for="leaveType in leaveTypes"
+              :key="leaveType.id"
+              :value="leaveType.id">
+              {{ leaveType.name }}
+            </SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
       <!-- Replace Table with Cards -->
-      <div v-if="leaveRequests.data.length > 0" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card v-for="leave in leaveRequests.data"
-              :key="leave.id"
-              class="hover:shadow-md transition-shadow">
+      <div
+        v-if="leaveRequests.data.length > 0"
+        class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <Card
+          v-for="leave in leaveRequests.data"
+          :key="leave.id"
+          class="hover:shadow-md transition-shadow">
           <CardContent class="p-6">
             <!-- Header with Employee Info and Status -->
             <div class="flex items-center justify-between mb-6">
@@ -224,15 +230,22 @@ const stats = computed(() => ({
                     {{ leave.user.name.charAt(0) }}
                   </span>
                 </div>
+
                 <div>
                   <h3 class="font-medium">{{ leave.user.name }}</h3>
                   <p class="text-sm text-muted-foreground">{{ leave.user.email }}</p>
                 </div>
               </div>
-              <Badge :variant="getStatusBadgeVariant(leave.status)">
-                <component :is="leave.status === 'approved' ? CheckCircle2 :
-                             leave.status === 'rejected' ? XCircle : Clock"
-                         class="w-4 h-4 mr-1.5" />
+
+              <Badge
+                :variant="getStatusBadgeVariant(leave.status)">
+                <component
+                  :is="leave.status === 'approved'
+                  ? CheckCircle2
+                  : leave.status === 'rejected'
+                  ? XCircle
+                  : Clock"
+                  class="w-4 h-4 mr-1.5" />
                 {{ leave.status }}
               </Badge>
             </div>
@@ -245,20 +258,28 @@ const stats = computed(() => ({
                   {{ leave.leave_type.name }}
                 </Badge>
               </div>
+
               <div>
-                <p class="text-sm text-muted-foreground mb-1">Duration</p>
-                <p class="font-medium">{{ getDurationInDays(leave.start_date, leave.end_date) }} days</p>
+                <p class="text-sm text-muted-foreground mb-1">
+                  Duration
+                </p>
+
+                <p class="font-medium">
+                  {{ getDurationInDays(leave.start_date, leave.end_date) }} days
+                </p>
               </div>
             </div>
 
             <!-- Date Range -->
             <div class="flex items-start gap-3 mb-6 bg-muted/50 p-3 rounded-lg">
               <CalendarDays class="w-5 h-5 text-muted-foreground mt-0.5" />
+
               <div>
                 <p class="font-medium">
                   {{ dayjs(leave.start_date).format('MMM D') }} -
                   {{ dayjs(leave.end_date).format('MMM D, YYYY') }}
                 </p>
+
                 <p class="text-sm text-muted-foreground mt-1">
                   Submitted {{ dayjs(leave.created_at).fromNow() }}
                 </p>
@@ -268,25 +289,30 @@ const stats = computed(() => ({
             <!-- Actions -->
             <div class="flex items-center justify-between pt-4 border-t">
               <div class="flex gap-2">
-                <Button v-if="leave.status === 'pending'"
-                        variant="outline"
-                        size="sm"
-                        class="text-destructive hover:text-destructive"
-                        @click="reject(leave.id)">
+                <Button
+                  v-if="leave.status === 'pending'"
+                  variant="outline"
+                  size="sm"
+                  class="text-destructive hover:text-destructive"
+                  @click="reject(leave.id)">
                   <XCircle class="w-4 h-4 mr-1.5" />
                   Reject
                 </Button>
-                <Button v-if="leave.status === 'pending'"
-                        size="sm"
-                        class="text-success hover:text-success"
-                        @click="approve(leave.id)">
+
+                <Button
+                  v-if="leave.status === 'pending'"
+                  size="sm"
+                  class="text-success hover:text-success"
+                  @click="approve(leave.id)">
                   <CheckCircle2 class="w-4 h-4 mr-1.5" />
                   Approve
                 </Button>
               </div>
-              <Button variant="ghost"
-                      size="sm"
-                      :href="route('admin.leave-requests.show', leave.uuid)">
+
+              <Button
+                variant="ghost"
+                size="sm"
+                :href="route('admin.leave-requests.show', leave.uuid)">
                 <MessageSquare class="w-4 h-4 mr-1.5" />
                 View Details
               </Button>
@@ -296,7 +322,9 @@ const stats = computed(() => ({
       </div>
 
       <!-- Loading State -->
-      <div v-if="isLoading" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div
+        v-if="isLoading"
+        class="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card v-for="n in 4" :key="n">
           <CardContent class="p-6">
             <div class="space-y-4">
@@ -328,6 +356,7 @@ const stats = computed(() => ({
           Showing {{ leaveRequests.from }} to {{ leaveRequests.to }}
           of {{ leaveRequests.total }} requests
         </p>
+
         <div class="flex gap-2">
           <Button
             v-for="link in leaveRequests.links"

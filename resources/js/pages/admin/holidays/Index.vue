@@ -8,14 +8,14 @@ import {
   TableCell,
   TableHead,
   TableHeader,
-  TableRow,
+  TableRow
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger,
+  DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { Card, CardContent } from '@/components/ui/card';
 import { PencilIcon, TrashIcon, MoreHorizontalIcon } from 'lucide-vue-next';
@@ -63,7 +63,7 @@ const deleteHoliday = (uuid: string) => {
 
     <Head title="Holidays" />
 
-    <div class="p-6">
+    <div class="p-6 max-w-5xl">
       <div class="flex justify-between items-start mb-6">
         <div>
           <h1 class="text-2xl font-bold">Holidays</h1>
@@ -92,40 +92,53 @@ const deleteHoliday = (uuid: string) => {
             </TableHeader>
 
             <TableBody>
-              <TableRow v-for="holiday in holidays.data"
-                        :key="holiday.uuid">
-                <TableCell>{{ holiday.name }}</TableCell>
+              <TableRow
+                v-for="holiday in holidays.data"
+                :key="holiday.uuid">
+                <TableCell>
+                  {{ holiday.name }}
+                </TableCell>
+
                 <TableCell>
                   {{ new Date(holiday.date).toLocaleDateString() }}
                 </TableCell>
+
                 <TableCell>
                   <Badge :variant="holiday.type === 'Public Holiday' ? 'default' : 'secondary'">
                     {{ holiday.type }}
                   </Badge>
                 </TableCell>
+
                 <TableCell>
                   <Badge :variant="holiday.is_recurring ? 'success' : 'secondary'">
                     {{ holiday.is_recurring ? 'Recurring' : 'One-time' }}
                   </Badge>
                 </TableCell>
+
                 <TableCell class="max-w-[300px] truncate hidden md:table-cell">
                   {{ holiday.description }}
                 </TableCell>
+
                 <TableCell>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost"
-                              size="icon">
+                      <Button
+                        variant="ghost"
+                        size="icon">
                         <MoreHorizontalIcon class="w-4 h-4" />
                       </Button>
                     </DropdownMenuTrigger>
+
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem @click="router.visit(route('admin.holidays.edit', holiday.uuid))">
+                      <DropdownMenuItem
+                        @click="router.visit(route('admin.holidays.edit', holiday.uuid))">
                         <PencilIcon class="w-4 h-4 mr-2" />
                         Edit
                       </DropdownMenuItem>
-                      <DropdownMenuItem @click="deleteHoliday(holiday.uuid)"
-                                        class="text-red-600">
+
+                      <DropdownMenuItem
+                        @click="deleteHoliday(holiday.uuid)"
+                        class="text-red-600">
                         <TrashIcon class="w-4 h-4 mr-2" />
                         Delete
                       </DropdownMenuItem>

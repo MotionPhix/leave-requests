@@ -49,7 +49,7 @@ const monthlyChartOptions = computed(() => ({
   },
   series: [{
     name: 'Leave Requests',
-    data: Array.from({ length: 12 }, (_, i) => 
+    data: Array.from({ length: 12 }, (_, i) =>
       props.monthlyStats[i + 1] || 0
     )
   }],
@@ -82,7 +82,7 @@ const employeeChartOptions = computed(() => ({
   <AppLayout :breadcrumbs="breadcrumbs">
     <Head :title="leaveType.name" />
 
-    <div class="p-6">
+    <div class="p-6 max-w-5xl">
       <div class="mb-6">
         <h1 class="text-2xl font-bold mb-2">{{ leaveType.name }}</h1>
         <p class="text-gray-600 dark:text-gray-400">{{ leaveType.description }}</p>

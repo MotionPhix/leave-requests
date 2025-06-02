@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "1f5b3b60c2fc8d8b32b7d44a483e7281",
+    "content-hash": "462da7206c2e2d19309715bc478520c2",
     "packages": [
         {
             "name": "brick/math",
@@ -1202,6 +1202,66 @@
                 "source": "https://github.com/inertiajs/inertia-laravel/tree/v2.0.2"
             },
             "time": "2025-04-10T15:08:36+00:00"
+        },
+        {
+            "name": "inertiaui/modal",
+            "version": "0.19.4",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/inertiaui/modal.git",
+                "reference": "dc28a18b1dcfa76908898bd90f286ac212c54c7c"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/inertiaui/modal/zipball/dc28a18b1dcfa76908898bd90f286ac212c54c7c",
+                "reference": "dc28a18b1dcfa76908898bd90f286ac212c54c7c",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/contracts": "^10.48||^11.11||^12.0",
+                "inertiajs/inertia-laravel": "^1.3|^2.0",
+                "php": "^8.2"
+            },
+            "require-dev": {
+                "larastan/larastan": "^2.9",
+                "laravel/dusk": "^8.3",
+                "laravel/pint": "^1.14",
+                "orchestra/testbench": "^8.23||^9.1||^10.0",
+                "rector/rector": "^1.0.3"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "InertiaUI\\Modal\\ModalServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "files": [
+                    "src/helpers.php"
+                ],
+                "psr-4": {
+                    "InertiaUI\\Modal\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "Inertia Modal",
+            "homepage": "https://github.com/inertiaui/modal",
+            "support": {
+                "issues": "https://github.com/inertiaui/modal/issues",
+                "source": "https://github.com/inertiaui/modal/tree/0.19.4"
+            },
+            "funding": [
+                {
+                    "url": "https://github.com/pascalbaljet",
+                    "type": "github"
+                }
+            ],
+            "time": "2025-02-18T21:06:24+00:00"
         },
         {
             "name": "laravel/framework",

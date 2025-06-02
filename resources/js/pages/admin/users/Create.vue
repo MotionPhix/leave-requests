@@ -11,7 +11,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import type { BreadcrumbItem } from '@/types';
@@ -39,7 +39,7 @@ const form = useForm('post', '/admin/employees', {
   email: '',
   gender: '',
   password: '',
-  role_id: '',
+  role_id: ''
 });
 </script>
 
@@ -49,7 +49,7 @@ const form = useForm('post', '/admin/employees', {
     <Head title="Add New Employee" />
 
     <div class="p-6">
-      <Card class="max-w-2xl mx-auto">
+      <Card class="max-w-2xl">
         <CardHeader>
           <CardTitle>New Employee</CardTitle>
           <CardDescription>
@@ -58,32 +58,37 @@ const form = useForm('post', '/admin/employees', {
         </CardHeader>
 
         <CardContent>
-          <form @submit.prevent="form.submit()" class="space-y-6">
+          <form
+            @submit.prevent="form.submit()"
+            class="space-y-6">
             <div class="space-y-2">
               <Label>Name</Label>
-
-              <Input v-model="form.name"
-                     @change="form.validate('name')" />
+              <Input
+                v-model="form.name"
+                @change="form.validate('name')" />
 
               <InputError :message="form.errors.name" />
             </div>
 
             <div class="space-y-2 mt-4">
-
               <Label>Email</Label>
-
-              <Input type="email"
-                     v-model="form.email"
-                     @change="form.validate('email')" />
+              <Input
+                type="email"
+                v-model="form.email"
+                @change="form.validate('email')"
+              />
 
               <InputError :message="form.errors.email" />
             </div>
 
             <div class="space-y-2 mt-4">
               <Label>Password</Label>
-              <Input type="password"
-                     v-model="form.password"
-                     @change="form.validate('password')" />
+              <Input
+                type="password"
+                v-model="form.password"
+                @change="form.validate('password')"
+              />
+
               <InputError :message="form.errors.password" />
             </div>
 
@@ -91,12 +96,13 @@ const form = useForm('post', '/admin/employees', {
 
               <div class="space-y-2">
                 <Label>Gender</Label>
-
-                <Select v-model="form.gender"
-                        @update:modelValue="form.validate('gender')">
+                <Select
+                  v-model="form.gender"
+                  @update:modelValue="form.validate('gender')">
                   <SelectTrigger class="w-full">
                     <SelectValue placeholder="Select gender" />
                   </SelectTrigger>
+
                   <SelectContent>
                     <SelectItem value="male">Male</SelectItem>
                     <SelectItem value="female">Female</SelectItem>
@@ -108,17 +114,18 @@ const form = useForm('post', '/admin/employees', {
 
               <div class="space-y-2">
                 <Label>Role</Label>
-
-                <Select v-model="form.role_id"
-                        @update:modelValue="form.validate('role_id')">
+                <Select
+                  v-model="form.role_id"
+                  @update:modelValue="form.validate('role_id')">
                   <SelectTrigger class="w-full">
                     <SelectValue placeholder="Select role" />
                   </SelectTrigger>
 
                   <SelectContent>
-                    <SelectItem v-for="role in roles"
-                                :key="role.id"
-                                :value="role.id">
+                    <SelectItem
+                      v-for="role in roles"
+                      :key="role.id"
+                      :value="role.id">
                       {{ role.name }}
                     </SelectItem>
                   </SelectContent>
@@ -126,16 +133,14 @@ const form = useForm('post', '/admin/employees', {
 
                 <InputError :message="form.errors.role_id" />
               </div>
-
             </section>
 
             <div class="mt-6 flex justify-end">
-
-              <Button type="submit"
-                      :disabled="form.processing">
+              <Button
+                type="submit"
+                :disabled="form.processing">
                 Create User
               </Button>
-
             </div>
           </form>
         </CardContent>

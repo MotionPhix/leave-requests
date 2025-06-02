@@ -55,8 +55,8 @@ const form = useForm(
   <AppLayout :breadcrumbs="breadcrumbs">
     <Head title="Edit Employee" />
 
-    <div class="p-6">
-      <Card class="max-w-2xl mx-auto">
+    <div class="max-w-2xl p-6">
+      <Card>
         <CardHeader>
           <CardTitle>Edit Employee</CardTitle>
           <CardDescription>
@@ -101,16 +101,17 @@ const form = useForm(
                 <Label>Gender</Label>
                 <Select
                   v-model="form.gender"
-                  @update:modelValue="form.validate('gender')"
-                >
+                  @update:modelValue="form.validate('gender')">
                   <SelectTrigger class="w-full">
                     <SelectValue placeholder="Select gender" />
                   </SelectTrigger>
+
                   <SelectContent>
                     <SelectItem value="male">Male</SelectItem>
                     <SelectItem value="female">Female</SelectItem>
                   </SelectContent>
                 </Select>
+
                 <InputError :message="form.errors.gender" />
               </div>
 
@@ -118,21 +119,21 @@ const form = useForm(
                 <Label>Role</Label>
                 <Select
                   v-model="form.role_id"
-                  @update:modelValue="form.validate('role_id')"
-                >
+                  @update:modelValue="form.validate('role_id')">
                   <SelectTrigger class="w-full">
                     <SelectValue placeholder="Select role" />
                   </SelectTrigger>
+
                   <SelectContent>
                     <SelectItem
                       v-for="role in roles"
                       :key="role.id"
-                      :value="role.id"
-                    >
+                      :value="role.id">
                       {{ role.name }}
                     </SelectItem>
                   </SelectContent>
                 </Select>
+
                 <InputError :message="form.errors.role_id" />
               </div>
             </section>

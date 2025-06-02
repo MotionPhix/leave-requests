@@ -7,14 +7,11 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-  CardFooter,
-  CardDescription
+  CardFooter
 } from '@/components/ui/card';
 import {
-  CalendarIcon,
   ClipboardList,
   FileText,
-  MessageSquare,
   UserCircle,
   FileImage,
   FileIcon,
@@ -34,7 +31,7 @@ import {
   Dialog,
   DialogContent,
   DialogHeader,
-  DialogTitle,
+  DialogTitle
 } from '@/components/ui/dialog';
 import type { BreadcrumbItem } from '@/types';
 
@@ -115,8 +112,8 @@ const getFileIcon = (mimeType: string) => {
 
 const isPreviewable = (mimeType: string) => {
   return mimeType.startsWith('image/') ||
-         mimeType === 'application/pdf' ||
-         mimeType.includes('text/');
+    mimeType === 'application/pdf' ||
+    mimeType.includes('text/');
 };
 
 const formatFileSize = (bytes: number) => {
@@ -183,15 +180,16 @@ const getTimelineStatusColor = (status: TimelineEvent['status']) => {
         <div class="flex items-center gap-4">
           <h1 class="text-2xl font-bold">Leave Request Details</h1>
           <Badge
-            class="text-base px-4 py-1"
-            :variant="leaveRequest.status === 'approved' ? 'success' :
-                     leaveRequest.status === 'rejected' ? 'destructive' : 'warning'"
-          >
+            class="text-base px-4 py-1 capitalize"
+            :variant="leaveRequest.status === 'approved'
+            ? 'default' : leaveRequest.status === 'rejected'
+            ? 'destructive' : 'secondary'">
             {{ leaveRequest.status }}
           </Badge>
         </div>
+
         <p class="text-muted-foreground mt-2">
-          Submitted on {{ new Date(leaveRequest.created_at).toLocaleDateString() }}
+          Submitted on {{ leaveRequest.created_at }}
         </p>
       </div>
 
@@ -212,11 +210,13 @@ const getTimelineStatusColor = (status: TimelineEvent['status']) => {
                   <h3 class="font-medium text-lg">{{ leaveRequest.user.name }}</h3>
                   <p class="text-muted-foreground">{{ leaveRequest.user.email }}</p>
                 </div>
+
                 <div class="grid grid-cols-2 gap-4 pt-4 border-t">
                   <div>
                     <p class="text-sm text-muted-foreground">Position</p>
                     <p class="font-medium">{{ leaveRequest.user.position }}</p>
                   </div>
+
                   <div>
                     <p class="text-sm text-muted-foreground">Department</p>
                     <p class="font-medium">{{ leaveRequest.user.department }}</p>
@@ -234,20 +234,23 @@ const getTimelineStatusColor = (status: TimelineEvent['status']) => {
                 Leave Details
               </CardTitle>
             </CardHeader>
+
             <CardContent>
               <div class="space-y-4">
                 <div>
                   <p class="text-sm text-muted-foreground">Type</p>
                   <p class="font-medium">{{ leaveRequest.leave_type.name }}</p>
                 </div>
+
                 <div class="pt-4 border-t">
                   <p class="text-sm text-muted-foreground">Duration</p>
                   <p class="font-medium">
-                    {{ new Date(leaveRequest.start_date).toLocaleDateString() }} -
-                    {{ new Date(leaveRequest.end_date).toLocaleDateString() }}
+                    {{ leaveRequest.start_date }} -
+                    {{ leaveRequest.end_date }}
                   </p>
+
                   <Badge variant="secondary" class="mt-2">
-                    {{ leaveRequest.total_days }} days
+                    A total of {{ leaveRequest.total_days }} days
                   </Badge>
                 </div>
               </div>
@@ -313,8 +316,7 @@ const getTimelineStatusColor = (status: TimelineEvent['status']) => {
                           size="sm"
                           class="flex items-center gap-2"
                           :href="leaveRequest.documentation.url"
-                          download
-                        >
+                          download>
                           <Download class="w-4 h-4" />
                           Download
                         </Button>
@@ -371,9 +373,10 @@ const getTimelineStatusColor = (status: TimelineEvent['status']) => {
                   <div class="absolute left-[17px] top-[24px] bottom-0 w-px bg-border"></div>
 
                   <!-- Timeline Events -->
-                  <div v-for="(event, index) in timelineEvents"
-                       :key="index"
-                       class="relative flex gap-4">
+                  <div
+                    v-for="(event, index) in timelineEvents"
+                    :key="index"
+                    class="relative flex gap-4">
                     <div class="relative">
                       <component
                         :is="event.icon"
@@ -381,8 +384,9 @@ const getTimelineStatusColor = (status: TimelineEvent['status']) => {
                         :class="getTimelineStatusColor(event.status)"
                       />
                       <!-- Connecting Line (except for last item) -->
-                      <div v-if="index !== timelineEvents.length - 1"
-                           class="absolute left-1/2 top-9 bottom-[-40px] w-px bg-border">
+                      <div
+                        v-if="index !== timelineEvents.length - 1"
+                        class="absolute left-1/2 top-9 bottom-[-40px] w-px bg-border">
                       </div>
                     </div>
 
@@ -397,7 +401,7 @@ const getTimelineStatusColor = (status: TimelineEvent['status']) => {
                             </p>
                           </div>
                           <time class="text-sm text-muted-foreground whitespace-nowrap">
-                            {{ new Date(event.timestamp).toLocaleString() }}
+                            {{ event.timestamp }}
                           </time>
                         </div>
 
@@ -419,7 +423,7 @@ const getTimelineStatusColor = (status: TimelineEvent['status']) => {
 
           <!-- Action Footer -->
           <CardFooter v-if="leaveRequest.status === 'pending'"
-                     class="flex-col gap-4 border-t">
+                      class="flex-col gap-4 border-t">
             <div class="w-full">
               <label class="text-sm font-medium mb-2 block">
                 Comments

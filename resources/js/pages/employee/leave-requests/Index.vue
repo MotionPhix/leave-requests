@@ -4,7 +4,6 @@ import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
-import { Table, TableHeader, TableHead, TableRow, TableBody, TableCell } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { computed, ref, watch } from 'vue';
 import DatePicker from '@/components/DatePicker.vue';
@@ -13,7 +12,6 @@ import { ArrowRightIcon, ArrowLeftIcon, PlusIcon, SlidersHorizontalIcon} from 'l
 import { formatDate } from '@/lib/utils';
 import { useEchoPublic } from '@laravel/echo-vue';
 import { toast } from 'vue-sonner';
-import { debounce } from 'lodash';
 import {
   Calendar,
   Clock,
@@ -24,6 +22,7 @@ import {
 } from 'lucide-vue-next';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import debounce from 'lodash/debounce';
 
 dayjs.extend(relativeTime);
 
