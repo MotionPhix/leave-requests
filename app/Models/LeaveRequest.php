@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Notifications\LeaveRequestStatusUpdated;
+use App\Notifications\LeaveRequestSubmitted;
 use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Notification;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
@@ -52,5 +55,20 @@ class LeaveRequest extends Model implements HasMedia
     $this->addMediaCollection('supporting_documents')
       ->acceptsMimeTypes(['application/pdf', 'image/jpeg', 'image/png'])
       ->maxFileSize(5 * 1024 * 1024); // 5MB
+  }
+
+  protected static function booted()
+  {
+    static::created(function ($leaveRequest) {
+      // Notify admins and HR
+      $admins = User::role(['Admin', 'HR'])->get();
+      Notification::send($admins, new LeaveRequestSubmitted($leaveRequest));
+    });
+
+    static::updated(function ($leaveRequest) {
+      if ($leaveRequest->wasChanged('status')) {
+        $leaveRequest->user->notify(new LeaveRequestStatusUpdated($leaveRequest));
+      }
+    });
   }
 }

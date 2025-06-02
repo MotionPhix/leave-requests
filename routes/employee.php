@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Requests\StoreLeaveRequest;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Foundation\Http\Middleware\HandlePrecognitiveRequests;
 use Inertia\Inertia;
@@ -18,6 +17,11 @@ Route::group(['middleware' => 'auth'], function () {
       '/leave-requests/create',
       'create'
     )->name('leave-requests.create');
+
+    Route::get(
+      '/leave-requests/s/{leaveRequest:uuid}',
+      'show'
+    )->name('leave-requests.show');
 
     Route::post(
       '/leave-requests',

@@ -16,8 +16,8 @@ class LeaveTypeController extends Controller
     return Inertia::render('admin/leave-types/Index', [
       'leaveTypes' => LeaveType::query()
         ->orderBy('name')
-        ->get()
-        ->map(fn($type) => [
+        ->paginate(10)
+        ->through(fn($type) => [
           'id' => $type->id,
           'uuid' => $type->uuid,
           'name' => $type->name,

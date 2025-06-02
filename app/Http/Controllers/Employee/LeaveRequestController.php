@@ -142,12 +142,34 @@ class LeaveRequestController extends Controller
     return redirect()->route('leave-requests.index')->with('success', 'Leave request submitted.');
   }
 
-  public function show(LeaveRequest $leaveRequest): Response
+  public function show(LeaveRequest $leaveRequest)
   {
-    $this->authorize('view', $leaveRequest);
+    if(auth()->user()->cannot('view', $leaveRequest)) {
+      return back()->with('error', 'You do not have permission to view this leave request.');
+    }
 
-    return Inertia::render('LeaveRequests/Show', [
-      'leaveRequest' => $leaveRequest->load('leaveType', 'user'),
+    $documentation = $leaveRequest->getFirstMedia('documentation');
+
+    return Inertia::render('employee/leave-requests/Show', [
+      'leaveRequest' => [
+        'uuid' => $leaveRequest->uuid,
+        'leave_type' => [
+          'name' => $leaveRequest->leaveType->name,
+          'requires_documentation' => $leaveRequest->leaveType->requires_documentation,
+        ],
+        'start_date' => $leaveRequest->start_date->format('Y-m-d'),
+        'end_date' => $leaveRequest->end_date->format('Y-m-d'),
+        'total_days' => $leaveRequest->total_days,
+        'reason' => $leaveRequest->reason,
+        'status' => $leaveRequest->status,
+        'comments' => $leaveRequest->comments,
+        'documentation' => $documentation ? [
+          'name' => $documentation->name,
+          'url' => $documentation->getUrl(),
+        ] : null,
+        'created_at' => $leaveRequest->created_at->format('Y-m-d H:i:s'),
+        'updated_at' => $leaveRequest->updated_at->format('Y-m-d H:i:s'),
+      ]
     ]);
   }
 

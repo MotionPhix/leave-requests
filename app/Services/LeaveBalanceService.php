@@ -8,7 +8,7 @@ use Carbon\Carbon;
 
 class LeaveBalanceService
 {
-  public function getUsedDays(int $userId, int $leaveTypeId, int $year): int
+  public function getUsedDays(int $userId, int $leaveTypeId, ?int $year = null): int
   {
     $year = $year ?? now()->year;
 

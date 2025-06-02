@@ -18,6 +18,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Card, CardContent } from '@/components/ui/card';
+import Pagination from '@/components/Pagination.vue';
 import { PencilIcon, InfoIcon, TrashIcon, MoreHorizontalIcon } from 'lucide-vue-next';
 import type { BreadcrumbItem } from '@/types';
 
@@ -29,16 +30,27 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 defineProps<{
-  leaveTypes: Array<{
-    id: number;
-    name: string;
-    max_days_per_year: number;
-    requires_documentation: boolean;
-    gender_specific: boolean;
-    gender: string;
-    frequency_years: number;
-    pay_percentage: number;
-  }>;
+  leaveTypes: {
+    data: Array<{
+      id: number;
+      name: string;
+      max_days_per_year: number;
+      requires_documentation: boolean;
+      gender_specific: boolean;
+      gender: string;
+      frequency_years: number;
+      pay_percentage: number;
+    }>;
+    links: Array<{
+      url: string | null;
+      label: string;
+      active: boolean;
+    }>;
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+  }
 }>();
 
 const deleteLeaveType = (id: number) => {
@@ -69,7 +81,7 @@ const deleteLeaveType = (id: number) => {
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Days/Year</TableHead>
-                <TableHead>Documentation</TableHead>
+                <TableHead class="hidden md:table-column">Documentation</TableHead>
                 <TableHead>Gender</TableHead>
                 <TableHead>Frequency</TableHead>
                 <TableHead>Pay %</TableHead>
@@ -77,11 +89,11 @@ const deleteLeaveType = (id: number) => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              <TableRow v-for="type in leaveTypes"
+              <TableRow v-for="type in leaveTypes.data"
                         :key="type.id">
                 <TableCell>{{ type.name }}</TableCell>
                 <TableCell>{{ type.max_days_per_year }}</TableCell>
-                <TableCell>
+                <TableCell class="hidden md:table-column">
                   <Badge :variant="type.requires_documentation ? 'default' : 'secondary'">
                     {{ type.requires_documentation ? 'Required' : 'Not Required' }}
                   </Badge>
@@ -123,6 +135,17 @@ const deleteLeaveType = (id: number) => {
             </TableBody>
           </Table>
 
+          <div class="mt-4 flex items-center justify-between">
+            <p class="text-sm text-muted-foreground">
+              Showing {{ leaveTypes.current_page }} of {{ leaveTypes.last_page }} pages
+              ({{ leaveTypes.total }} items)
+            </p>
+
+            <Pagination
+              :links="leaveTypes.links"
+              class="justify-end"
+            />
+          </div>
         </CardContent>
       </Card>
     </div>

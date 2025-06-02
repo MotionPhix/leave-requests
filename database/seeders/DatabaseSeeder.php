@@ -6,8 +6,6 @@ use App\Models\User;
 
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use Spatie\Permission\Models\Permission;
-use Spatie\Permission\Models\Role;
 
 class DatabaseSeeder extends Seeder
 {
@@ -18,10 +16,13 @@ class DatabaseSeeder extends Seeder
   {
     $this->call([
       RolesAndPermissionsSeeder::class,
+      DepartmentSeeder::class,
+      UserSeeder::class,
+      HolidaySeeder::class,
       LeaveTypeSeeder::class,
     ]);
 
-    $gender = fake()->randomElement(['male', 'female']);
+    /*$gender = fake()->randomElement(['male', 'female']);
 
     $user = User::factory()->create([
       'name' => fake('MW')->name($gender),
@@ -37,6 +38,6 @@ class DatabaseSeeder extends Seeder
       'gender' => $gender,
     ]);
 
-    $user->assignRole('Manager');
+    $user->assignRole('Manager');*/
   }
 }

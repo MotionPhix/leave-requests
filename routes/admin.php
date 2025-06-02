@@ -18,7 +18,7 @@ Route::group([
       )->name('admin.leave-requests.index');
 
       Route::get(
-        '/leave-requests/{leaveRequest:uuid}',
+        '/leave-requests/s/{leaveRequest}',
         'show'
       )->name('admin.leave-requests.show');
 
@@ -119,6 +119,8 @@ Route::group([
       Route::post('/', 'store')
         ->name('admin.employees.store')
         ->middleware(HandlePrecognitiveRequests::class);
+
+      Route::get('/s/{user:uuid}', 'show')->name('admin.employees.show');
 
       Route::get('/e/{user:uuid}', 'edit')->name('admin.employees.edit');
 

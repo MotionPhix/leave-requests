@@ -42,8 +42,37 @@ class LeaveRequestController extends Controller
   {
     if (auth()->user()->can('view leave')) {
 
+      $documentation = $leaveRequest->getFirstMedia('documentation');
+
       return Inertia::render('admin/leave-requests/Show', [
-        'leaveRequest' => $leaveRequest->load('leaveType', 'user'),
+        'leaveRequest' => [
+          'uuid' => $leaveRequest->uuid,
+          'user' => [
+            'name' => $leaveRequest->user->name,
+            'email' => $leaveRequest->user->email,
+            'position' => $leaveRequest->user->position,
+            'department' => $leaveRequest->user->department,
+          ],
+          'leave_type' => [
+            'name' => $leaveRequest->leaveType->name,
+            'requires_documentation' => $leaveRequest->leaveType->requires_documentation,
+          ],
+          'start_date' => $leaveRequest->start_date->format('Y-m-d'),
+          'end_date' => $leaveRequest->end_date->format('Y-m-d'),
+          'reason' => $leaveRequest->reason,
+          'status' => $leaveRequest->status,
+          'comments' => $leaveRequest->comments,
+          'documentation' => $documentation ? [
+            'name' => $documentation->name,
+            'size' => $documentation->size,
+            'type' => $documentation->mime_type,
+            'url' => $documentation->getUrl(),
+          ] : null,
+          'created_at' => $leaveRequest->created_at->format('Y-m-d H:i:s'),
+          'updated_at' => $leaveRequest->updated_at->format('Y-m-d H:i:s'),
+          'reviewed_by' => $leaveRequest->reviewer?->name,
+          'reviewed_at' => $leaveRequest->reviewed_at?->format('Y-m-d H:i:s'),
+        ]
       ]);
     }
 

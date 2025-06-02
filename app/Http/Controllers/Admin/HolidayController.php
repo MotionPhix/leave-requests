@@ -14,11 +14,12 @@ class HolidayController extends Controller
   {
     $holidays = Holiday::query()
       ->orderBy('date')
-      ->get()
-      ->map(fn($holiday) => [
+      ->paginate(10)
+      ->through(fn($holiday) => [
         'id' => $holiday->id,
         'uuid' => $holiday->uuid,
         'name' => $holiday->name,
+        'type' => $holiday->type,
         'date' => $holiday->date->format('Y-m-d'),
         'description' => $holiday->description,
         'is_recurring' => $holiday->is_recurring,

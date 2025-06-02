@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import { Head, Link, router } from '@inertiajs/vue3';
-import AppLayout from '@/layouts/AppLayout.vue';
-import { Button } from '@/components/ui/button';
+import { ref } from 'vue'
+import { Head, Link, router } from '@inertiajs/vue3'
+import AppLayout from '@/layouts/AppLayout.vue'
+import { Button } from '@/components/ui/button'
 import {
   Table,
   TableBody,
@@ -19,7 +19,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Card, CardContent } from '@/components/ui/card';
-import { MoreHorizontalIcon, PencilIcon, TrashIcon } from 'lucide-vue-next';
+import Pagination from '@/components/Pagination.vue';
+import { MoreHorizontalIcon, PencilIcon, TrashIcon, EyeIcon } from 'lucide-vue-next';
 import type { BreadcrumbItem } from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -33,6 +34,7 @@ defineProps<{
   users: {
     data: Array<{
       id: number;
+      uuid: string;
       name: string;
       email: string;
       gender: string;
@@ -44,6 +46,10 @@ defineProps<{
       label: string;
       active: boolean;
     }>;
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
   };
 }>();
 </script>
@@ -106,6 +112,13 @@ defineProps<{
                     </DropdownMenuTrigger>
 
                     <DropdownMenuContent align="end">
+                      <Link :href="route('admin.employees.show', user.uuid)">
+                        <DropdownMenuItem>
+                          <EyeIcon class="w-4 h-4 mr-2" />
+                          Details
+                        </DropdownMenuItem>
+                      </Link>
+
                       <Link :href="route('admin.employees.edit', user)">
                       <DropdownMenuItem>
                         <PencilIcon class="w-4 h-4 mr-2" />
@@ -124,6 +137,18 @@ defineProps<{
               </TableRow>
             </TableBody>
           </Table>
+
+          <div class="mt-4 flex items-center justify-between">
+            <p class="text-sm text-muted-foreground">
+              Showing {{ users.current_page }} of {{ users.last_page }} pages
+              ({{ users.total }} items)
+            </p>
+
+            <Pagination
+              :links="users.links"
+              class="justify-end"
+            />
+          </div>
         </CardContent>
       </Card>
     </div>

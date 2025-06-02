@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Card, CardContent } from '@/components/ui/card';
 import { PencilIcon, TrashIcon, MoreHorizontalIcon } from 'lucide-vue-next';
+import Pagination from '@/components/Pagination.vue';
 import type { BreadcrumbItem } from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -29,14 +30,25 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 defineProps<{
-  holidays: Array<{
-    uuid: string;
-    name: string;
-    date: string;
-    description: string | null;
-    type: string;
-    is_recurring: boolean;
-  }>;
+  holidays: {
+    data: Array<{
+      uuid: string;
+      name: string;
+      date: string;
+      description: string | null;
+      type: string;
+      is_recurring: boolean;
+    }>;
+    links: Array<{
+      url: string | null;
+      label: string;
+      active: boolean;
+    }>;
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+  }
 }>();
 
 const deleteHoliday = (uuid: string) => {
@@ -67,7 +79,6 @@ const deleteHoliday = (uuid: string) => {
 
       <Card>
         <CardContent>
-
           <Table>
             <TableHeader>
               <TableRow>
@@ -75,12 +86,13 @@ const deleteHoliday = (uuid: string) => {
                 <TableHead>Date</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>Recurring</TableHead>
-                <TableHead>Description</TableHead>
+                <TableHead class="hidden md:table-column">Description</TableHead>
                 <TableHead class="w-[70px]"></TableHead>
               </TableRow>
             </TableHeader>
+
             <TableBody>
-              <TableRow v-for="holiday in holidays"
+              <TableRow v-for="holiday in holidays.data"
                         :key="holiday.uuid">
                 <TableCell>{{ holiday.name }}</TableCell>
                 <TableCell>
@@ -96,7 +108,7 @@ const deleteHoliday = (uuid: string) => {
                     {{ holiday.is_recurring ? 'Recurring' : 'One-time' }}
                   </Badge>
                 </TableCell>
-                <TableCell class="max-w-[300px] truncate">
+                <TableCell class="max-w-[300px] truncate hidden md:table-cell">
                   {{ holiday.description }}
                 </TableCell>
                 <TableCell>
@@ -124,6 +136,17 @@ const deleteHoliday = (uuid: string) => {
             </TableBody>
           </Table>
 
+          <div class="mt-4 flex items-center justify-between">
+            <p class="text-sm text-muted-foreground">
+              Showing {{ holidays.current_page }} of {{ holidays.last_page }} pages
+              ({{ holidays.total }} items)
+            </p>
+
+            <Pagination
+              :links="holidays.links"
+              class="justify-end"
+            />
+          </div>
         </CardContent>
       </Card>
     </div>
