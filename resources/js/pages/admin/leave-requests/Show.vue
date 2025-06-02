@@ -81,10 +81,11 @@ const updateStatus = async (status: 'approved' | 'rejected') => {
   processing.value = true;
 
   try {
-    await router.post(route('admin.leave-requests.update-status', props.leaveRequest.uuid), {
+    router.post(route('admin.leave-requests.update-status', props.leaveRequest.uuid), {
       status,
-      comments: comments.value
+      comment: comments.value
     });
+
   } finally {
     processing.value = false;
   }
@@ -266,11 +267,15 @@ const getTimelineStatusColor = (status: TimelineEvent['status']) => {
               Request Information
             </CardTitle>
           </CardHeader>
+
           <CardContent>
             <div class="space-y-8">
               <!-- Reason Section -->
               <div>
-                <h3 class="text-sm font-medium text-muted-foreground mb-2">Reason for Leave</h3>
+                <h3 class="text-sm font-medium text-muted-foreground mb-2">
+                  Reason for Leave
+                </h3>
+
                 <div class="bg-muted p-4 rounded-lg">
                   <p class="text-sm">{{ leaveRequest.reason }}</p>
                 </div>
@@ -278,7 +283,10 @@ const getTimelineStatusColor = (status: TimelineEvent['status']) => {
 
               <!-- Documentation Section -->
               <div v-if="leaveRequest.documentation" class="space-y-4">
-                <h3 class="text-sm font-medium text-muted-foreground">Supporting Documents</h3>
+                <h3 class="text-sm font-medium text-muted-foreground">
+                  Supporting Documents
+                </h3>
+
                 <Card>
                   <CardContent class="p-6">
                     <div class="flex items-center justify-between">
@@ -289,10 +297,12 @@ const getTimelineStatusColor = (status: TimelineEvent['status']) => {
                             class="w-6 h-6 text-muted-foreground"
                           />
                         </div>
+
                         <div>
                           <h4 class="font-medium text-sm">
                             {{ leaveRequest.documentation.name }}
                           </h4>
+
                           <p class="text-xs text-muted-foreground mt-1">
                             {{ formatFileSize(leaveRequest.documentation.size) }}
                           </p>
@@ -305,8 +315,7 @@ const getTimelineStatusColor = (status: TimelineEvent['status']) => {
                           variant="outline"
                           size="sm"
                           class="flex items-center gap-2"
-                          @click="showPreview = true"
-                        >
+                          @click="showPreview = true">
                           <Eye class="w-4 h-4" />
                           Preview
                         </Button>
@@ -329,7 +338,9 @@ const getTimelineStatusColor = (status: TimelineEvent['status']) => {
                 <Dialog :open="showPreview" @update:open="showPreview = false">
                   <DialogContent class="max-w-3xl max-h-[80vh]">
                     <DialogHeader>
-                      <DialogTitle>{{ leaveRequest.documentation.name }}</DialogTitle>
+                      <DialogTitle>
+                        {{ leaveRequest.documentation.name }}
+                      </DialogTitle>
                     </DialogHeader>
 
                     <div class="mt-4 relative overflow-hidden rounded-lg">
@@ -352,8 +363,7 @@ const getTimelineStatusColor = (status: TimelineEvent['status']) => {
                       <!-- Text Preview -->
                       <pre
                         v-else-if="leaveRequest.documentation.type.includes('text/')"
-                        class="p-4 bg-muted rounded-lg overflow-auto max-h-[60vh]"
-                      >
+                        class="p-4 bg-muted rounded-lg overflow-auto max-h-[60vh]">
                         <code>{{ leaveRequest.documentation.content }}</code>
                       </pre>
                     </div>
@@ -422,8 +432,9 @@ const getTimelineStatusColor = (status: TimelineEvent['status']) => {
           </CardContent>
 
           <!-- Action Footer -->
-          <CardFooter v-if="leaveRequest.status === 'pending'"
-                      class="flex-col gap-4 border-t">
+          <CardFooter
+            v-if="leaveRequest.status === 'pending'"
+            class="flex-col gap-4 border-t">
             <div class="w-full">
               <label class="text-sm font-medium mb-2 block">
                 Comments
@@ -439,14 +450,13 @@ const getTimelineStatusColor = (status: TimelineEvent['status']) => {
               <Button
                 variant="outline"
                 :disabled="processing"
-                @click="updateStatus('rejected')"
-              >
+                @click="updateStatus('rejected')">
                 Reject Request
               </Button>
+
               <Button
                 :disabled="processing"
-                @click="updateStatus('approved')"
-              >
+                @click="updateStatus('approved')">
                 Approve Request
               </Button>
             </div>

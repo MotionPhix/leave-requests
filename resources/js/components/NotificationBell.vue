@@ -50,6 +50,7 @@ const fetchNotifications = async () => {
 
 onMounted(() => {
   channel().notification((notification) => {
+    console.log(notification);
     notifications.value.unshift(notification);
     unreadCount.value++;
   });
@@ -109,6 +110,7 @@ const getNotificationMessage = (notification: Notification): string => {
               <p class="text-sm font-medium">
                 {{ notification.type }}
               </p>
+
               <Button
                 v-if="!notification.read_at"
                 variant="ghost"

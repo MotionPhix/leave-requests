@@ -144,7 +144,7 @@ class LeaveRequestController extends Controller
 
   public function show(LeaveRequest $leaveRequest)
   {
-    if(auth()->user()->cannot('view', $leaveRequest)) {
+    if (auth()->user()->cannot('view', $leaveRequest)) {
       return back()->with('error', 'You do not have permission to view this leave request.');
     }
 
@@ -189,6 +189,28 @@ class LeaveRequestController extends Controller
     ]);
 
     return back()->with('success', 'Leave request updated.');
+  }
+
+  public function cancel(Request $request, LeaveRequest $leaveRequest)
+  {
+    if (!$leaveRequest->canBeCancelled()) {
+      return back()->with('error', 'This leave request cannot be cancelled.');
+    }
+
+    if ($leaveRequest->user_id !== auth()->id()) {
+      return back()->with('error', 'You can only cancel your own leave requests.');
+    }
+
+    $request->validate([
+      'reason' => 'nullable|string|max:500'
+    ]);
+
+    try {
+      $leaveRequest->cancel($request->reason);
+      return back()->with('success', 'Leave request cancelled successfully.');
+    } catch (\Exception $e) {
+      return back()->with('error', 'Failed to cancel leave request.');
+    }
   }
 
   protected function getUpcomingHolidays(): array

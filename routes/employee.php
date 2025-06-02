@@ -6,28 +6,37 @@ use Inertia\Inertia;
 
 Route::group(['middleware' => 'auth'], function () {
 
-  Route::controller(\App\Http\Controllers\Employee\LeaveRequestController::class)->group(function () {
+  Route::prefix('leave-requests')->name('leave-requests.')->group(function () {
 
-    Route::get(
-      '/leave-requests',
-      'index'
-    )->name('leave-requests.index');
+    Route::controller(\App\Http\Controllers\Employee\LeaveRequestController::class)->group(function () {
 
-    Route::get(
-      '/leave-requests/create',
-      'create'
-    )->name('leave-requests.create');
+      Route::get(
+        '/create',
+        'create'
+      )->name('create');
 
-    Route::get(
-      '/leave-requests/s/{leaveRequest}',
-      'show'
-    )->name('leave-requests.show');
+      Route::post(
+        '/c/{leaveRequest:uuid}',
+        'cancel'
+      )->name('cancel');
 
-    Route::post(
-      '/leave-requests',
-      'store'
-    )->name('leave-requests.store')
-      ->middleware([HandlePrecognitiveRequests::class]);
+      Route::get(
+        '/s/{leaveRequest:uuid}',
+        'show'
+      )->name('show');
+
+      Route::get(
+        '/',
+        'index'
+      )->name('index');
+
+      Route::post(
+        '/',
+        'store'
+      )->name('leave-requests.store')
+        ->middleware([HandlePrecognitiveRequests::class]);
+    });
+
   });
 
   Route::controller(\App\Http\Controllers\Employee\DashboardController::class)->group(function () {

@@ -232,8 +232,13 @@ const stats = computed(() => ({
                 </div>
 
                 <div>
-                  <h3 class="font-medium">{{ leave.user.name }}</h3>
-                  <p class="text-sm text-muted-foreground">{{ leave.user.email }}</p>
+                  <h3 class="font-medium">
+                    {{ leave.user.name }}
+                  </h3>
+
+                  <p class="text-sm text-muted-foreground">
+                    {{ leave.user.email }}
+                  </p>
                 </div>
               </div>
 

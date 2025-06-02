@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\LeaveStatus;
 use App\Notifications\LeaveRequestStatusUpdated;
 use App\Notifications\LeaveRequestSubmitted;
 use App\Traits\HasUuid;
@@ -27,12 +28,15 @@ class LeaveRequest extends Model implements HasMedia
     'comment',
     'reviewed_by',
     'reviewed_at',
+    'cancelled_at',
+    'cancellation_reason'
   ];
 
   protected $casts = [
     'start_date' => 'date',
     'end_date' => 'date',
     'reviewed_at' => 'datetime',
+    'cancelled_at' => 'datetime',
   ];
 
   public function user(): BelongsTo
@@ -55,6 +59,24 @@ class LeaveRequest extends Model implements HasMedia
     $this->addMediaCollection('supporting_documents')
       ->acceptsMimeTypes(['application/pdf', 'image/jpeg', 'image/png'])
       ->maxFileSize(5 * 1024 * 1024); // 5MB
+  }
+
+  public function canBeCancelled(): bool
+  {
+    return $this->status === LeaveStatus::Pending->value;
+  }
+
+  public function cancel(?string $reason = null): void
+  {
+    if (!$this->canBeCancelled()) {
+      throw new \Exception('This leave request cannot be cancelled.');
+    }
+
+    $this->update([
+      'status' => LeaveStatus::Cancelled->value,
+      'cancelled_at' => now(),
+      'cancellation_reason' => $reason
+    ]);
   }
 
   protected static function booted()

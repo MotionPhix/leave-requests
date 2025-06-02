@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { computed, ref, watch } from 'vue';
 import DatePicker from '@/components/DatePicker.vue';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowRightIcon, ArrowLeftIcon, PlusIcon, SlidersHorizontalIcon} from 'lucide-vue-next';
+import { ArrowRightIcon, ArrowLeftIcon, PlusIcon, SlidersHorizontalIcon } from 'lucide-vue-next';
 import { formatDate } from '@/lib/utils';
 import { useEchoPublic } from '@laravel/echo-vue';
 import { toast } from 'vue-sonner';
@@ -33,12 +33,12 @@ const breadcrumbs: BreadcrumbItem[] = [
   }
 ];
 
-const { props } = usePage()
-const leaveRequests = props.leaveRequests.data
-const leaveTypes = props.leaveTypes
-const initialFilters = props.filters
-const filters = ref({ ...initialFilters })
-const isLoading = ref(false)
+const { props } = usePage();
+const leaveRequests = props.leaveRequests.data;
+const leaveTypes = props.leaveTypes;
+const initialFilters = props.filters;
+const filters = ref({ ...initialFilters });
+const isLoading = ref(false);
 
 // Computed properties for formatted filters
 const formattedFilters = computed(() => ({
@@ -46,19 +46,19 @@ const formattedFilters = computed(() => ({
   leave_type_id: filters.value.leave_type_id,
   date_from: formatDate(filters.value.date_from),
   date_to: formatDate(filters.value.date_to)
-}))
+}));
 
 function applyFilters() {
-  isLoading.value = true
+  isLoading.value = true;
 
   router.get(route('leave-requests.index'), formattedFilters.value, {
     onFinish: () => isLoading.value = false
-  })
+  });
 }
 
 function resetFilters() {
-  filters.value = { status: '', leave_type_id: '', date_from: '', date_to: '' }
-  applyFilters()
+  filters.value = { status: '', leave_type_id: '', date_from: '', date_to: '' };
+  applyFilters();
 }
 
 watch(filters.value, debounce(() => {
@@ -71,8 +71,8 @@ useEchoPublic(
   (e) => {
     toast(`Leave "${e.title}" updated.`);
     router.visit(route('leave-requests.index'), {
-      only: ['leaveRequests'],
-    })
+      only: ['leaveRequests']
+    });
   }
 );
 
@@ -90,11 +90,11 @@ const getStatusIcon = (status: string) => {
 const getStatusColor = (status: string) => {
   switch (status) {
     case 'approved':
-      return 'success';
+      return 'default';
     case 'rejected':
       return 'destructive';
     default:
-      return 'warning';
+      return 'secondary';
   }
 };
 
@@ -120,7 +120,8 @@ const getDayCount = (start: string, end: string) => {
             :as="Link"
             variant="outline"
             :href="route('leave-requests.create')">
-            <PlusIcon /> New
+            <PlusIcon />
+            New
           </Button>
         </div>
       </div>
@@ -138,7 +139,7 @@ const getDayCount = (start: string, end: string) => {
               size="icon"
               variant="outline"
               @click="resetFilters">
-             <SlidersHorizontalIcon />
+              <SlidersHorizontalIcon />
             </Button>
           </div>
 
@@ -183,110 +184,156 @@ const getDayCount = (start: string, end: string) => {
         </div>
 
         <div class="mt-4 flex gap-2">
-          <span v-if="isLoading" class="text-sm text-blue-600">Loading...</span>
+          <span
+            v-if="isLoading"
+            class="text-sm text-blue-600">
+            Loading...
+          </span>
         </div>
       </div>
 
-      <div v-if="leaveRequests?.length" class="space-y-4">
-      <Card v-for="leave in leaveRequests"
-            :key="leave.id"
-            class="hover:shadow-md transition-shadow">
-        <CardContent class="p-6">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-4">
-              <div class="w-12 h-12 rounded-lg bg-muted flex items-center justify-center">
-                <Calendar class="w-6 h-6 text-muted-foreground" />
+      <div
+        v-if="leaveRequests?.length"
+        class="space-y-4">
+
+        <Card
+          v-for="leave in leaveRequests"
+          :key="leave.id"
+          class="hover:shadow-md transition-shadow">
+          <CardContent class="px-6">
+            <div class="flex flex-col md:flex-row md:items-center justify-between">
+              <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-lg bg-muted flex items-start justify-center">
+                  <Calendar class="w-6 h-6 text-muted-foreground" />
+                </div>
+
+                <div>
+                  <h3 class="font-medium">
+                    {{ leave.leave_type?.name }}
+                  </h3>
+
+                  <p class="text-sm text-muted-foreground mb-1">
+                    {{ getDayCount(leave.start_date, leave.end_date) }} days
+                  </p>
+
+                  <Badge
+                    class="md:hidden inline-flex"
+                    :variant="getStatusColor(leave.status)">
+                    <component
+                      :is="getStatusIcon(leave.status)"
+                      class="w-4 h-4 mr-1"
+                    />
+
+                    {{ leave.status }}
+                  </Badge>
+                </div>
               </div>
+
+              <Badge
+                class="hidden md:inline-flex"
+                :variant="getStatusColor(leave.status)">
+                <component
+                  :is="getStatusIcon(leave.status)"
+                  class="w-4 h-4 mr-1"
+                />
+
+                {{ leave.status }}
+              </Badge>
+            </div>
+
+            <div class="mt-4 grid grid-cols-2 gap-4 pt-4 border-t">
               <div>
-                <h3 class="font-medium">{{ leave.leave_type?.name }}</h3>
-                <p class="text-sm text-muted-foreground">
-                  {{ getDayCount(leave.start_date, leave.end_date) }} days
+                <p class="text-sm text-muted-foreground mb-1">
+                  Start Date
+                </p>
+
+                <p class="font-medium">
+                  {{ dayjs(leave.start_date).format('MMM D, YYYY') }}
+                </p>
+              </div>
+
+              <div>
+                <p class="text-sm text-muted-foreground mb-1">
+                  End Date
+                </p>
+
+                <p class="font-medium">
+                  {{ dayjs(leave.end_date).format('MMM D, YYYY') }}
                 </p>
               </div>
             </div>
 
-            <Badge :variant="getStatusColor(leave.status)">
-              <component :is="getStatusIcon(leave.status)"
-                        class="w-4 h-4 mr-1" />
-              {{ leave.status }}
-            </Badge>
-          </div>
-
-          <div class="mt-4 grid grid-cols-2 gap-4 pt-4 border-t">
-            <div>
-              <p class="text-sm text-muted-foreground mb-1">Start Date</p>
-              <p class="font-medium">
-                {{ dayjs(leave.start_date).format('MMM D, YYYY') }}
-              </p>
+            <div v-if="leave.reason" class="mt-4 pt-4 border-t">
+              <p class="text-sm text-muted-foreground mb-1">Reason</p>
+              <p class="text-sm line-clamp-2">{{ leave.reason }}</p>
             </div>
-            <div>
-              <p class="text-sm text-muted-foreground mb-1">End Date</p>
-              <p class="font-medium">
-                {{ dayjs(leave.end_date).format('MMM D, YYYY') }}
+
+            <div class="mt-4 pt-4 border-t flex items-center justify-between">
+              <p class="text-sm text-muted-foreground">
+                Submitted {{ dayjs(leave.created_at).fromNow() }}
               </p>
+
+              <Link
+                :href="route('leave-requests.show', leave.uuid)">
+                <span class="flex items-center text-sm font-medium text-primary hover:underline">
+                <span class="hidden md:inline-flex">View details</span>
+                <ChevronRight
+                  class="w-4 h-4 ml-1 hidden md:inline-flex"
+                />
+
+                  <ArrowRightIcon
+                    class="w-4 h-4 ml-1 md:hidden inline-flex"
+                  />
+                </span>
+              </Link>
             </div>
-          </div>
+          </CardContent>
+        </Card>
 
-          <div v-if="leave.reason" class="mt-4 pt-4 border-t">
-            <p class="text-sm text-muted-foreground mb-1">Reason</p>
-            <p class="text-sm line-clamp-2">{{ leave.reason }}</p>
-          </div>
+        <!-- Pagination -->
+        <div class="flex items-center md:justify-between justify-end pt-4">
+          <p class="text-sm text-muted-foreground hidden md:block">
+            Showing {{ props.leaveRequests.from }} to {{ props.leaveRequests.to }}
+            of {{ props.leaveRequests.total }} requests
+          </p>
 
-          <div class="mt-4 pt-4 border-t flex items-center justify-between">
-            <p class="text-sm text-muted-foreground">
-              Submitted {{ dayjs(leave.created_at).fromNow() }}
-            </p>
-            <Link :href="route('leave-requests.show', leave.uuid)"
-                  class="flex items-center text-sm font-medium text-primary hover:underline">
-              View details
-              <ChevronRight class="w-4 h-4 ml-1" />
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
+          <div class="flex gap-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              @click="router.get(props.leaveRequests.prev_page_url)"
+              :disabled="!props.leaveRequests.prev_page_url">
+              <ArrowLeftIcon class="w-4 h-4 mr-1" />
+              Previous
+            </Button>
 
-      <!-- Pagination -->
-      <div class="flex items-center justify-between pt-4">
-        <p class="text-sm text-muted-foreground">
-          Showing {{ props.leaveRequests.from }} to {{ props.leaveRequests.to }}
-          of {{ props.leaveRequests.total }} requests
-        </p>
-        <div class="flex gap-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            @click="router.get(props.leaveRequests.prev_page_url)"
-            :disabled="!props.leaveRequests.prev_page_url">
-            <ArrowLeftIcon class="w-4 h-4 mr-1" />
-            Previous
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            @click="router.get(props.leaveRequests.next_page_url)"
-            :disabled="!props.leaveRequests.next_page_url">
-            Next
-            <ArrowRightIcon class="w-4 h-4 ml-1" />
-          </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              @click="router.get(props.leaveRequests.next_page_url)"
+              :disabled="!props.leaveRequests.next_page_url">
+              Next
+              <ArrowRightIcon class="w-4 h-4 ml-1" />
+            </Button>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div v-else class="text-center py-12">
-      <AlertCircle class="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-      <h3 class="text-lg font-medium mb-2">No leave requests found</h3>
-      <p class="text-muted-foreground mb-6">
-        You haven't made any leave requests yet.
-      </p>
-      <Button
-        v-if="$page.props.auth.user.can['create leave']"
-        :as="Link"
-        :href="route('leave-requests.create')">
-        <PlusIcon class="w-4 h-4 mr-2" />
-        Request Leave
-      </Button>
+      <div v-else class="text-center py-12">
+        <AlertCircle class="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+        <h3 class="text-lg font-medium mb-2">No leave requests found</h3>
+        <p class="text-muted-foreground mb-6">
+          You haven't made any leave requests yet.
+        </p>
+        <Button
+          v-if="$page.props.auth.user.can['create leave']"
+          :as="Link"
+          :href="route('leave-requests.create')">
+          <PlusIcon class="w-4 h-4 mr-2" />
+          Request Leave
+        </Button>
+      </div>
     </div>
-  </div>
 
   </AppLayout>
 </template>

@@ -64,6 +64,27 @@ Route::group([
 
   });
 
+  Route::prefix('roles')->group(function () {
+
+    Route::controller(\App\Http\Controllers\Admin\RoleController::class)->group(function () {
+      Route::get('/', 'index')->name('admin.roles.index');
+
+      Route::get('/create', 'create')
+        ->name('admin.roles.create');
+
+      Route::post('/', 'store')
+        ->name('admin.roles.store')
+        ->middleware(HandlePrecognitiveRequests::class);
+
+      Route::put('/{role}', 'update')
+        ->name('admin.roles.update')
+        ->middleware(HandlePrecognitiveRequests::class);
+
+      Route::delete('/{role}', 'destroy')->name('admin.roles.destroy');
+    });
+
+  });
+
   Route::controller(\App\Http\Controllers\Admin\DashboardController::class)->group(function () {
     Route::get(
       'dashboard',

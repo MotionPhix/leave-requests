@@ -7,6 +7,7 @@ import { createApp, h } from 'vue';
 import { ZiggyVue } from 'ziggy-js';
 import { initializeTheme } from './composables/useAppearance';
 import { configureEcho } from '@laravel/echo-vue';
+import { renderApp } from '@inertiaui/modal-vue'
 
 configureEcho({
   broadcaster: 'pusher',
@@ -35,7 +36,8 @@ createInertiaApp({
   title: (title) => `${title} - ${appName}`,
   resolve: (name) => resolvePageComponent(`./pages/${name}.vue`, import.meta.glob<DefineComponent>('./pages/**/*.vue')),
   setup({ el, App, props, plugin }) {
-    createApp({ render: () => h(App, props) })
+    // createApp({ render: () => h(App, props) })
+    createApp({ render: renderApp(App, props) })
       .use(plugin)
       .use(ZiggyVue)
       .mount(el);
