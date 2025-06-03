@@ -13,12 +13,12 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle, 
-  CardDescription 
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription
 } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import DatePicker from '@/components/DatePicker.vue';
@@ -58,7 +58,6 @@ const form = useForm('post', '/admin/employees', {
   role_id: '',
   position: '',
   department: '',
-  employee_id: '',
   join_date: '',
   reporting_to: '',
   work_phone: '',
@@ -72,8 +71,8 @@ const form = useForm('post', '/admin/employees', {
   <AppLayout :breadcrumbs="breadcrumbs">
     <Head title="Add New Employee" />
 
-    <div class="p-6">
-      <Card class="max-w-4xl">
+    <div class="p-6 max-w-4xl">
+      <Card>
         <CardHeader>
           <CardTitle>New Employee</CardTitle>
           <CardDescription>
@@ -88,11 +87,13 @@ const form = useForm('post', '/admin/employees', {
               <h3 class="text-lg font-medium">Personal Information</h3>
 
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="space-y-2">
+                <div class="space-y-2 col-span-2">
                   <Label>Full Name</Label>
                   <Input
                     v-model="form.name"
-                    @change="form.validate('name')" />
+                    @change="form.validate('name')"
+                  />
+
                   <InputError :message="form.errors.name" />
                 </div>
 
@@ -101,16 +102,10 @@ const form = useForm('post', '/admin/employees', {
                   <Input
                     type="email"
                     v-model="form.email"
-                    @change="form.validate('email')" />
-                  <InputError :message="form.errors.email" />
-                </div>
+                    @change="form.validate('email')"
+                  />
 
-                <div class="space-y-2">
-                  <Label>Employee ID</Label>
-                  <Input
-                    v-model="form.employee_id"
-                    @change="form.validate('employee_id')" />
-                  <InputError :message="form.errors.employee_id" />
+                  <InputError :message="form.errors.email" />
                 </div>
 
                 <div class="space-y-2">
@@ -118,9 +113,10 @@ const form = useForm('post', '/admin/employees', {
                   <Select
                     v-model="form.gender"
                     @update:modelValue="form.validate('gender')">
-                    <SelectTrigger>
+                    <SelectTrigger class="w-full">
                       <SelectValue placeholder="Select gender" />
                     </SelectTrigger>
+
                     <SelectContent>
                       <SelectItem value="male">Male</SelectItem>
                       <SelectItem value="female">Female</SelectItem>
@@ -151,9 +147,10 @@ const form = useForm('post', '/admin/employees', {
                   <Select
                     v-model="form.department"
                     @update:modelValue="form.validate('department')">
-                    <SelectTrigger>
+                    <SelectTrigger class="w-full">
                       <SelectValue placeholder="Select department" />
                     </SelectTrigger>
+
                     <SelectContent>
                       <SelectItem
                         v-for="dept in departments"
@@ -163,6 +160,7 @@ const form = useForm('post', '/admin/employees', {
                       </SelectItem>
                     </SelectContent>
                   </Select>
+
                   <InputError :message="form.errors.department" />
                 </div>
 
@@ -170,7 +168,9 @@ const form = useForm('post', '/admin/employees', {
                   <Label>Join Date</Label>
                   <DatePicker
                     v-model="form.join_date"
-                    @update:modelValue="form.validate('join_date')" />
+                    @update:modelValue="form.validate('join_date')"
+                  />
+
                   <InputError :message="form.errors.join_date" />
                 </div>
 
@@ -179,9 +179,10 @@ const form = useForm('post', '/admin/employees', {
                   <Select
                     v-model="form.reporting_to"
                     @update:modelValue="form.validate('reporting_to')">
-                    <SelectTrigger>
+                    <SelectTrigger class="w-full">
                       <SelectValue placeholder="Select manager" />
                     </SelectTrigger>
+
                     <SelectContent>
                       <SelectItem
                         v-for="manager in managers"
@@ -191,6 +192,7 @@ const form = useForm('post', '/admin/employees', {
                       </SelectItem>
                     </SelectContent>
                   </Select>
+
                   <InputError :message="form.errors.reporting_to" />
                 </div>
 
@@ -199,9 +201,10 @@ const form = useForm('post', '/admin/employees', {
                   <Select
                     v-model="form.employment_type"
                     @update:modelValue="form.validate('employment_type')">
-                    <SelectTrigger>
+                    <SelectTrigger class="w-full">
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
+
                     <SelectContent>
                       <SelectItem value="full-time">Full Time</SelectItem>
                       <SelectItem value="part-time">Part Time</SelectItem>
@@ -209,6 +212,7 @@ const form = useForm('post', '/admin/employees', {
                       <SelectItem value="intern">Intern</SelectItem>
                     </SelectContent>
                   </Select>
+
                   <InputError :message="form.errors.employment_type" />
                 </div>
 
@@ -217,9 +221,10 @@ const form = useForm('post', '/admin/employees', {
                   <Select
                     v-model="form.employment_status"
                     @update:modelValue="form.validate('employment_status')">
-                    <SelectTrigger>
+                    <SelectTrigger class="w-full">
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
+
                     <SelectContent>
                       <SelectItem value="active">Active</SelectItem>
                       <SelectItem value="probation">Probation</SelectItem>
@@ -227,6 +232,7 @@ const form = useForm('post', '/admin/employees', {
                       <SelectItem value="resigned">Resigned</SelectItem>
                     </SelectContent>
                   </Select>
+
                   <InputError :message="form.errors.employment_status" />
                 </div>
               </div>
@@ -269,9 +275,10 @@ const form = useForm('post', '/admin/employees', {
                   <Select
                     v-model="form.role_id"
                     @update:modelValue="form.validate('role_id')">
-                    <SelectTrigger>
+                    <SelectTrigger class="w-full">
                       <SelectValue placeholder="Select role" />
                     </SelectTrigger>
+
                     <SelectContent>
                       <SelectItem
                         v-for="role in roles"

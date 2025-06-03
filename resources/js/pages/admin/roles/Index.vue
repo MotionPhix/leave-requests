@@ -5,8 +5,20 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ModalLink } from '@inertiaui/modal-vue'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Trash2, Edit } from 'lucide-vue-next';
+import { Trash2, Pencil } from 'lucide-vue-next';
 import type { BreadcrumbItem } from '@/types';
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import { Separator } from '@/components/ui/separator';
 
 defineProps<{
   roles: Array<{
@@ -27,10 +39,8 @@ const breadcrumbs: BreadcrumbItem[] = [
   },
 ];
 
-function deleteRole(roleId) {
-  if (confirm('Are you sure you want to delete this role?')) {
-    router.delete(route('admin.roles.destroy', roleId));
-  }
+function handleDelete(role: { id: number; name: string }) {
+  router.delete(route('admin.roles.destroy', role.id));
 }
 </script>
 
@@ -59,7 +69,7 @@ function deleteRole(roleId) {
               <TableRow>
                 <TableHead>Role Name</TableHead>
                 <TableHead>Permissions</TableHead>
-                <TableHead class="w-[100px]">Actions</TableHead>
+                <TableHead class="w-[100px]"></TableHead>
               </TableRow>
             </TableHeader>
 
@@ -85,16 +95,44 @@ function deleteRole(roleId) {
                       v-if="role.name !== 'Admin'"
                       variant="ghost"
                       size="icon">
-                      <Edit class="h-4 w-4" />
+                      <Pencil class="h-4 w-4" />
                     </Button>
 
-                    <Button
-                      v-if="role.name !== 'Admin'"
-                      variant="ghost"
-                      size="icon"
-                      @click="deleteRole(role.id)">
-                      <Trash2 class="h-4 w-4" />
-                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger as-child>
+                        <Button
+                          v-if="role.name !== 'Admin'"
+                          variant="ghost"
+                          size="icon">
+                          <Trash2 class="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+
+                      <AlertDialogContent class="sm:max-w-sm">
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>
+                            Delete {{ role.name }} role?
+                          </AlertDialogTitle>
+
+                          <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete the role, and users who are assigned this role.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+
+                        <Separator />
+
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>
+                            Cancel
+                          </AlertDialogCancel>
+
+                          <AlertDialogAction
+                            @click="handleDelete(role)">
+                            Delete Anyway
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 </TableCell>
               </TableRow>

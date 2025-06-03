@@ -12,6 +12,7 @@ import SettingsLayout from '@/layouts/settings/Layout.vue';
 import { type BreadcrumbItem } from '@/types';
 import dayjs from 'dayjs';
 import { computed } from 'vue';
+import OptionsPicker from '@/components/OptionsPicker.vue';
 
 interface Props {
   settings: {
@@ -58,6 +59,20 @@ const preview = computed(() => {
   return parts.join(form.separator);
 });
 
+const yearOptions = [
+  {
+    value: 'y',
+    title: `2 digits (${twoDigit})`,
+    description: 'Short year format'
+  },
+
+  {
+    value: 'Y',
+    title: `4 digits (${fourDigit})`,
+    description: 'Full year format'
+  }
+] as const
+
 const submit = () => {
   form.patch(route('admin.settings.employee-id.update'), {
     preserveScroll: true
@@ -79,7 +94,7 @@ const submit = () => {
         <form @submit.prevent="submit" class="space-y-6">
           <Card>
             <CardContent>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                 <div class="grid gap-2">
                   <Label>Prefix</Label>
                   <Input
@@ -98,7 +113,7 @@ const submit = () => {
                   <p class="text-sm text-muted-foreground">Character used between parts</p>
                 </div>
 
-                <div class="grid gap-2">
+                <div class="grid gap-2 align-top">
                   <Label>Number Length</Label>
                   <Input
                     type="number"
@@ -123,31 +138,22 @@ const submit = () => {
                     Include Year
                     <Switch v-model="form.include_year" />
                   </Label>
-                  <InputError :message="form.errors.include_year" />
-                  <p class="text-sm text-muted-foreground">Add current year to ID</p>
-                </div>
 
-                <div v-if="form.include_year" class="grid gap-2">
-                  <Label>Year Format</Label>
-                  <div class="flex items-center gap-4">
-                    <Label class="flex items-center gap-2">
-                      <input
-                        type="radio"
-                        v-model="form.year_format"
-                        value="y"
-                        class="rounded-full" />
-                      2 digits ({{ twoDigit }})
-                    </Label>
-                    <Label class="flex items-center gap-2">
-                      <input
-                        type="radio"
-                        v-model="form.year_format"
-                        value="Y"
-                        class="rounded-full" />
-                      4 digits ({{ fourDigit }})
-                    </Label>
+                  <InputError :message="form.errors.include_year" />
+
+                  <p class="text-sm text-muted-foreground">
+                    Add current year to ID
+                  </p>
+
+                  <div class="grid mt-4">
+                    <OptionsPicker
+                      v-if="form.include_year"
+                      v-model="form.year_format"
+                      :options="yearOptions"
+                      title="Year Format"
+                      :inline="true"
+                    />
                   </div>
-                  <InputError :message="form.errors.year_format" />
                 </div>
               </div>
 

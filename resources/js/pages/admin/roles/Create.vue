@@ -8,6 +8,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription }
 import { useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import InputError from '@/components/InputError.vue';
+import { Separator } from '@/components/ui/separator';
 
 defineProps<{
   permissions: { id: number; name: string }[];
@@ -89,6 +90,8 @@ function handleSubmit() {
                 </div>
               </div>
             </div>
+
+            <Separator />
 
             <CardFooter class="flex justify-end space-x-2">
               <Button

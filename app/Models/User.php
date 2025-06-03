@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Enums\EmploymentStatus;
+use App\Enums\EmploymentType;
+use App\Enums\Gender;
 use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -59,6 +62,9 @@ class User extends Authenticatable
       'email_verified_at' => 'datetime',
       'password' => 'hashed',
       'join_date' => 'date',
+      'gender' => Gender::class,
+      'employment_status' => EmploymentStatus::class,
+      'employment_type' => EmploymentType::class,
     ];
   }
 

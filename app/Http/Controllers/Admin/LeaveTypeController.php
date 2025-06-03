@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\Gender;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LeaveType\StoreLeaveTypeRequest;
 use App\Http\Requests\LeaveType\UpdateLeaveTypeRequest;
@@ -47,6 +48,7 @@ class LeaveTypeController extends Controller
   public function edit(LeaveType $leaveType)
   {
     return Inertia::render('admin/leave-types/Edit', [
+      'genders' => Gender::toArray(),
       'leaveType' => [
         'id' => $leaveType->id,
         'name' => $leaveType->name,

@@ -96,10 +96,15 @@ const lineOptions = {
       <div class="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader>
-            <CardTitle class="text-sm font-medium">Total Requests</CardTitle>
+            <CardTitle class="text-sm font-medium">
+              Total Requests
+            </CardTitle>
           </CardHeader>
+
           <CardContent>
-            <div class="text-2xl font-bold">{{ chartData.total }}</div>
+            <div class="text-2xl font-bold">
+              {{ chartData.total }}
+            </div>
           </CardContent>
         </Card>
 

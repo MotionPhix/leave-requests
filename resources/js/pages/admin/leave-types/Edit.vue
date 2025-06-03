@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { ref } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import { useForm } from 'laravel-precognition-vue-inertia';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -18,6 +17,7 @@ import {
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { BreadcrumbItem } from '@/types';
+import { Separator } from '@/components/ui/separator';
 
 const props = defineProps<{
   leaveType: {
@@ -32,7 +32,13 @@ const props = defineProps<{
     pay_percentage: number;
     minimum_notice_days: number;
   };
+  genders: Array<{
+    id: string;
+    name: string;
+  }>;
 }>();
+
+console.log(props);
 
 const breadcrumbs: BreadcrumbItem[] = [
   {
@@ -70,8 +76,8 @@ const genderSpecificToggled = (value: boolean) => {
 
     <Head :title="`Edit ${leaveType.name}`" />
 
-    <div class="p-6">
-      <Card class="max-w-2xl mx-auto">
+    <div class="p-6 max-w-2xl">
+      <Card>
         <CardHeader>
           <CardTitle>Edit Leave Type</CardTitle>
         </CardHeader>
@@ -130,44 +136,61 @@ const genderSpecificToggled = (value: boolean) => {
               </div>
             </div>
 
-            <div class="space-y-4">
-              <div class="flex items-center justify-between">
-                <Label>Requires Documentation</Label>
-                <Switch v-model="form.requires_documentation"
-                        @update:modelValue="form.validate('requires_documentation')" />
+            <section class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+              <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                  <Label>Requires Documentation</Label>
+                  <Switch v-model="form.requires_documentation"
+                          @update:modelValue="form.validate('requires_documentation')" />
+                </div>
+
+                <div class="flex items-center justify-between">
+                  <Label>Gender Specific</Label>
+                  <Switch v-model="form.gender_specific"
+                          @update:modelValue="genderSpecificToggled" />
+                </div>
+
+                <div v-if="form.gender_specific"
+                    class="space-y-2">
+
+                  <!-- <Label>Gender</Label> -->
+                  <Select
+                    v-model="form.gender"
+                    @update:modelValue="form.validate('gender')">
+                    <SelectTrigger class="w-full">
+                      <SelectValue placeholder="Select gender" />
+                    </SelectTrigger>
+
+                    <SelectContent>
+                      <SelectItem
+                        v-for="gender in genders"
+                        :key="gender.id"
+                        :value="gender.id">
+                        {{ gender.name }}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <InputError :message="form.errors.gender" />
+                </div>
               </div>
 
-              <div class="flex items-center justify-between">
-                <Label>Gender Specific</Label>
-                <Switch v-model="form.gender_specific"
-                        @update:modelValue="genderSpecificToggled" />
-              </div>
+            </section>
 
-              <div v-if="form.gender_specific"
-                   class="space-y-2">
-                <Label>Gender</Label>
-                <Select v-model="form.gender"
-                        @update:modelValue="form.validate('gender')">
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select gender" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="male">Male</SelectItem>
-                    <SelectItem value="female">Female</SelectItem>
-                  </SelectContent>
-                </Select>
-                <InputError :message="form.errors.gender" />
-              </div>
-            </div>
+            <Separator />
 
             <div class="flex justify-end gap-4">
-              <Button type="button"
-                      variant="outline"
-                      @click="router.visit(route('admin.leave-types.index'))">
+              <Button
+                type="button"
+                variant="outline"
+                @click="router.visit(route('admin.leave-types.index'))">
                 Cancel
               </Button>
-              <Button type="submit"
-                      :disabled="form.processing">
+
+              <Button
+                type="submit"
+                :disabled="form.processing">
                 Update Leave Type
               </Button>
             </div>

@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import InputError from '@/components/InputError.vue';
 import { ref } from 'vue';
+import {Separator} from '@/components/ui/separator';
 
 const props = defineProps<{
   role: {
@@ -94,6 +95,8 @@ function handleSubmit() {
                 </div>
               </div>
             </div>
+
+            <Separator />
 
             <CardFooter class="flex justify-end space-x-2">
               <Button
