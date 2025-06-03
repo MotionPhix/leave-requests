@@ -144,11 +144,14 @@ const deleteLeaveType = (id: number) => {
                         Details
                       </DropdownMenuItem>
 
-                      <DropdownMenuItem
-                        :as="ModalLink"
-                        :href="route('admin.leave-types.edit', type.uuid)">
-                        <PencilIcon class="w-4 h-4 mr-2" />
-                        Edit
+                      <DropdownMenuItem>
+                        <ModalLink
+                          max-width="xl"
+                        class="flex items-center gap-x-2 w-full"
+                          :href="route('admin.leave-types.edit', type.uuid)">
+                          <PencilIcon class="w-4 h-4 mr-2" />
+                          <span>Edit</span>
+                        </ModalLink>
                       </DropdownMenuItem>
 
                       <DropdownMenuItem
