@@ -26,8 +26,8 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const 2DigitYear = dayjs().format('YY');
-const 4DigitYear = dayjs().format('YYYY');
+const twoDigit = dayjs(new Date()).format('YY').toString();
+const fourDigit = dayjs(new Date()).format('YYYY').toString();
 
 const breadcrumbs: BreadcrumbItem[] = [
   {
@@ -52,7 +52,7 @@ const form = useForm({
 const preview = computed(() => {
   const parts = [];
   if (form.prefix) parts.push(form.prefix);
-  if (form.include_year) parts.push(form.year_format === 'Y' ? 4DigitYear : 2DigitYear);
+  if (form.include_year) parts.push(form.year_format === 'Y' ? fourDigit : twoDigit);
   parts.push(form.number_length ? '0'.repeat(form.number_length) : '0000');
   if (form.suffix) parts.push(form.suffix);
   return parts.join(form.separator);
@@ -136,7 +136,7 @@ const submit = () => {
                         v-model="form.year_format"
                         value="y"
                         class="rounded-full" />
-                      2 digits (24)
+                      2 digits ({{ twoDigit }})
                     </Label>
                     <Label class="flex items-center gap-2">
                       <input
@@ -144,7 +144,7 @@ const submit = () => {
                         v-model="form.year_format"
                         value="Y"
                         class="rounded-full" />
-                      4 digits (2024)
+                      4 digits ({{ fourDigit }})
                     </Label>
                   </div>
                   <InputError :message="form.errors.year_format" />
