@@ -90,7 +90,7 @@ const getNotificationMessage = (notification: Notification): string => {
         <Bell class="w-5 h-5" />
         <Badge
           v-if="unreadCount > 0"
-          class="absolute -top-2 -right-2 min-w-[20px] h-5">
+          class="absolute -top-2 -right-2 w-5 h-5">
           {{ unreadCount }}
         </Badge>
       </div>

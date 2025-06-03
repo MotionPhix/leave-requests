@@ -31,7 +31,7 @@ class LeaveBalanceService
     return max(0, $leaveType->max_days_per_year - $usedDays);
   }
 
-  protected function calculateWorkingDays(string $startDate, string $endDate): float
+  public function calculateWorkingDays(string $startDate, string $endDate): float
   {
     $start = Carbon::parse($startDate);
     $end = Carbon::parse($endDate);

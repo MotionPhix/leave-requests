@@ -80,8 +80,9 @@ function deleteRole(roleId) {
                 <TableCell>
                   <div class="flex items-center gap-2">
                     <Button
-                      as="ModalLink"
+                      :as="ModalLink"
                       :href="route('admin.roles.edit', role.id)"
+                      v-if="role.name !== 'Admin'"
                       variant="ghost"
                       size="icon">
                       <Edit class="h-4 w-4" />

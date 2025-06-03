@@ -49,7 +49,7 @@ function handleSubmit() {
           </CardTitle>
 
           <CardDescription>
-            Deploy your new project in one-click.
+            Create a new role and assign permissions to it.
           </CardDescription>
         </CardHeader>
 
@@ -77,6 +77,7 @@ function handleSubmit() {
                   :key="permission.id">
                   <label class="flex items-center space-x-2">
                     <Checkbox
+                      variant="secondary"
                       :model-value="form.permissions.includes(permission.id)"
                       @update:model-value="(checked) => checked ? form.permissions.push(permission.id) : form.permissions = form.permissions.filter(id => id !== permission.id)"
                     />

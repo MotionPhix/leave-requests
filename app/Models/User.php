@@ -132,14 +132,58 @@ class User extends Authenticatable
   public function availableLeaveTypes(): Attribute
   {
     return Attribute::make(
-      get: fn () => LeaveType::query()
-      ->when($this->gender !== 'any', function ($query) {
-        $query->where(function ($q) {
-          $q->where('gender_specific', false)
-            ->orWhere('gender', $this->gender);
-        });
-      })
-      ->get()
+      get: fn() => LeaveType::query()
+        ->when($this->gender !== 'any', function ($query) {
+          $query->where(function ($q) {
+            $q->where('gender_specific', false)
+              ->orWhere('gender', $this->gender);
+          });
+        })
+        ->get()
     );
+  }
+
+  protected static function generateEmployeeId(): string
+  {
+    $settings = EmployeeIdSetting::first() ?? new EmployeeIdSetting();
+
+    $parts = [];
+
+    // Add prefix
+    if ($settings->prefix) {
+      $parts[] = $settings->prefix;
+    }
+
+    // Add year if enabled
+    if ($settings->include_year) {
+      $parts[] = date($settings->year_format);
+    }
+
+    // Get the last number used
+    $lastUser = static::orderByRaw('CONVERT(SUBSTRING_INDEX(employee_id, "-", -1), UNSIGNED INTEGER) DESC')
+      ->first();
+
+    // Extract the number and increment
+    $lastNumber = $lastUser ? (int)preg_replace('/[^0-9]/', '', $lastUser->employee_id) : 0;
+    $nextNumber = str_pad($lastNumber + 1, $settings->number_length, '0', STR_PAD_LEFT);
+
+    $parts[] = $nextNumber;
+
+    // Add suffix
+    if ($settings->suffix) {
+      $parts[] = $settings->suffix;
+    }
+
+    // Join with separator
+    return implode($settings->separator, $parts);
+  }
+
+  protected static function boot()
+  {
+    parent::boot();
+
+    static::creating(function ($user) {
+      $user->employee_id = static::generateEmployeeId();
+    });
   }
 }

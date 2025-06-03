@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
-import { Head, router } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -10,7 +10,6 @@ import debounce from 'lodash/debounce';
 import {
   Calendar,
   Users,
-  Filter,
   Search,
   Clock,
   CheckCircle2,
@@ -19,22 +18,12 @@ import {
   MessageSquare
 } from 'lucide-vue-next';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Table, TableHeader, TableHead, TableRow, TableBody, TableCell, TableCaption } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
 
-// Enable the relativeTime plugin
 dayjs.extend(relativeTime);
 
 const props = defineProps({
@@ -67,15 +56,6 @@ watch([search, status, type], debounce(() => {
     }
   );
 }, 300));
-
-const getStatusColor = (status) => {
-  const colors = {
-    pending: 'bg-yellow-100 text-yellow-800',
-    approved: 'bg-green-100 text-green-800',
-    rejected: 'bg-red-100 text-red-800'
-  };
-  return colors[status] || '';
-};
 
 const approve = (id) => {
   router.put(route('admin.leave-requests.approve', id), {}, {
@@ -118,7 +98,7 @@ const stats = computed(() => ({
       <!-- Stats Overview -->
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
-          <CardContent class="p-6">
+          <CardContent class="px-6">
             <div class="flex items-center justify-between">
               <div>
                 <p class="text-sm font-medium text-muted-foreground">Total Requests</p>
@@ -130,7 +110,7 @@ const stats = computed(() => ({
         </Card>
 
         <Card>
-          <CardContent class="p-6">
+          <CardContent class="px-6">
             <div class="flex items-center justify-between">
               <div>
                 <p class="text-sm font-medium text-muted-foreground">Pending</p>
@@ -142,7 +122,7 @@ const stats = computed(() => ({
         </Card>
 
         <Card>
-          <CardContent class="p-6">
+          <CardContent class="px-6">
             <div class="flex items-center justify-between">
               <div>
                 <p class="text-sm font-medium text-muted-foreground">Approved</p>
@@ -154,7 +134,7 @@ const stats = computed(() => ({
         </Card>
 
         <Card>
-          <CardContent class="p-6">
+          <CardContent class="px-6">
             <div class="flex items-center justify-between">
               <div>
                 <p class="text-sm font-medium text-muted-foreground">Rejected</p>
@@ -213,7 +193,6 @@ const stats = computed(() => ({
         </Select>
       </div>
 
-      <!-- Replace Table with Cards -->
       <div
         v-if="leaveRequests.data.length > 0"
         class="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -221,7 +200,7 @@ const stats = computed(() => ({
           v-for="leave in leaveRequests.data"
           :key="leave.id"
           class="hover:shadow-md transition-shadow">
-          <CardContent class="p-6">
+          <CardContent class="px-6">
             <!-- Header with Employee Info and Status -->
             <div class="flex items-center justify-between mb-6">
               <div class="flex items-center gap-3">
@@ -243,6 +222,7 @@ const stats = computed(() => ({
               </div>
 
               <Badge
+                class="capitalize py-1.5"
                 :variant="getStatusBadgeVariant(leave.status)">
                 <component
                   :is="leave.status === 'approved'
@@ -317,6 +297,7 @@ const stats = computed(() => ({
               <Button
                 variant="ghost"
                 size="sm"
+                :as="Link"
                 :href="route('admin.leave-requests.show', leave.uuid)">
                 <MessageSquare class="w-4 h-4 mr-1.5" />
                 View Details
@@ -331,7 +312,7 @@ const stats = computed(() => ({
         v-if="isLoading"
         class="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card v-for="n in 4" :key="n">
-          <CardContent class="p-6">
+          <CardContent class="px-6">
             <div class="space-y-4">
               <Skeleton class="h-12 w-full" />
               <div class="grid grid-cols-2 gap-4">
@@ -355,7 +336,7 @@ const stats = computed(() => ({
         </CardContent>
       </Card>
 
-      <!-- Enhanced Pagination -->
+      <!-- Pagination -->
       <div class="flex items-center justify-between">
         <p class="text-sm text-muted-foreground">
           Showing {{ leaveRequests.from }} to {{ leaveRequests.to }}

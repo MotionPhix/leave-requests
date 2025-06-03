@@ -65,7 +65,7 @@ class LeaveRequestController extends Controller
           'reason' => $leaveRequest->reason,
           'status' => $leaveRequest->status,
           'comments' => $leaveRequest->comment,
-          'total_days' => $start->diffInDays($end),
+          'total_days' => $start->diffInDays($end) + 1,
           'documentation' => $documentation ? [
             'name' => $documentation->name,
             'size' => $documentation->size,

@@ -25,7 +25,6 @@ class UserFactory extends Factory
       'remember_token' => Str::random(10),
       'gender' => $gender,
       'position' => fake()->jobTitle(),
-      'employee_id' => 'EMP' . fake()->unique()->numberBetween(1000, 9999),
       'join_date' => fake()->dateTimeBetween('-5 years', 'now'),
       'work_phone' => fake()->phoneNumber(),
       'office_location' => fake()->city(),

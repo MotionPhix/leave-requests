@@ -11,10 +11,21 @@ import {
   UserIcon,
   BriefcaseIcon,
   HourglassIcon,
-  ClockIcon
+  ClockIcon,
+  FileX2Icon,
+  Calendar,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  ArrowRight,
+  CalendarDays
 } from 'lucide-vue-next';
+import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
 import type { BreadcrumbItem } from '@/types';
 import SimpleStats from '@/components/SimpleStats.vue';
+
+dayjs.extend(relativeTime);
 
 const props = defineProps<{
   user: {
@@ -123,6 +134,17 @@ const monthlyChartOptions = computed(() => ({
     }
   }
 }));
+
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case 'approved':
+      return 'success';
+    case 'rejected':
+      return 'destructive';
+    default:
+      return 'warning';
+  }
+};
 </script>
 
 <template>
@@ -134,11 +156,11 @@ const monthlyChartOptions = computed(() => ({
       <!-- Header Section -->
       <div class="mb-6">
         <h1 class="text-2xl font-bold mb-2">{{ user.name }}</h1>
-        <div class="grid grid-cols-2 sm:grid-cols-4 items-center gap-2">
+        <div class="grid grid-cols-2 md:grid-cols-4 items-center gap-2">
 
           <SimpleStats
             :icon="UserIcon"
-            title="Position"
+            title="Employee Position"
             :description="user.position"
           />
 
@@ -213,16 +235,17 @@ const monthlyChartOptions = computed(() => ({
             <Tabs
               v-model="activeTab"
               class="w-full">
-              <TabsList class="grid w-full grid-cols-3">
-                <TabsTrigger value="balances">
+              <TabsList
+                class="grid w-full grid-cols-3">
+                <TabsTrigger value="balances" class="cursor-pointer">
                   Current Balances
                 </TabsTrigger>
 
-                <TabsTrigger value="history">
+                <TabsTrigger value="history" class="cursor-pointer">
                   Leave History
                 </TabsTrigger>
 
-                <TabsTrigger value="analytics">
+                <TabsTrigger value="analytics" class="cursor-pointer">
                   Analytics
                 </TabsTrigger>
               </TabsList>
@@ -252,31 +275,67 @@ const monthlyChartOptions = computed(() => ({
               </TabsContent>
 
               <TabsContent value="history">
-                <div class="space-y-4">
-                  <div
-                    v-for="leave in leaveHistory"
-                    :key="leave.id"
-                    class="flex items-center justify-between p-4 border rounded-lg">
-                    <div>
-                      <p class="font-medium">{{ leave.type }}</p>
-                      <p class="text-sm text-muted-foreground">
-                        {{ new Date(leave.start_date).toLocaleDateString() }} -
-                        {{ new Date(leave.end_date).toLocaleDateString() }}
-                      </p>
-                    </div>
+                <div v-if="leaveHistory.length > 0" class="space-y-4">
+                  <div v-for="leave in leaveHistory"
+                       :key="leave.id"
+                       class="group">
+                    <Card class="transition-shadow hover:shadow-md">
+                      <CardContent class="p-4">
+                        <div class="flex items-start justify-between">
+                          <div class="flex gap-4">
+                            <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                              <CalendarDays class="w-5 h-5 text-primary" />
+                            </div>
 
-                    <div class="text-right">
-                      <Badge :variant="leave.status === 'approved' ? 'success' :
-                        leave.status === 'pending' ? 'warning' : 'destructive'">
-                        {{ leave.status }}
-                      </Badge>
+                            <div>
+                              <div class="flex items-center gap-2">
+                                <h4 class="font-medium">{{ leave.type }}</h4>
+                                <Badge :variant="getStatusColor(leave.status)" class="capitalize">
+                                  <component
+                                    :is="leave.status === 'approved' ? CheckCircle2 :
+                                         leave.status === 'rejected' ? XCircle : Clock"
+                                    class="w-3 h-3 mr-1"
+                                  />
+                                  {{ leave.status }}
+                                </Badge>
+                              </div>
 
-                      <p class="text-sm text-muted-foreground mt-1">
-                        {{ leave.total_days }} days
-                      </p>
-                    </div>
+                              <div class="mt-2 space-y-1">
+                                <p class="text-sm text-muted-foreground flex items-center gap-2">
+                                  <Calendar class="w-4 h-4" />
+                                  {{ dayjs(leave.start_date).format('MMM D, YYYY') }}
+                                  <ArrowRight class="w-4 h-4" />
+                                  {{ dayjs(leave.end_date).format('MMM D, YYYY') }}
+                                </p>
+
+                                <div class="flex items-center gap-4">
+                                  <Badge variant="outline" class="text-xs">
+                                    {{ leave.total_days }} working days
+                                  </Badge>
+                                  <p class="text-xs text-muted-foreground">
+                                    Submitted {{ dayjs(leave.created_at).fromNow() }}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
                   </div>
                 </div>
+
+                <Card v-else>
+                  <CardContent class="py-12">
+                    <div class="text-center">
+                      <FileX2Icon class="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                      <h3 class="text-lg font-medium mb-2">No Leave History</h3>
+                      <p class="text-sm text-muted-foreground">
+                        This employee hasn't taken any leave yet.
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
               </TabsContent>
 
               <TabsContent value="analytics">

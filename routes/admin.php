@@ -18,7 +18,7 @@ Route::group([
       )->name('admin.leave-requests.index');
 
       Route::get(
-        '/leave-requests/s/{leaveRequest}',
+        '/leave-requests/s/{leaveRequest:uuid}',
         'show'
       )->name('admin.leave-requests.show');
 
@@ -76,11 +76,14 @@ Route::group([
         ->name('admin.roles.store')
         ->middleware(HandlePrecognitiveRequests::class);
 
-      Route::put('/{role}', 'update')
+      Route::get('/e/{role}', 'edit')
+        ->name('admin.roles.edit');
+
+      Route::put('/u/{role}', 'update')
         ->name('admin.roles.update')
         ->middleware(HandlePrecognitiveRequests::class);
 
-      Route::delete('/{role}', 'destroy')->name('admin.roles.destroy');
+      Route::delete('/d/{role}', 'destroy')->name('admin.roles.destroy');
     });
 
   });
@@ -110,10 +113,9 @@ Route::group([
       Route::put('/password', 'update')->name('admin.password.update');
     });
 
-    Route::controller(\App\Http\Controllers\Admin\Settings\ActiveSessionController::class)->group(function () {
-      Route::get('/sessions', 'index')->name('admin.sessions.index');
-      Route::get('/sessions/new', 'create')->name('admin.sessions.create');
-      Route::post('/sessions', 'store')->name('admin.sessions.store');
+    Route::controller(\App\Http\Controllers\Admin\Settings\EmployeeIdGenerator::class)->group(function () {
+      Route::get('/employee-id', 'edit')->name('admin.employee-id.edit');
+      Route::patch('/employee-id', 'update')->name('admin.employee-id.update');
     });
 
     Route::get('/appearance', function () {

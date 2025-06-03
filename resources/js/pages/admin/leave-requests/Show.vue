@@ -175,7 +175,7 @@ const getTimelineStatusColor = (status: TimelineEvent['status']) => {
   <AppLayout :breadcrumbs="breadcrumbs">
     <Head :title="`Leave Request #${leaveRequest.uuid}`" />
 
-    <div class="p-6">
+    <div class="p-6 max-w-5xl">
       <!-- Status Banner -->
       <div class="mb-6">
         <div class="flex items-center gap-4">

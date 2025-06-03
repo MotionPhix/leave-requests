@@ -104,6 +104,7 @@ class UserController extends Controller
         'start_date' => $leave->start_date,
         'end_date' => $leave->end_date,
         'status' => $leave->status,
+        'created_at' => $leave->created_at->format('M d, Y'),
         'total_days' => $leaveBalanceService->calculateWorkingDays(
           $leave->start_date,
           $leave->end_date

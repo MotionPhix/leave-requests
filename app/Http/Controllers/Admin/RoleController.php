@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
@@ -67,6 +66,16 @@ class RoleController extends Controller
     $role->syncPermissions($request->permissions);
 
     return back()->with('success', 'Role created successfully.');
+  }
+
+  public function edit(Role $role, Request $request): \Inertia\Response
+  {
+    $permissions = Permission::all(['id', 'name']);
+
+    return Inertia::render('admin/roles/Edit', [
+      'role' => $role->load('permissions:id,name'),
+      'permissions' => $permissions,
+    ]);
   }
 
   public function update(Request $request, Role $role)
