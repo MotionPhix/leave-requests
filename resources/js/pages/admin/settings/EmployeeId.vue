@@ -78,7 +78,7 @@ const submit = () => {
 
         <form @submit.prevent="submit" class="space-y-6">
           <Card>
-            <CardContent class="pt-6">
+            <CardContent>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="grid gap-2">
                   <Label>Prefix</Label>

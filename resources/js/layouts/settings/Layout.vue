@@ -33,8 +33,8 @@ const sidebarNavItems: NavItem[] = [
 const adminSidebarNavItems: NavItem[] = [
 
   {
-    title: 'EmployeeID Generator',
-    href: route('admin.employee-id.edit'),
+    title: 'ID Generator',
+    href: '/admin/settings/employee-id',
     icon: HourglassIcon
   }
 ];
