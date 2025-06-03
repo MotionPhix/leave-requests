@@ -21,6 +21,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { PencilIcon, TrashIcon, MoreHorizontalIcon } from 'lucide-vue-next';
 import Pagination from '@/components/Pagination.vue';
 import type { BreadcrumbItem } from '@/types';
+import { ModalLink } from '@inertiaui/modal-vue';
 
 const breadcrumbs: BreadcrumbItem[] = [
   {
@@ -72,7 +73,9 @@ const deleteHoliday = (uuid: string) => {
           </p>
         </div>
 
-        <Button @click="router.visit(route('admin.holidays.create'))">
+        <Button
+          :as="ModalLink"
+          :href="route('admin.holidays.create')">
           Add Holiday
         </Button>
       </div>
@@ -130,10 +133,12 @@ const deleteHoliday = (uuid: string) => {
                     </DropdownMenuTrigger>
 
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem
-                        @click="router.visit(route('admin.holidays.edit', holiday.uuid))">
+                      <DropdownMenuItem>
                         <PencilIcon class="w-4 h-4 mr-2" />
-                        Edit
+                        <ModalLink
+                          :href="route('admin.holidays.edit', holiday.uuid)">
+                          Edit
+                        </ModalLink>
                       </DropdownMenuItem>
 
                       <DropdownMenuItem

@@ -21,6 +21,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import Pagination from '@/components/Pagination.vue';
 import { PencilIcon, InfoIcon, TrashIcon, MoreHorizontalIcon } from 'lucide-vue-next';
 import type { BreadcrumbItem } from '@/types';
+import { ModalLink } from '@inertiaui/modal-vue';
 
 const breadcrumbs: BreadcrumbItem[] = [
   {
@@ -68,8 +69,10 @@ const deleteLeaveType = (id: number) => {
     <div class="p-6 max-w-5xl">
       <div class="flex justify-between items-center mb-6">
         <h1 class="text-2xl font-bold">Leave Types</h1>
+
         <Button
-          @click="router.visit(route('admin.leave-types.create'))">
+          :as="ModalLink"
+          :href="route('admin.leave-types.create')">
           Add Leave Type
         </Button>
       </div>
@@ -142,7 +145,8 @@ const deleteLeaveType = (id: number) => {
                       </DropdownMenuItem>
 
                       <DropdownMenuItem
-                        @click="router.visit(route('admin.leave-types.edit', type.uuid))">
+                        :as="ModalLink"
+                        :href="route('admin.leave-types.edit', type.uuid)">
                         <PencilIcon class="w-4 h-4 mr-2" />
                         Edit
                       </DropdownMenuItem>
