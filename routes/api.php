@@ -47,6 +47,31 @@ Route::middleware(['auth:sanctum'])->group(function () {
     [\App\Http\Controllers\Employee\Api\CalendarController::class, 'index']
   )->name('api.calendar');
 
+  // Calendar statistics
+  Route::get(
+    '/calendar/statistics',
+    [\App\Http\Controllers\Employee\Api\CalendarController::class, 'statistics']
+  )->name('api.calendar.statistics');
+
+  // Export functionality
+  Route::get(
+    '/calendar/export/{format}',
+    [\App\Http\Controllers\Employee\Api\CalendarController::class, 'export']
+  )->where('format', 'ics|csv|pdf')
+  ->name('api.calendar.export');
+
+  // Leave types for filtering
+  Route::get(
+    '/calendar/leave-types',
+    [\App\Http\Controllers\Employee\Api\CalendarController::class, 'leaveTypes']
+  )->name('api.calendar.leave-types');
+
+  // Holidays for calendar display
+  Route::get(
+    '/calendar/holidays',
+    [\App\Http\Controllers\Employee\Api\CalendarController::class, 'holidays']
+  )->name('api.calendar.holidays');
+
   // Notification routes
   Route::get(
     '/notifications',
@@ -69,6 +94,22 @@ Route::middleware(['auth:sanctum'])->group(function () {
     [
       NotificationController::class,
       'markAllAsRead'
+    ]
+  );
+
+  Route::delete(
+    '/notifications/clear-all',
+    [
+      NotificationController::class,
+      'clearAllNotifications'
+    ]
+  );
+
+  Route::delete(
+    '/notifications/{id}',
+    [
+      NotificationController::class,
+      'deleteNotification'
     ]
   );
 });

@@ -29,6 +29,7 @@
     "@fullcalendar/daygrid": "^6.1.17",
     "@fullcalendar/interaction": "^6.1.17",
     "@fullcalendar/list": "^6.1.17",
+    "@fullcalendar/timegrid": "^6.1.18",
     "@fullcalendar/vue3": "^6.1.17",
     "@inertiajs/vue3": "^2.0.0",
     "@inertiaui/modal-vue": "file:vendor/inertiaui/modal/vue",

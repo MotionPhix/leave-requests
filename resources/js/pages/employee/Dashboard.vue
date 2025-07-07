@@ -142,14 +142,15 @@ const lineOptions = {
           <CardHeader>
             <CardTitle>Leave Balances</CardTitle>
           </CardHeader>
+
           <CardContent>
             <div class="space-y-4">
               <div v-for="leave in leaveSummary" :key="leave.name" class="flex items-center">
                 <div class="flex-1">
                   <p class="text-sm font-medium">{{ leave.name }}</p>
-                  <div class="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+                  <div class="w-full bg-gray-200 h-2 mt-2">
                     <div
-                      class="h-2.5 rounded-full"
+                      class="h-2"
                       :style="{
                         width: `${(leave.used / leave.max) * 100}%`,
                         backgroundColor: leave.color

@@ -91,7 +91,7 @@ const employeeChartOptions = computed(() => ({
       <!-- Stats Cards -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         <Card>
-          <CardContent class="flex items-center p-6">
+          <CardContent class="flex items-start">
             <div class="rounded-full p-3 bg-blue-100 dark:bg-blue-900">
               <FileTextIcon class="w-6 h-6 text-blue-600 dark:text-blue-400" />
             </div>
@@ -103,34 +103,39 @@ const employeeChartOptions = computed(() => ({
         </Card>
 
         <Card>
-          <CardContent class="flex items-center p-6">
+          <CardContent class="flex items-start">
             <div class="rounded-full p-3 bg-green-100 dark:bg-green-900">
               <UserIcon class="w-6 h-6 text-green-600 dark:text-green-400" />
             </div>
             <div class="ml-4">
-              <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Total Days Taken</p>
+              <p class="text-sm font-medium text-gray-600 dark:text-gray-400">
+                Total Days Taken
+              </p>
               <h3 class="text-2xl font-bold">{{ stats.total_days_taken }}</h3>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent class="flex items-center p-6">
+          <CardContent class="flex items-start">
             <div class="rounded-full p-3 bg-yellow-100 dark:bg-yellow-900">
               <CalendarIcon class="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
             </div>
             <div class="ml-4">
-              <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Max Days/Year</p>
+              <p class="text-sm font-medium text-gray-600 dark:text-gray-400">
+                Max <br />Days/Year
+              </p>
               <h3 class="text-2xl font-bold">{{ leaveType.max_days_per_year }}</h3>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent class="flex items-center p-6">
+          <CardContent class="flex items-start">
             <div class="rounded-full p-3 bg-purple-100 dark:bg-purple-900">
               <PercentIcon class="w-6 h-6 text-purple-600 dark:text-purple-400" />
             </div>
+
             <div class="ml-4">
               <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Pay Percentage</p>
               <h3 class="text-2xl font-bold">{{ leaveType.pay_percentage }}%</h3>
@@ -145,6 +150,7 @@ const employeeChartOptions = computed(() => ({
           <CardHeader>
             <CardTitle>Monthly Distribution</CardTitle>
           </CardHeader>
+
           <CardContent>
             <ApexCharts
               type="area"
@@ -159,6 +165,7 @@ const employeeChartOptions = computed(() => ({
           <CardHeader>
             <CardTitle>Employee Usage</CardTitle>
           </CardHeader>
+
           <CardContent>
             <ApexCharts
               type="bar"

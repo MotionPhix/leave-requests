@@ -15,6 +15,8 @@ use Illuminate\Support\Facades\Auth;
 
 class LeaveRequestController extends Controller
 {
+  use \Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+
   public function index(Request $request): Response
   {
     $query = LeaveRequest::query()->with(['leaveType', 'user']);
@@ -53,10 +55,39 @@ class LeaveRequestController extends Controller
 
   public function create(LeaveBalanceService $leaveBalanceService): Response
   {
+    $leaveBalanceService = app(LeaveBalanceService::class);
+    $leaveSummary = $leaveBalanceService->getUserLeaveSummary(Auth::id());
+
     $user = auth()->user();
 
-    // Get available leave types with balances
-    $leaveTypes = LeaveType::all()->map(function ($type) use ($leaveBalanceService, $user) {
+    // Get all leave types and filter them properly
+    $leaveTypes = LeaveType::all()->filter(function ($type) use ($user, $leaveBalanceService) {
+      // Filter out gender-specific leaves that don't match user's gender
+      if ($type->gender_specific && $type->gender !== 'any' && $type->gender !== $user->gender) {
+        return false;
+      }
+
+      // Check frequency restrictions (for maternity/paternity/special leaves)
+      if ($type->frequency_years > 1) {
+        $lastApprovedRequest = $user->leaveRequests()
+          ->where('leave_type_id', $type->id)
+          ->where('status', LeaveStatus::Approved->value)
+          ->where('created_at', '>=', now()->subYears($type->frequency_years))
+          ->exists();
+
+        if ($lastApprovedRequest) {
+          return false; // User has already taken this leave within the frequency period
+        }
+      }
+
+      // Only show leave types that have remaining days (unless they allow negative balance)
+      $remainingDays = $leaveBalanceService->getRemainingDays($user->id, $type->id);
+      if (!$type->allow_negative_balance && $remainingDays <= 0) {
+        return false;
+      }
+
+      return true;
+    })->map(function ($type) use ($leaveBalanceService, $user) {
       return [
         'id' => $type->id,
         'name' => $type->name,
@@ -66,35 +97,63 @@ class LeaveRequestController extends Controller
         'gender_specific' => $type->gender_specific,
         'gender' => $type->gender,
         'frequency_years' => $type->frequency_years,
+        'max_days_per_year' => $type->max_days_per_year,
         'available_days' => $leaveBalanceService->getRemainingDays($user->id, $type->id),
         'pay_percentage' => $type->pay_percentage,
+        'allow_negative_balance' => $type->allow_negative_balance,
       ];
-    })->filter(function ($type) use ($user) {
-      // Filter out gender-specific leaves that don't match user's gender
-      if ($type['gender_specific'] && $type['gender'] !== $user->gender) {
-        return false;
-      }
-      return true;
     })->values();
+
+    // Get leave balances for all leave types (for the sidebar)
+    $leaveBalances = LeaveType::all()->map(function ($leaveType) use ($leaveBalanceService) {
+      return [
+        'leave_type_id' => $leaveType->id,
+        'leave_type_name' => $leaveType->name,
+        'max_days' => $leaveType->max_days_per_year,
+        'used_days' => $leaveBalanceService->getUsedDays(Auth::id(), $leaveType->id),
+        'remaining_days' => $leaveBalanceService->getRemainingDays(Auth::id(), $leaveType->id),
+      ];
+    });
 
     return Inertia::render('employee/leave-requests/Create', [
       'leaveTypes' => $leaveTypes,
       'holidays' => $this->getUpcomingHolidays(),
+      'leaveBalances' => $leaveBalances,
+      'leaveSummary' => $leaveSummary,
+      'canRequestLeave' => $leaveSummary['can_request_new_leave'],
+      'blockingReason' => $leaveSummary['blocking_reason'],
+      'activeRequests' => $leaveSummary['active_requests']->map(function ($request) {
+        return [
+          'id' => $request->id,
+          'leave_type' => $request->leaveType->name,
+          'start_date' => $request->start_date->format('M d, Y'),
+          'end_date' => $request->end_date->format('M d, Y'),
+          'status' => $request->status,
+          'status_label' => $request->getStatusLabel(),
+          'total_days' => $request->total_days,
+        ];
+      }),
     ]);
   }
 
   public function store(StoreLeaveRequest $request)
   {
-    // Calculate business days (excluding weekends)
-    $daysRequested = now()
-      ->parse($request->start_date)
-      ->diffInDaysFiltered(
-        fn($date) => !$date->isWeekend(),
-        now()->parse($request->end_date)
-      ) + 1;
+    $leaveBalanceService = app(LeaveBalanceService::class);
 
-    $canTake = app(LeaveBalanceService::class)->hasSufficientBalance(
-      Auth::id(),
+    $canRequestResult = $leaveBalanceService->canRequestNewLeave(Auth::id());
+
+    if (!$canRequestResult['can_request']) {
+      return back()->with('error', $canRequestResult['reason'])->withInput();
+    }
+
+    // Calculate business days (excluding weekends)
+    $daysRequested = $leaveBalanceService->calculateWorkingDays(
+      $request->start_date,
+      $request->end_date
+    );
+
+    $canTake = $leaveBalanceService->hasSufficientBalance(
+      $request->user()->id,
       $request->leave_type_id,
       $daysRequested
     );
@@ -102,28 +161,40 @@ class LeaveRequestController extends Controller
     if (!$canTake) {
       return back()->with(
         'error',
-        'Insufficient leave balance.'
+        'Insufficient leave balance. You need ' . $daysRequested . ' days but only have ' .
+        $leaveBalanceService->getRemainingDays(Auth::id(), $request->leave_type_id) . ' days remaining.'
       )->withInput();
     }
 
     // Check for overlapping leaves
-    $hasOverlap = LeaveRequest::query()
-      ->where('user_id', Auth::id())
-      ->where('status', '!=', LeaveStatus::Rejected->value)
-      ->where(function ($query) use ($request) {
-        $query->whereBetween('start_date', [$request->start_date, $request->end_date])
-          ->orWhereBetween('end_date', [$request->start_date, $request->end_date]);
-      })
-      ->exists();
+    $hasOverlap = $leaveBalanceService->hasOverlappingLeave(
+      Auth::id(),
+      $request->start_date,
+      $request->end_date
+    );
 
     if ($hasOverlap) {
       return back()->with(
         'error',
-        'You have overlapping leave requests for the selected dates.'
+        'You have overlapping leave requests for the selected dates. Please check your existing leave requests.'
       )->withInput();
     }
 
-    LeaveRequest::create([
+    $leaveType = \App\Models\LeaveType::findOrFail($request->leave_type_id);
+
+    if ($leaveType->minimum_notice_days > 0) {
+      $noticeDate = now()->addDays($leaveType->minimum_notice_days);
+      $requestedStartDate = \Carbon\Carbon::parse($request->start_date);
+
+      if ($requestedStartDate->lessThan($noticeDate)) {
+        return back()->with(
+          'error',
+          "This leave type requires at least {$leaveType->minimum_notice_days} days notice. Please select a start date from {$noticeDate->format('M d, Y')} onwards."
+        )->withInput();
+      }
+    }
+
+    $leaveRequest = LeaveRequest::create([
       'user_id' => Auth::id(),
       'leave_type_id' => $request->leave_type_id,
       'start_date' => $request->start_date,
@@ -132,10 +203,19 @@ class LeaveRequestController extends Controller
       'status' => LeaveStatus::Pending->value,
     ]);
 
-    if ($request->hasFile('supporting_documents')) {
+    /*if ($request->hasFile('supporting_documents')) {
       foreach ($request->file('supporting_documents') as $file) {
         $leaveRequest->addMedia($file)
           ->toMediaCollection('supporting_documents');
+      }
+    }*/
+
+    if ($request->hasFile('supporting_documents')) {
+      foreach ($request->file('supporting_documents') as $file) {
+        $leaveRequest->addMediaFromRequest('supporting_documents')
+          ->each(function ($fileAdder) {
+            $fileAdder->toMediaCollection('supporting_documents');
+          });
       }
     }
 
@@ -162,7 +242,7 @@ class LeaveRequestController extends Controller
         'total_days' => $leaveRequest->total_days,
         'reason' => $leaveRequest->reason,
         'status' => $leaveRequest->status,
-        'comments' => $leaveRequest->comments,
+        'comments' => $leaveRequest->comment,
         'documentation' => $documentation ? [
           'name' => $documentation->name,
           'url' => $documentation->getUrl(),

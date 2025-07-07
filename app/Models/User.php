@@ -184,6 +184,104 @@ class User extends Authenticatable
     return implode($settings->separator, $parts);
   }
 
+  /**
+   * Get the formatted work phone number for display.
+   */
+  public function formattedWorkPhone(): ?Attribute
+  {
+    return Attribute::make(
+      get: fn() => $this->formatWorkPhone()
+    );
+  }
+
+  /**
+   * Format the work phone number for display.
+   */
+  protected function formatWorkPhone(): string
+  {
+    if (!$this->work_phone) {
+      return '';
+    }
+
+    try {
+      $phone = phone($this->work_phone);
+      return $phone->formatNational(); // Format as national number for display
+    } catch (\Exception $e) {
+      return $this->work_phone; // Return original if formatting fails
+    }
+  }
+
+  /**
+   * Get the international format of work phone.
+   */
+  public function internationalWorkPhone(): ?Attribute
+  {
+    return Attribute::make(
+      get: fn() => $this->formatWorkPhoneInternational()
+    );
+  }
+
+  /**
+   * Format the work phone number in international format.
+   */
+  protected function formatWorkPhoneInternational(): ?string
+  {
+    if (!$this->work_phone) {
+      return null;
+    }
+
+    try {
+      $phone = phone($this->work_phone);
+      return $phone->formatInternational();
+    } catch (\Exception $e) {
+      return $this->work_phone; // Return original if formatting fails
+    }
+  }
+
+  /**
+   * Get the E164 format of work phone (for storage/API).
+   */
+  public function e164WorkPhone(): ?Attribute
+  {
+    return Attribute::make(
+      get: fn() => $this->formatWorkPhoneE164()
+    );
+  }
+
+  /**
+   * Format the work phone number in E164 format.
+   */
+  protected function formatWorkPhoneE164(): ?string
+  {
+    if (!$this->work_phone) {
+      return null;
+    }
+
+    try {
+      $phone = phone($this->work_phone);
+      return $phone->formatE164();
+    } catch (\Exception $e) {
+      return $this->work_phone; // Return original if formatting fails
+    }
+  }
+
+  /**
+   * Check if the work phone number is valid.
+   */
+  public function hasValidWorkPhone(): bool
+  {
+    if (!$this->work_phone) {
+      return false;
+    }
+
+    try {
+      phone($this->work_phone);
+      return true;
+    } catch (\Exception $e) {
+      return false;
+    }
+  }
+
   protected static function boot()
   {
     parent::boot();

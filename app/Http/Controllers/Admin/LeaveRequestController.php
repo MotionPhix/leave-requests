@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\LeaveRequest;
 use App\Models\LeaveType;
-use App\Notifications\LeaveRequestStatusUpdated;
+use App\Notifications\LeaveRequestUpdated;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -100,7 +100,7 @@ class LeaveRequestController extends Controller
     ]);
 
     // Send notification only to the employee who requested the leave
-    $leaveRequest->user->notify(new LeaveRequestStatusUpdated($leaveRequest));
+    $leaveRequest->user->notify(new LeaveRequestUpdated($leaveRequest));
 
     return redirect()
       ->back()

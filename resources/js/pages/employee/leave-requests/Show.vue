@@ -130,7 +130,7 @@ const getStatusColor = (status: string) => {
               <div class="space-y-6">
                 <!-- Leave Type -->
                 <div class="flex items-start gap-4">
-                  <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                  <div class="w-8 h-8 shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
                     <Calendar class="w-4 h-4 text-primary" />
                   </div>
                   <div>
@@ -143,9 +143,10 @@ const getStatusColor = (status: string) => {
 
                 <!-- Duration -->
                 <div class="flex items-start gap-4">
-                  <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                  <div class="w-8 h-8 shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
                     <Clock class="w-4 h-4 text-primary" />
                   </div>
+
                   <div>
                     <h3 class="font-medium">Duration</h3>
                     <p class="text-sm text-muted-foreground">
@@ -158,7 +159,7 @@ const getStatusColor = (status: string) => {
 
                 <!-- Reason -->
                 <div class="flex items-start gap-4">
-                  <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                  <div class="w-8 h-8 shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
                     <MessageSquare class="w-4 h-4 text-primary" />
                   </div>
                   <div>
@@ -170,7 +171,7 @@ const getStatusColor = (status: string) => {
                 <!-- Documentation -->
                 <div v-if="leaveRequest.documentation" class="flex items-start gap-4">
                   <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                    <FileText class="w-4 h-4 text-primary" />
+                    <FileText class="w-4 h-4 text-primary shrink-0" />
                   </div>
                   <div>
                     <h3 class="font-medium">Supporting Documentation</h3>

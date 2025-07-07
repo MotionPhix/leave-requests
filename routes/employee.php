@@ -33,7 +33,7 @@ Route::group(['middleware' => 'auth'], function () {
       Route::post(
         '/',
         'store'
-      )->name('leave-requests.store')
+      )->name('store')
         ->middleware([HandlePrecognitiveRequests::class]);
     });
 

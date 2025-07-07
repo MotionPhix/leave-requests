@@ -67,7 +67,7 @@ const combinedSidebarNavItems = user?.isEmployee
 
       <Separator class="my-6 md:hidden" />
 
-      <div class="flex-1 md:max-w-2xl pt-10 md:mt-0">
+      <div class="flex-1 md:max-w-2xl pt-10 lg:pt-0 md:mt-0">
         <section class="max-w-xl space-y-12">
           <slot />
         </section>
