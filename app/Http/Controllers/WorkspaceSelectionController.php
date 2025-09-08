@@ -78,8 +78,17 @@ class WorkspaceSelectionController extends Controller
     /**
      * Switch to a specific workspace
      */
-    public function switch(Workspace $workspace): RedirectResponse
+    public function switch(string $slug, string $uuid): RedirectResponse
     {
+        // Find workspace by slug and uuid
+        $workspace = Workspace::where('slug', $slug)
+            ->where('uuid', $uuid)
+            ->first();
+            
+        if (!$workspace) {
+            abort(404, 'Workspace not found.');
+        }
+
         // Verify user has access to this workspace
         $user = Auth::user();
         $isOwner = $workspace->owner_id == $user->id;

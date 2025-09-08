@@ -58,6 +58,17 @@ class LeaveRequestController extends Controller
 
   public function create(LeaveBalanceService $leaveBalanceService): Response
   {
+    // Check if user has permission to create leave requests
+    // Owners and Super Admins cannot request leave - they manage the company!
+    if (auth()->user()->hasRole(['Owner', 'Super Admin'])) {
+      abort(403, 'Owners and super admins cannot request leave. You manage the company - you don\'t need permission to take time off!');
+    }
+    
+    // Also check for the specific permission
+    if (!auth()->user()->can('leave-requests.create')) {
+      abort(403, 'You do not have permission to create leave requests.');
+    }
+    
     $leaveBalanceService = app(LeaveBalanceService::class);
     $leaveSummary = $leaveBalanceService->getUserLeaveSummary(Auth::id());
 
@@ -141,6 +152,13 @@ class LeaveRequestController extends Controller
 
   public function store(StoreLeaveRequest $request)
   {
+    // Owners and Super Admins cannot request leave - they manage the company!
+    if (auth()->user()->hasRole(['Owner', 'Super Admin'])) {
+      return redirect()->back()
+        ->with('error', 'Owners and super admins cannot request leave. You manage the company - you don\'t need permission to take time off!')
+        ->withInput();
+    }
+    
     $leaveBalanceService = app(LeaveBalanceService::class);
 
     $canRequestResult = $leaveBalanceService->canRequestNewLeave(Auth::id());

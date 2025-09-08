@@ -26,22 +26,13 @@ class DashboardController extends Controller
         $canCreateLeaveRequests = $user->can('leave-requests.create');
         $isOwner = $user->hasRole('Owner');
 
-        // Get user's leave balance summary (if not owner)
-        $leaveSummary = !$isOwner ? $this->getUserLeaveSummary($user, $workspace) : null;
+        // Determine which dashboard component to render
+        $dashboardComponent = $this->getDashboardComponent($userRole, $isOwner);
 
-        // Get user's recent leave requests (if not owner)
-        $myRecentRequests = !$isOwner ? $this->getMyRecentRequests($user, $workspace) : [];
+        // Get role-specific data
+        $dashboardData = $this->getDashboardData($user, $workspace, $userRole, $isOwner, $canApproveLeave);
 
-        // Get pending team requests if user has approval permissions
-        $teamPendingRequests = $canApproveLeave ? $this->getTeamPendingRequests($user, $workspace) : [];
-
-        // Get upcoming holidays
-        $upcomingHolidays = $this->getUpcomingHolidays($workspace);
-
-        // Get dashboard stats based on user's permissions
-        $stats = $this->getDashboardStats($user, $workspace);
-
-        return Inertia::render('tenant/Dashboard', [
+        return Inertia::render($dashboardComponent, [
             'workspace' => [
                 'uuid' => $workspace?->uuid,
                 'slug' => $workspace?->slug,
@@ -58,12 +49,55 @@ class DashboardController extends Controller
                     'canCreateLeaveRequests' => $canCreateLeaveRequests,
                 ]
             ],
-            'stats' => $stats,
-            'myRecentRequests' => $myRecentRequests,
-            'teamPendingRequests' => $teamPendingRequests,
-            'upcomingHolidays' => $upcomingHolidays,
-            'leaveSummary' => $leaveSummary,
+            ...$dashboardData
         ]);
+    }
+
+    /**
+     * Determine which dashboard component to render based on user role
+     */
+    private function getDashboardComponent(string $userRole, bool $isOwner): string
+    {
+        if ($isOwner) {
+            return 'tenant/dashboard/OwnerDashboard';
+        }
+
+        return match($userRole) {
+            'Manager' => 'tenant/dashboard/ManagerDashboard',
+            'HR' => 'tenant/dashboard/ManagerDashboard', // HR uses manager dashboard for now
+            'Admin' => 'tenant/dashboard/ManagerDashboard', // Admin uses manager dashboard for now
+            'Employee' => 'tenant/dashboard/EmployeeDashboard',
+            default => 'tenant/dashboard/EmployeeDashboard',
+        };
+    }
+
+    /**
+     * Get role-specific dashboard data
+     */
+    private function getDashboardData($user, $workspace, string $userRole, bool $isOwner, bool $canApproveLeave): array
+    {
+        $data = [];
+
+        if ($isOwner) {
+            // Owner-specific data
+            $data['stats'] = $this->getOwnerStats($user, $workspace);
+            $data['teamPendingRequests'] = $this->getCompanyPendingRequests($workspace);
+            $data['upcomingHolidays'] = $this->getUpcomingHolidays($workspace);
+        } elseif (in_array($userRole, ['Manager', 'HR', 'Admin'])) {
+            // Manager/HR/Admin dashboard data
+            $data['stats'] = $this->getManagerStats($user, $workspace);
+            $data['myRecentRequests'] = $this->getMyRecentRequests($user, $workspace);
+            $data['teamPendingRequests'] = $canApproveLeave ? $this->getTeamPendingRequests($user, $workspace) : [];
+            $data['leaveSummary'] = $this->getUserLeaveSummary($user, $workspace);
+        } else {
+            // Employee dashboard data
+            $data['stats'] = $this->getEmployeeStats($user, $workspace);
+            $data['myRecentRequests'] = $this->getMyRecentRequests($user, $workspace);
+            $data['upcomingHolidays'] = $this->getUpcomingHolidays($workspace);
+            $data['leaveSummary'] = $this->getUserLeaveSummary($user, $workspace);
+        }
+
+        return $data;
     }
 
     private function getUserLeaveSummary($user, $workspace)
@@ -238,5 +272,132 @@ class DashboardController extends Controller
         ];
 
         return $colors[$leaveType] ?? 'bg-gray-500';
+    }
+
+    /**
+     * Get Owner-specific dashboard statistics
+     */
+    private function getOwnerStats($user, $workspace)
+    {
+        return [
+            'totalEmployees' => $this->getTotalEmployeesCount($workspace),
+            'companyPendingRequests' => $this->getCompanyPendingRequestsCount($workspace),
+            'thisMonthApproved' => $this->getThisMonthApprovedCount($workspace),
+            'totalDepartments' => $this->getTotalDepartmentsCount($workspace),
+        ];
+    }
+
+    /**
+     * Get Manager-specific dashboard statistics
+     */
+    private function getManagerStats($user, $workspace)
+    {
+        return [
+            'myLeaveBalance' => $this->getMyLeaveBalance($user, $workspace),
+            'myPendingRequests' => $this->getMyPendingRequestsCount($user, $workspace),
+            'teamPendingRequests' => $this->getTeamPendingRequestsCount($user, $workspace),
+            'teamMembers' => $this->getTeamMembersCount($user, $workspace),
+        ];
+    }
+
+    /**
+     * Get Employee-specific dashboard statistics
+     */
+    private function getEmployeeStats($user, $workspace)
+    {
+        return [
+            'myLeaveBalance' => $this->getMyLeaveBalance($user, $workspace),
+            'myPendingRequests' => $this->getMyPendingRequestsCount($user, $workspace),
+            'myUsedDays' => $this->getMyUsedDaysCount($user, $workspace),
+        ];
+    }
+
+    /**
+     * Get all pending requests across the company (for owners)
+     */
+    private function getCompanyPendingRequests($workspace)
+    {
+        return LeaveRequest::with(['user', 'leaveType'])
+            ->where('workspace_id', $workspace->id)
+            ->where('status', 'pending')
+            ->orderBy('created_at', 'asc')
+            ->limit(10)
+            ->get()
+            ->map(function ($request) {
+                return [
+                    'id' => $request->id,
+                    'user' => [
+                        'id' => $request->user->id,
+                        'name' => $request->user->name,
+                    ],
+                    'leave_type' => [
+                        'id' => $request->leaveType->id,
+                        'name' => $request->leaveType->name,
+                    ],
+                    'start_date' => $request->start_date,
+                    'end_date' => $request->end_date,
+                    'days' => $request->total_days,
+                    'status' => $request->status,
+                    'reason' => $request->reason,
+                ];
+            });
+    }
+
+    /**
+     * Get count of all pending requests in the company
+     */
+    private function getCompanyPendingRequestsCount($workspace)
+    {
+        return LeaveRequest::where('workspace_id', $workspace->id)
+            ->where('status', 'pending')
+            ->count();
+    }
+
+    /**
+     * Get count of approved requests this month
+     */
+    private function getThisMonthApprovedCount($workspace)
+    {
+        return LeaveRequest::where('workspace_id', $workspace->id)
+            ->where('status', 'approved')
+            ->whereMonth('created_at', now()->month)
+            ->whereYear('created_at', now()->year)
+            ->count();
+    }
+
+    /**
+     * Get total departments count
+     */
+    private function getTotalDepartmentsCount($workspace)
+    {
+        return \App\Models\Department::where('workspace_id', $workspace->id)->count();
+    }
+
+    /**
+     * Get team members count (direct reports)
+     */
+    private function getTeamMembersCount($user, $workspace)
+    {
+        return User::whereHas('workspaces', function ($query) use ($workspace) {
+            $query->where('workspaces.id', $workspace->id);
+        })->where('reporting_to', $user->id)->count();
+    }
+
+    /**
+     * Get user's used days count for current year
+     */
+    private function getMyUsedDaysCount($user, $workspace)
+    {
+        $approvedRequests = LeaveRequest::where('user_id', $user->id)
+            ->where('workspace_id', $workspace->id)
+            ->where('status', 'approved')
+            ->whereYear('start_date', now()->year)
+            ->get(['start_date', 'end_date']);
+
+        return $approvedRequests->sum(function ($request) {
+            $startDate = \Carbon\Carbon::parse($request->start_date);
+            $endDate = \Carbon\Carbon::parse($request->end_date);
+            return $startDate->diffInDays($endDate) + 1;
+        });
     }
 }

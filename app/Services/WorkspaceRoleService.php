@@ -51,8 +51,8 @@ class WorkspaceRoleService
         'HR' => [
             // HR specific permissions
             'users.view-any', 'users.create', 'users.edit-any', 'users.activate', 'users.deactivate',
-            'leave-requests.view-any', 'leave-requests.approve', 'leave-requests.reject',
-            'leave-requests.view-history',
+            'leave-requests.create', 'leave-requests.view-any', 'leave-requests.approve', 'leave-requests.reject',
+            'leave-requests.view-history', 'leave-requests.view-own', 'leave-requests.edit-own', 'leave-requests.cancel-own',
             'leave-types.view', 'leave-types.create', 'leave-types.edit', 'leave-types.activate',
             'leave-types.deactivate',
             'departments.view', 'departments.view-members',

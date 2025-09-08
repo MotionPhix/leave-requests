@@ -315,7 +315,7 @@
             <h3 class="text-lg font-semibold text-gray-900">Leave Balance Summary</h3>
           </div>
           <div class="p-6">
-            <div v-if="leaveSummary.length > 0" class="space-y-4">
+            <div v-if="leaveSummary && leaveSummary.length > 0" class="space-y-4">
               <div 
                 v-for="leave in leaveSummary" 
                 :key="leave.type"
@@ -408,7 +408,7 @@ interface PageProps extends /* @vue-ignore */ Record<string, any> {
   myRecentRequests: LeaveRequest[];
   teamPendingRequests: LeaveRequest[];
   upcomingHolidays: Holiday[];
-  leaveSummary: LeaveSummary[];
+  leaveSummary: LeaveSummary[] | null;
 }
 
 const page = usePage<PageProps>();

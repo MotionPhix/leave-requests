@@ -31,6 +31,10 @@ class UserSeeder extends Seeder
     // Set the current team for permission assignment
     setPermissionsTeamId($workspace->id);
     
+    // Create workspace-scoped roles using WorkspaceRoleService
+    $roleService = new \App\Services\WorkspaceRoleService();
+    $roleService->seedCoreRoles($workspace);
+    
     // Add admin to workspace and assign role
     $workspace->users()->attach($admin->id, ['role' => 'owner']);
     $admin->assignRole('Owner');
@@ -52,7 +56,7 @@ class UserSeeder extends Seeder
     
     // Add HR manager to workspace
     $workspace->users()->attach($hrManager->id, ['role' => 'member']);
-    $hrManager->assignRole('HR Manager');
+    $hrManager->assignRole('HR');
     $hrDepartment->manager_id = $hrManager->id;
     $hrDepartment->save();
 
@@ -69,7 +73,7 @@ class UserSeeder extends Seeder
       
       // Add manager to workspace
       $workspace->users()->attach($manager->id, ['role' => 'member']);
-      $manager->assignRole('Department Manager');
+      $manager->assignRole('Manager');
 
       // Update department with manager
       $department->manager_id = $manager->id;

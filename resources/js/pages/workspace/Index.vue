@@ -3,20 +3,14 @@
     <Head title="Select Workspace" />
     
     <!-- Hero Section -->
-    <div class="text-center mb-12">
-      <div class="mb-6">
-        <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl mb-4">
-          <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-          </svg>
-        </div>
-      </div>
+    <div class="text-center mb-12" v-if="workspaces.length > 0">
       <h1 class="text-4xl font-bold text-gray-900 mb-4">
         Welcome to your 
         <span class="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
           workspace hub
         </span>
       </h1>
+
       <p class="text-xl text-gray-600 max-w-2xl mx-auto">
         Select a workspace to jump into your leave management dashboard, or create a new workspace for your team.
       </p>
@@ -128,10 +122,23 @@
           </svg>
         </div>
       </div>
-      <h3 class="text-2xl font-semibold text-gray-900 mb-4">Ready to get organized?</h3>
+
+      <h3 class="text-2xl font-semibold text-gray-900 mb-4">
+        Ready to get organized?
+      </h3>
+
       <p class="text-gray-600 mb-8 max-w-md mx-auto">
         You're not part of any workspaces yet. Create your first workspace to start managing leave requests with your team.
       </p>
+
+      <div>
+        <Link 
+          :as="Button"
+          :href="route('workspaces.create')" 
+          class="h-12 cursor-pointer">
+          Create Your First Workspace
+        </Link>
+      </div>
     </div>
   </WorkspaceSelectionLayout>
 </template>
