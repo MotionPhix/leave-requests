@@ -12,6 +12,9 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Workspace;
+use Thunk\Verbs\Facades\Verbs;
+use App\Events\LeaveRequestSubmitted;
 
 class LeaveRequestController extends Controller
 {
@@ -217,6 +220,14 @@ class LeaveRequestController extends Controller
             $fileAdder->toMediaCollection('supporting_documents');
           });
       }
+    }
+
+    // Fire event for leave request submission - get workspace from context if available
+    $workspace = $request->attributes->get('workspace');
+    if ($workspace instanceof Workspace) {
+      Verbs::fire(
+        LeaveRequestSubmitted::fire($workspace, Auth::user(), $leaveRequest, $request->validated())
+      );
     }
 
     return redirect()->route('leave-requests.index')->with('success', 'Leave request submitted.');

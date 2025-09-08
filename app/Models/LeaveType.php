@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Traits\HasUuid;
+use App\Traits\Tenantable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -10,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class LeaveType extends Model
 {
   /** @use HasFactory<\Database\Factories\LeaveTypeFactory> */
-  use HasFactory, HasUuid;
+  use HasFactory, HasUuid, Tenantable;
 
   protected $fillable = [
     'name',
@@ -38,5 +39,10 @@ class LeaveType extends Model
   public function leaveRequests(): HasMany
   {
     return $this->hasMany(LeaveRequest::class);
+  }
+
+  public function workspace(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+  {
+    return $this->belongsTo(Workspace::class);
   }
 }

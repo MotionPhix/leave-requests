@@ -22,11 +22,17 @@ class LeaveRequestSubmitted extends Notification implements ShouldQueue
 
   public function toMail(object $notifiable): MailMessage
   {
+    $url = route('tenant.admin.leave-requests.show', [
+      'tenant_slug' => $this->leaveRequest->workspace->slug,
+      'tenant_uuid' => $this->leaveRequest->workspace->uuid,
+      'leaveRequest' => $this->leaveRequest->uuid,
+    ]);
+
     return (new MailMessage)
       ->subject('New Leave Request Submitted')
       ->line("A new {$this->leaveRequest->leaveType->name} request has been submitted by {$this->leaveRequest->user->name}.")
       ->line("Duration: {$this->leaveRequest->start_date->format('M j, Y')} to {$this->leaveRequest->end_date->format('M j, Y')}")
-      ->action('Review Request', route('admin.leave-requests.show', $this->leaveRequest->uuid))
+      ->action('Review Request', $url)
       ->line('Please review and take appropriate action.');
   }
 

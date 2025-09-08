@@ -90,7 +90,7 @@ class LeaveTypeController extends Controller
     $monthlyStats = $leaveType->leaveRequests()
       ->where('status', 'approved')
       ->whereYear('created_at', now()->year)
-      ->selectRaw('MONTH(created_at) as month, COUNT(*) as total')
+      ->selectRaw("CAST(strftime('%m', created_at) AS INTEGER) as month, COUNT(*) as total")
       ->groupBy('month')
       ->get()
       ->pluck('total', 'month')

@@ -33,21 +33,29 @@ class RegisteredUserController extends Controller
     $request->validate([
       'name' => 'required|string|max:255',
       'email' => 'required|string|lowercase|email|max:255|unique:' . User::class,
+      'gender' => 'required|in:male,female',
       'password' => ['required', 'confirmed', Rules\Password::defaults()],
     ]);
 
     $user = User::create([
       'name' => $request->name,
       'email' => $request->email,
+      'gender' => $request->gender,
       'password' => Hash::make($request->password),
     ]);
 
-    $user->assignRole('Employee');
+    // Note: Role assignment will happen when user joins a workspace
+    // $user->assignRole('Employee');
 
     event(new Registered($user));
 
     Auth::login($user);
 
-    return to_route('dashboard');
+    // Let the authentication redirect logic handle where to send the user
+    $user = $request->user();
+    if ($user->hasRole('Employee')) {
+      return redirect()->intended(route('dashboard', absolute: false));
+    }
+    return redirect()->intended(route('admin.dashboard', absolute: false));
   }
 }

@@ -10,6 +10,11 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Support\Facades\Auth;
+use App\Models\Workspace;
+use Thunk\Verbs\Facades\Verbs;
+use App\Events\LeaveRequestApproved;
+use App\Events\LeaveRequestRejected;
 
 class LeaveRequestController extends Controller
 {
@@ -41,7 +46,7 @@ class LeaveRequestController extends Controller
 
   public function show(LeaveRequest $leaveRequest): Response|\Illuminate\Http\RedirectResponse
   {
-    if (auth()->user()->can('view leave')) {
+    if (Auth::user()->can('view leave')) {
 
       $documentation = $leaveRequest->getFirstMedia('documentation');
       $start = Carbon::parse($leaveRequest->start_date, 'Africa/Blantyre');
@@ -90,14 +95,31 @@ class LeaveRequestController extends Controller
       'comment' => ['nullable', 'string', 'max:500'],
     ]);
 
-    abort_unless(auth()->user()->can('approve leave'), 403);
+    abort_unless(Auth::user()->can('approve leave'), 403);
+
+    $oldStatus = $leaveRequest->status;
 
     $leaveRequest->update([
       'status' => $request->status,
       'comment' => $request->comment,
-      'reviewed_by' => auth()->id(),
+      'reviewed_by' => Auth::id(),
       'reviewed_at' => now(),
     ]);
+
+    // Fire events based on status change
+    if ($workspace = $request->attributes->get('workspace')) {
+      $approver = Auth::user();
+
+      if ($request->status === 'approved' && $oldStatus !== 'approved') {
+        Verbs::fire(
+          LeaveRequestApproved::fire($workspace, $approver, $leaveRequest, $request->comment)
+        );
+      } elseif ($request->status === 'rejected' && $oldStatus !== 'rejected') {
+        Verbs::fire(
+          LeaveRequestRejected::fire($workspace, $approver, $leaveRequest, $request->comment)
+        );
+      }
+    }
 
     // Send notification only to the employee who requested the leave
     $leaveRequest->user->notify(new LeaveRequestUpdated($leaveRequest));

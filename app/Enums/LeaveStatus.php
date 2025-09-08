@@ -22,4 +22,16 @@ enum LeaveStatus: string
       self::Reviewed => 'Reviewed',
     };
   }
+
+  public function color(): string
+  {
+    return match ($this) {
+      self::Pending => 'warning',
+      self::Approved => 'success',
+      self::Rejected => 'danger',
+      self::Cancelled => 'neutral',
+      self::Rescheduled => 'info',
+      self::Reviewed => 'primary',
+    };
+  }
 }

@@ -4,6 +4,7 @@ use App\Models\LeaveType;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Auth;
 
 uses(RefreshDatabase::class);
 
@@ -24,7 +25,7 @@ it('shows leave type details page for HR without error', function () {
     $leaveType = LeaveType::factory()->create();
 
     // Authenticate and bypass middleware to focus on controller behavior
-    $this->actingAs($user);
+    Auth::login($user);
     $this->withoutMiddleware();
 
     $this->get(route('admin.leave-types.show', ['leaveType' => $leaveType->uuid]))

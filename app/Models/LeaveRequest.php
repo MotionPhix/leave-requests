@@ -8,6 +8,7 @@ use App\Notifications\LeaveRequestRejected;
 use App\Notifications\LeaveRequestUpdated;
 use App\Notifications\LeaveRequestSubmitted;
 use App\Traits\HasUuid;
+use App\Traits\Tenantable;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -21,7 +22,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 class LeaveRequest extends Model implements HasMedia
 {
   /** @use HasFactory<\Database\Factories\LeaveRequestFactory> */
-  use HasFactory, HasUuid, InteractsWithMedia;
+  use HasFactory, HasUuid, Tenantable, InteractsWithMedia;
 
   protected $fillable = [
     'user_id',
@@ -57,6 +58,11 @@ class LeaveRequest extends Model implements HasMedia
   public function reviewer(): BelongsTo
   {
     return $this->belongsTo(User::class, 'reviewed_by');
+  }
+
+  public function workspace(): BelongsTo
+  {
+    return $this->belongsTo(Workspace::class);
   }
 
   public function registerMediaCollections(): void

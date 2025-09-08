@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Traits\HasUuid;
+use App\Traits\Tenantable;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
@@ -12,7 +13,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Department extends Model
 {
-  use HasFactory, HasUuid;
+  use HasFactory, HasUuid, Tenantable;
 
   protected $fillable = [
     'name',
@@ -57,6 +58,11 @@ class Department extends Model
   public function children(): HasMany
   {
     return $this->hasMany(Department::class, 'parent_id');
+  }
+
+  public function workspace(): BelongsTo
+  {
+    return $this->belongsTo(Workspace::class);
   }
 
   /**

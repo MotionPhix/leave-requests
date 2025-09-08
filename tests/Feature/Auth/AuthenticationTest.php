@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use Database\Seeders\RolesAndPermissionsSeeder;
 
 uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
 
@@ -12,6 +13,7 @@ test('login screen can be rendered', function () {
 
 test('users can authenticate using the login screen', function () {
     $user = User::factory()->create();
+    // Don't assign roles for basic authentication test
 
     $response = $this->post('/login', [
         'email' => $user->email,
@@ -19,7 +21,8 @@ test('users can authenticate using the login screen', function () {
     ]);
 
     $this->assertAuthenticated();
-    $response->assertRedirect(route('dashboard', absolute: false));
+    // Since user has no roles, they'll be redirected to admin dashboard by default
+    $response->assertRedirect(route('admin.dashboard', absolute: false));
 });
 
 test('users can not authenticate with invalid password', function () {

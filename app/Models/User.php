@@ -93,6 +93,16 @@ class User extends Authenticatable
   }
 
   /**
+   * Workspaces the user belongs to.
+   */
+  public function workspaces(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+  {
+    return $this->belongsToMany(Workspace::class, 'workspace_user')
+      ->withPivot('role')
+      ->withTimestamps();
+  }
+
+  /**
    * Get the department this user belongs to
    */
   public function departmentModel(): BelongsTo
@@ -151,7 +161,22 @@ class User extends Authenticatable
 
   protected static function generateEmployeeId(): string
   {
-    $settings = EmployeeIdSetting::first() ?? new EmployeeIdSetting();
+    // Disable tenant scope when looking for settings during user creation
+    $settings = EmployeeIdSetting::disableTenantScope(function () {
+      return EmployeeIdSetting::first();
+    });
+
+    // If no settings found, create default settings object (not persisted)
+    if (!$settings) {
+      $settings = new EmployeeIdSetting([
+        'prefix' => null,
+        'suffix' => null,
+        'separator' => '-',
+        'include_year' => true,
+        'year_format' => 'Y',
+        'number_length' => 4,
+      ]);
+    }
 
     $parts = [];
 
@@ -165,12 +190,16 @@ class User extends Authenticatable
       $parts[] = date($settings->year_format);
     }
 
-    // Get the last number used
-    $lastUser = static::orderByRaw('CONVERT(SUBSTRING_INDEX(employee_id, "-", -1), UNSIGNED INTEGER) DESC')
-      ->first();
+    // Get the last number used - SQLite compatible approach
+    $lastUser = static::latest('id')->first();
+    $lastNumber = 0;
 
-    // Extract the number and increment
-    $lastNumber = $lastUser ? (int)preg_replace('/[^0-9]/', '', $lastUser->employee_id) : 0;
+    if ($lastUser && $lastUser->employee_id) {
+      // Extract the numeric part from the employee_id
+      preg_match('/(\d+)(?!.*\d)/', $lastUser->employee_id, $matches);
+      $lastNumber = $matches[1] ?? 0;
+    }
+
     $nextNumber = str_pad($lastNumber + 1, $settings->number_length, '0', STR_PAD_LEFT);
 
     $parts[] = $nextNumber;
