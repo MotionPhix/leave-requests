@@ -82,8 +82,8 @@ class LeaveTypeController extends Controller
       'total_days_taken' => $leaveType->leaveRequests()
         ->where('status', 'approved')
         ->get()
-        ->sum(function ($request) {
-          return $this->calculateWorkingDays($request->start_date, $request->end_date);
+        ->sum(function ($request) use ($leaveService) {
+          return $leaveService->calculateWorkingDays($request->start_date, $request->end_date);
         }),
     ];
 
@@ -102,9 +102,9 @@ class LeaveTypeController extends Controller
       ->whereYear('created_at', now()->year)
       ->get()
       ->groupBy('user.name')
-      ->map(function ($requests) {
-        return $requests->sum(function ($request) {
-          return $this->calculateWorkingDays($request->start_date, $request->end_date);
+      ->map(function ($requests) use ($leaveService) {
+        return $requests->sum(function ($request) use ($leaveService) {
+          return $leaveService->calculateWorkingDays($request->start_date, $request->end_date);
         });
       })
       ->toArray();
