@@ -3,11 +3,14 @@
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceInvitation;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\URL;
 use Spatie\Permission\PermissionRegistrar;
 use Spatie\Permission\Models\Role;
 use Database\Seeders\RolesAndPermissionsSeeder;
+
+uses(RefreshDatabase::class);
 
 it('owner can send an invitation', function () {
     Notification::fake();
@@ -35,6 +38,21 @@ it('owner can send an invitation', function () {
     ]);
 
     $response->assertRedirect();
+
+    // Debug: Check what invitations exist
+    $allInvitations = WorkspaceInvitation::all();
+    $workspaceInvitations = WorkspaceInvitation::where('workspace_id', $workspace->id)->get();
+
+    if (!WorkspaceInvitation::where('workspace_id', $workspace->id)->where('email', $invitee->email)->exists()) {
+        dd([
+            'all_invitations' => $allInvitations->toArray(),
+            'workspace_invitations' => $workspaceInvitations->toArray(),
+            'looking_for_workspace_id' => $workspace->id,
+            'looking_for_email' => $invitee->email,
+            'workspace' => $workspace->toArray(),
+            'invitee' => $invitee->toArray(),
+        ]);
+    }
 
     expect(WorkspaceInvitation::where('workspace_id', $workspace->id)->where('email', $invitee->email)->exists())->toBeTrue();
 });
