@@ -9,20 +9,22 @@ use Illuminate\Support\Facades\Auth;
 uses(RefreshDatabase::class);
 
 it('shows leave type details page for HR without error', function () {
-    // Create HR user and assign role if using spatie/permission
+    // Seed permissions first
+    $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
+    
+    // Create HR user and workspace
     $user = User::factory()->createOne();
+    $workspace = \App\Models\Workspace::factory()->create(['owner_id' => $user->id]);
+    $workspace->users()->attach($user->id);
 
-    // Attempt to assign HR role if roles table exists
-    try {
-        if (Schema::hasTable('roles')) {
-            $role = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'HR']);
-            $user->assignRole($role);
-        }
-    } catch (\Throwable $e) {
-        // If permissions not set up in test env, proceed without role
-    }
+    // Set up workspace-scoped roles
+    app(\Spatie\Permission\PermissionRegistrar::class)->setPermissionsTeamId($workspace->id);
+    $roleService = new \App\Services\WorkspaceRoleService();
+    $roleService->seedCoreRoles($workspace);
+    
+    $user->assignRole('HR');
 
-    $leaveType = LeaveType::factory()->create();
+    $leaveType = \App\Models\LeaveType::factory()->create(['workspace_id' => $workspace->id]);
 
     // Authenticate and bypass middleware to focus on controller behavior
     Auth::login($user);

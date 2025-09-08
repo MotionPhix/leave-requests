@@ -37,6 +37,12 @@ class InvitationsController extends Controller
         $data = $request->validated();
         $workspace = Workspace::query()->where('slug', $tenant_slug)->where('uuid', $tenant_uuid)->firstOrFail();
 
+        // Authorization: only Owner/Admin/HR/Manager can invite
+        app(\Spatie\Permission\PermissionRegistrar::class)->setPermissionsTeamId($workspace->id);
+        if (! $request->user()->hasAnyRole(['Owner', 'Admin', 'HR', 'Manager', 'Super Admin'])) {
+            abort(403);
+        }
+
     // Ensure roles exist for this workspace
     app(WorkspaceRoleService::class)->seedCoreRoles($workspace);
 

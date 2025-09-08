@@ -24,7 +24,11 @@ it('owner can send an invitation', function () {
 
     // Seed roles for team and set context
     app(PermissionRegistrar::class)->setPermissionsTeamId($workspace->id);
-    Role::firstOrCreate(['name' => 'Owner', 'workspace_id' => $workspace->id]);
+    
+    // Use WorkspaceRoleService to create workspace-scoped roles
+    $roleService = new \App\Services\WorkspaceRoleService();
+    $roleService->seedCoreRoles($workspace);
+    
     $owner->assignRole('Owner');
 
     $invitee = User::factory()->create();

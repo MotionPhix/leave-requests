@@ -3,22 +3,32 @@
 use App\Models\User;
 use App\Models\Workspace;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-
 use Illuminate\Support\Facades\Auth;
 
 uses(RefreshDatabase::class);
 
 it('creates a workspace and opens tenant dashboard', function () {
+    // Seed roles and permissions first
+    $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
+    
     $user = User::factory()->create();
 
     Auth::login($user);
-    $this->post('/workspaces', ['name' => 'Acme Inc'])
-        ->assertRedirect('/workspaces');
-
+    $response = $this->post('/workspaces', ['name' => 'Acme Inc']);
+    
     $workspace = Workspace::firstOrFail();
+    
+    // The workspace creation should redirect to the tenant dashboard
+    $response->assertRedirect(route('tenant.dashboard', [
+        'tenant_slug' => $workspace->slug,
+        'tenant_uuid' => $workspace->uuid
+    ]));
 
     Auth::login($user);
-    $this->withoutMiddleware();
-    $this->get(route('tenant.dashboard', ['tenant_slug' => $workspace->slug, 'tenant_uuid' => $workspace->uuid]))
-        ->assertSuccessful();
+    $response = $this->get(route('tenant.dashboard', [
+        'tenant_slug' => $workspace->slug, 
+        'tenant_uuid' => $workspace->uuid
+    ]));
+    
+    $response->assertSuccessful();
 });

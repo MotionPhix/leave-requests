@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\User;
-use Database\Seeders\RolesAndPermissionsSeeder;
 
 uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
 
@@ -21,8 +20,8 @@ test('users can authenticate using the login screen', function () {
     ]);
 
     $this->assertAuthenticated();
-    // Since user has no roles, they'll be redirected to admin dashboard by default
-    $response->assertRedirect(route('admin.dashboard', absolute: false));
+    // Since user has no workspaces, they'll be redirected to workspace selection
+    $response->assertRedirect(route('workspaces.index', absolute: false));
 });
 
 test('users can not authenticate with invalid password', function () {

@@ -1,7 +1,5 @@
 <?php
 
-use Database\Seeders\RolesAndPermissionsSeeder;
-
 uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
 
 test('registration screen can be rendered', function () {
@@ -23,6 +21,6 @@ test('new users can register', function () {
     $response->assertStatus(302); // Should be a redirect
 
     $this->assertAuthenticated();
-    // User without roles will be redirected to admin dashboard
-    $response->assertRedirect(route('admin.dashboard', absolute: false));
+    // New users are redirected to workspace selection in the central system
+    $response->assertRedirect(route('workspaces.index', absolute: false));
 });

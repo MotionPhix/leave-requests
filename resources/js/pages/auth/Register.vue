@@ -4,15 +4,25 @@ import TextLink from '@/components/TextLink.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AuthBase from '@/layouts/AuthLayout.vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import { LoaderCircle } from 'lucide-vue-next';
 
+const props = defineProps({
+  invitation: {
+    type: Object,
+    default: null
+  }
+});
+
 const form = useForm({
   name: '',
-  email: '',
+  email: props.invitation?.email || '',
+  gender: '',
   password: '',
-  password_confirmation: ''
+  password_confirmation: '',
+  invitation_token: props.invitation?.token || null
 });
 
 const submit = () => {
@@ -23,8 +33,28 @@ const submit = () => {
 </script>
 
 <template>
-  <AuthBase title="Create an account" description="Enter your details below to create your account">
+  <AuthBase 
+    :title="invitation ? `Join ${invitation.workspace.name}` : 'Create an account'" 
+    :description="invitation ? `You've been invited to join ${invitation.workspace.name} as a ${invitation.role}` : 'Enter your details below to create your account'"
+  >
     <Head title="Register" />
+
+    <!-- Invitation Info -->
+    <div v-if="invitation" class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+      <div class="flex items-start">
+        <svg class="w-5 h-5 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <div class="ml-3">
+          <h3 class="text-sm font-medium text-blue-800">
+            Workspace Invitation
+          </h3>
+          <div class="mt-2 text-sm text-blue-700">
+            <p>You've been invited to join <strong>{{ invitation.workspace.name }}</strong> as a <strong>{{ invitation.role }}</strong>.</p>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <form @submit.prevent="submit" class="flex flex-col gap-6">
       <div class="grid gap-6">
@@ -37,9 +67,31 @@ const submit = () => {
 
         <div class="grid gap-2">
           <Label for="email">Email address</Label>
-          <Input id="email" type="email" required :tabindex="2" autocomplete="email" v-model="form.email"
-                 placeholder="email@example.com" />
+          <Input 
+            id="email" 
+            type="email" 
+            required 
+            :tabindex="2" 
+            autocomplete="email" 
+            v-model="form.email"
+            :disabled="!!invitation"
+            placeholder="email@example.com" 
+          />
           <InputError :message="form.errors.email" />
+        </div>
+
+        <div class="grid gap-2">
+          <Label for="gender">Gender</Label>
+          <Select v-model="form.gender" required>
+            <SelectTrigger class="w-full">
+              <SelectValue placeholder="Select your gender" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="male">Male</SelectItem>
+              <SelectItem value="female">Female</SelectItem>
+            </SelectContent>
+          </Select>
+          <InputError :message="form.errors.gender" />
         </div>
 
         <div class="grid gap-2">
@@ -72,7 +124,7 @@ const submit = () => {
 
         <Button type="submit" class="mt-2 w-full" tabindex="5" :disabled="form.processing">
           <LoaderCircle v-if="form.processing" class="h-4 w-4 animate-spin" />
-          Create account
+          {{ invitation ? 'Join Workspace' : 'Create account' }}
         </Button>
       </div>
 

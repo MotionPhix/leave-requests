@@ -13,45 +13,57 @@ use Inertia\Response;
 
 class AuthenticatedSessionController extends Controller
 {
-  /**
-   * Show the login page.
-   */
-  public function create(Request $request): Response
-  {
-    return Inertia::render('auth/Login', [
-      'canResetPassword' => Route::has('password.request'),
-      'status' => $request->session()->get('status'),
-    ]);
-  }
-
-  /**
-   * Handle an incoming authentication request.
-   */
-  public function store(LoginRequest $request): RedirectResponse
-  {
-    $request->authenticate();
-
-    $request->session()->regenerate();
-
-    $user = $request->user();
-
-    if ($user->hasRole('Employee')) {
-      return redirect()->intended(route('dashboard', absolute: false));
+    /**
+     * Show the login page.
+     */
+    public function create(Request $request): Response
+    {
+        return Inertia::render('auth/Login', [
+            'canResetPassword' => Route::has('password.request'),
+            'status' => $request->session()->get('status'),
+        ]);
     }
 
-    return redirect()->intended(route('admin.dashboard', absolute: false));
-  }
+    /**
+     * Handle an incoming authentication request.
+     */
+    public function store(LoginRequest $request): RedirectResponse
+    {
+        $request->authenticate();
+        $request->session()->regenerate();
 
-  /**
-   * Destroy an authenticated session.
-   */
-  public function destroy(Request $request): RedirectResponse
-  {
-    Auth::guard('web')->logout();
+        $user = $request->user();
+        $workspaces = $user->workspaces;
 
-    $request->session()->invalidate();
-    $request->session()->regenerateToken();
+        // If user has no workspaces, redirect to central workspace list
+        if ($workspaces->isEmpty()) {
+            return redirect()->route('workspaces.index')->with('info', 'Please select or create a workspace to continue.');
+        }
 
-    return redirect('/');
-  }
+        // If user has only one workspace, redirect directly to it
+        if ($workspaces->count() === 1) {
+            $workspace = $workspaces->first();
+
+            return redirect()->intended(route('tenant.dashboard', [
+                'tenant_slug' => $workspace->slug,
+                'tenant_uuid' => $workspace->uuid,
+            ]));
+        }
+
+        // If user has multiple workspaces, show them in central system
+        return redirect()->intended(route('workspaces.index'));
+    }
+
+    /**
+     * Destroy an authenticated session.
+     */
+    public function destroy(Request $request): RedirectResponse
+    {
+        Auth::guard('web')->logout();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect('/');
+    }
 }

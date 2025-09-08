@@ -35,7 +35,11 @@ it('fires LeaveRequestSubmitted event when employee submits leave request', func
     // Setup workspace context
     $workspace->users()->attach($employee->id);
     app(PermissionRegistrar::class)->setPermissionsTeamId($workspace->id);
-    Role::firstOrCreate(['name' => 'Employee', 'workspace_id' => $workspace->id]);
+    
+    // Use WorkspaceRoleService to create proper roles
+    $roleService = new \App\Services\WorkspaceRoleService();
+    $roleService->seedCoreRoles($workspace);
+    
     $employee->assignRole('Employee');
 
     Auth::login($employee);
@@ -72,8 +76,11 @@ it('fires LeaveRequestApproved event when admin approves leave', function () {
     // Setup workspace context and roles
     $workspace->users()->attach([$admin->id, $employee->id]);
     app(PermissionRegistrar::class)->setPermissionsTeamId($workspace->id);
-    Role::firstOrCreate(['name' => 'Admin', 'workspace_id' => $workspace->id]);
-    Role::firstOrCreate(['name' => 'Employee', 'workspace_id' => $workspace->id]);
+    
+    // Use WorkspaceRoleService to create proper roles
+    $roleService = new \App\Services\WorkspaceRoleService();
+    $roleService->seedCoreRoles($workspace);
+    
     $admin->assignRole('Admin');
     $employee->assignRole('Employee');
 
@@ -109,8 +116,11 @@ it('fires LeaveRequestRejected event when admin rejects leave', function () {
     // Setup workspace context and roles
     $workspace->users()->attach([$admin->id, $employee->id]);
     app(PermissionRegistrar::class)->setPermissionsTeamId($workspace->id);
-    Role::firstOrCreate(['name' => 'Admin', 'workspace_id' => $workspace->id]);
-    Role::firstOrCreate(['name' => 'Employee', 'workspace_id' => $workspace->id]);
+    
+    // Use WorkspaceRoleService to create proper roles
+    $roleService = new \App\Services\WorkspaceRoleService();
+    $roleService->seedCoreRoles($workspace);
+    
     $admin->assignRole('Admin');
     $employee->assignRole('Employee');
 

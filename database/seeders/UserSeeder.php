@@ -33,7 +33,7 @@ class UserSeeder extends Seeder
     
     // Add admin to workspace and assign role
     $workspace->users()->attach($admin->id, ['role' => 'owner']);
-    $admin->assignRole('Workspace Owner');
+    $admin->assignRole('Owner');
 
     // Create departments with workspace_id
     $this->createDepartments($workspace);

@@ -78,7 +78,11 @@ class MembersController extends Controller
       'role' => ['required', Rule::in(['Owner', 'Admin', 'HR', 'Manager', 'Employee'])],
     ]);
 
-    $user = User::where('uuid', $userUuid)->firstOrFail();
+  $user = User::where('uuid', $userUuid)->firstOrFail();
+
+  // Ensure core roles exist for safety
+  app(\App\Services\WorkspaceRoleService::class)->seedCoreRoles($workspace);
+
   app(\Spatie\Permission\PermissionRegistrar::class)->setPermissionsTeamId($workspace->getKey());
   $user->syncRoles([$validated['role']]);
 

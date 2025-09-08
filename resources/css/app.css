@@ -405,4 +405,10 @@
   }
 }
 
+input, [role=combobox], 
+button[aria-haspopup=dialog],
+button[aria-haspopup=menu] {
+  @apply !h-11;
+}
+
 html body { overflow: auto !important; padding-right: 0 !important; }

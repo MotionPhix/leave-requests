@@ -16,13 +16,17 @@ function createWorkspaceAs(User $user): Workspace
     return Workspace::latest()->firstOrFail();
 }
 
-it('allows the workspace owner to access members index', function () {
+it('allows the owner to access members index', function () {
     $owner = User::factory()->create();
     $workspace = createWorkspaceAs($owner);
 
-    // Seed Owner role for this team and assign to owner
+    // Set up permissions and create workspace-scoped roles
     app(PermissionRegistrar::class)->setPermissionsTeamId($workspace->id);
-    Role::firstOrCreate(['name' => 'Owner', 'workspace_id' => $workspace->id]);
+    
+    // Use WorkspaceRoleService to create workspace-scoped roles
+    $roleService = new \App\Services\WorkspaceRoleService();
+    $roleService->seedCoreRoles($workspace);
+    
     $owner->assignRole('Owner');
 
     Auth::login($owner);

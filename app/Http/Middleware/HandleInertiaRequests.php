@@ -66,7 +66,9 @@ class HandleInertiaRequests extends Middleware
             'id' => $user?->id,
             'name' => $user?->name,
             'email' => $user?->email,
+            // Helpful flags
             'isEmployee' => $user?->hasRole('Employee'),
+            'isOwner' => $user?->hasRole('Owner'),
             'can' => $can,
           ];
         },
