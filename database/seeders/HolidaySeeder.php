@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Holiday;
+use App\Models\Workspace;
 use Illuminate\Database\Seeder;
 use Carbon\Carbon;
 
@@ -13,6 +14,9 @@ class HolidaySeeder extends Seeder
    */
   public function run(): void
   {
+    // Get the workspace created in UserSeeder
+    $workspace = Workspace::first();
+    
     $holidays = [
       [
         'name' => 'New Year\'s Day',
@@ -94,6 +98,7 @@ class HolidaySeeder extends Seeder
     ];
 
     foreach ($holidays as $holiday) {
+      $holiday['workspace_id'] = $workspace->id;
       Holiday::create($holiday);
     }
   }

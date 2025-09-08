@@ -31,7 +31,7 @@
     "@fullcalendar/list": "^6.1.17",
     "@fullcalendar/timegrid": "^6.1.18",
     "@fullcalendar/vue3": "^6.1.17",
-    "@inertiajs/vue3": "^2.0.0",
+    "@inertiajs/vue3": "^2.1.5",
     "@inertiaui/modal-vue": "file:vendor/inertiaui/modal/vue",
     "@internationalized/date": "^3.8.1",
     "@tailwindcss/vite": "^4.1.1",
