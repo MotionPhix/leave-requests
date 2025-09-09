@@ -55,10 +55,25 @@ class InvitationsController extends Controller
             'expires_at' => now()->addDays(7),
         ]);
 
-    // Send email to the invited address
+        // Send email to the invited address
         Notification::route('mail', $invitation->email)
             ->notify(new WorkspaceInvitationNotification($invitation));
 
-    return back()->with('success', 'Invitation sent.');
+        return back()->with('success', 'Invitation sent.');
+    }
+
+    public function create(Request $request, string $tenant_slug, string $tenant_uuid)
+    {
+        $workspace = Workspace::query()->where('slug', $tenant_slug)->where('uuid', $tenant_uuid)->firstOrFail();
+
+        // Authorization: only Owner/Admin/HR/Manager can invite
+        app(\Spatie\Permission\PermissionRegistrar::class)->setPermissionsTeamId($workspace->id);
+        if (! $request->user()->hasAnyRole(['Owner', 'Admin', 'HR', 'Manager', 'Super Admin'])) {
+            abort(403);
+        }
+
+        return Inertia::render('tenant/dashboard/InviteMemberModal', [
+            'workspace' => $workspace,
+        ]);
     }
 }

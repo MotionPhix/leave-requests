@@ -29,8 +29,13 @@ class InvitationAcceptController extends Controller
 
         /** @var User $user */
         $user = $request->user();
+
+        // If user is not authenticated, redirect to invitation registration page
         if ($user === null) {
-            return redirect()->route('login');
+            return redirect()->route('invitations.register', [
+                'workspace' => $workspace->id,
+                'token' => $token
+            ]);
         }
 
         // Ensure the logged in user matches the invitation email
@@ -48,7 +53,7 @@ class InvitationAcceptController extends Controller
             'accepted_at' => now(),
         ])->save();
 
-    return redirect()->route('tenant.dashboard', ['tenant_slug' => $workspace->slug, 'tenant_uuid' => $workspace->uuid])
+        return redirect()->route('tenant.dashboard', ['tenant_slug' => $workspace->slug, 'tenant_uuid' => $workspace->uuid])
             ->with('success', 'You have joined the workspace.');
     }
 }

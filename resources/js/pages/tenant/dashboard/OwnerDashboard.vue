@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { Head, Link, usePage, useForm } from '@inertiajs/vue3'
+import { Head, Link, usePage } from '@inertiajs/vue3'
+import { Modal, ModalLink } from '@inertiaui/modal-vue'
 import TenantLayout from '@/layouts/TenantLayout.vue'
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
+import type { DashboardProps } from '@/types'
 import {
   Building,
   Users,
@@ -14,27 +16,9 @@ import {
   UserPlus,
   TrendingUp,
   Award,
-  Mail,
   Plus
 } from 'lucide-vue-next'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 
 // Get page instance
 const page = usePage()
@@ -148,42 +132,6 @@ const greeting = computed(() => {
   if (hour < 17) return 'Good afternoon'
   return 'Good evening'
 })
-
-// Invitation form state
-const showInviteDialog = ref(false)
-
-// Invitation form using Inertia's useForm
-const inviteForm = useForm({
-  email: '',
-  role: ''
-})
-
-// Available roles for invitation
-const availableRoles = [
-  { value: 'Employee', label: 'Employee' },
-  { value: 'Manager', label: 'Manager' },
-  { value: 'HR', label: 'HR' },
-  { value: 'Admin', label: 'Admin' }
-]
-
-// Submit invitation
-const submitInvitation = () => {
-  inviteForm.post(route('tenant.invitations.store', tenantParams), {
-    onSuccess: () => {
-      showInviteDialog.value = false
-      inviteForm.reset()
-    },
-    onError: () => {
-      // Handle errors if needed
-    }
-  })
-}
-
-// Close invitation dialog
-const closeInviteDialog = () => {
-  showInviteDialog.value = false
-  inviteForm.reset()
-}
 </script>
 
 <template>
@@ -265,7 +213,7 @@ const closeInviteDialog = () => {
       </div>
 
       <!-- Quick Actions -->
-      <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <Link
           as="button"
           :href="route('tenant.members.index', tenantParams)"
@@ -329,21 +277,6 @@ const closeInviteDialog = () => {
             </div>
           </div>
         </Link>
-
-        <button
-          @click="showInviteDialog = true"
-          class="cursor-pointer text-left group bg-white dark:bg-neutral-800 rounded-xl shadow-sm border border-neutral-200 dark:border-neutral-700 p-6 hover:shadow-md transition-shadow"
-        >
-          <div class="flex items-center space-x-3">
-            <div class="w-12 h-12 bg-neutral-100 dark:bg-neutral-700 rounded-lg flex items-center justify-center group-hover:bg-neutral-200 dark:group-hover:bg-neutral-600 transition-colors shrink-0">
-              <UserPlus class="w-6 h-6 text-neutral-600 dark:text-neutral-400" />
-            </div>
-            <div>
-              <p class="text-sm font-medium text-neutral-900 dark:text-neutral-100">Invite Member</p>
-              <p class="text-xs text-neutral-500 dark:text-neutral-400">Send invitation to join workspace</p>
-            </div>
-          </div>
-        </button>
       </div>
 
       <!-- Team Overview Section -->
@@ -357,84 +290,14 @@ const closeInviteDialog = () => {
             >
               View all members →
             </Link>
-            <Dialog v-model:open="showInviteDialog">
-              <DialogTrigger as-child>
-                <Button class="bg-neutral-900 dark:bg-neutral-100 text-neutral-100 dark:text-neutral-900 hover:bg-neutral-800 dark:hover:bg-neutral-200">
-                  <Plus class="w-4 h-4 mr-2" />
-                  Invite Member
-                </Button>
-              </DialogTrigger>
-              <DialogContent class="sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle class="flex items-center">
-                    <Mail class="w-5 h-5 mr-2" />
-                    Invite New Member
-                  </DialogTitle>
-                  <DialogDescription>
-                    Send an invitation to join your workspace. They'll receive an email with instructions to accept.
-                  </DialogDescription>
-                </DialogHeader>
 
-                <div class="space-y-4 py-4">
-                  <div class="space-y-2">
-                    <label class="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-                      Email Address
-                    </label>
-                    <Input
-                      v-model="inviteForm.email"
-                      type="email"
-                      placeholder="member@company.com"
-                      class="w-full"
-                      :disabled="inviteForm.processing"
-                    />
-                    <p v-if="inviteForm.errors.email" class="text-sm text-red-600 dark:text-red-400">
-                      {{ inviteForm.errors.email }}
-                    </p>
-                  </div>
-
-                  <div class="space-y-2">
-                    <label class="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-                      Role
-                    </label>
-                    <Select v-model="inviteForm.role" :disabled="inviteForm.processing">
-                      <SelectTrigger class="w-full">
-                        <SelectValue placeholder="Select a role" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem
-                          v-for="role in availableRoles"
-                          :key="role.value"
-                          :value="role.value"
-                        >
-                          {{ role.label }}
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <p v-if="inviteForm.errors.role" class="text-sm text-red-600 dark:text-red-400">
-                      {{ inviteForm.errors.role }}
-                    </p>
-                  </div>
-                </div>
-
-                <DialogFooter>
-                  <Button
-                    variant="outline"
-                    @click="closeInviteDialog"
-                    :disabled="inviteForm.processing"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    @click="submitInvitation"
-                    :disabled="inviteForm.processing || !inviteForm.email || !inviteForm.role"
-                    class="bg-neutral-900 dark:bg-neutral-100 text-neutral-100 dark:text-neutral-900 hover:bg-neutral-800 dark:hover:bg-neutral-200"
-                  >
-                    <Mail class="w-4 h-4 mr-2" v-if="!inviteForm.processing" />
-                    {{ inviteForm.processing ? 'Sending...' : 'Send Invitation' }}
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+            <ModalLink
+              :as="Button"
+              class="cursor-pointer"
+              :href="route('tenant.dashboard.invite-member', tenantParams)">
+              <Plus class="w-4 h-4" />
+              Invite Member
+            </ModalLink>
           </div>
         </div>
 

@@ -411,6 +411,7 @@ class DashboardController extends Controller
         return \App\Models\User::whereHas('workspaces', function ($query) use ($workspace) {
             $query->where('workspaces.id', $workspace->id);
         })
+        ->where('users.id', '!=', \Illuminate\Support\Facades\Auth::id()) // Exclude the current user (owner)
         ->orderBy('created_at', 'desc')
         ->limit(6)
         ->get()

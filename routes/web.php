@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\InvitationAcceptController;
+use App\Http\Controllers\InvitationRegisterController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\WorkspaceSelectionController;
 use Illuminate\Support\Facades\Route;
@@ -16,10 +17,15 @@ Route::get('/', function () {
     return Inertia::render('Welcome');
 })->name('home');
 
-// Invitation acceptance route (public)
+// Invitation acceptance route (public - handles both auth and non-auth users)
 Route::get('/invitation/{workspace}/{token}', InvitationAcceptController::class)
-    ->name('invitations.accept')
-    ->middleware('auth');
+    ->name('invitations.accept');
+
+// Invitation registration for new users
+Route::get('/invitation/{workspace}/{token}/register', InvitationRegisterController::class)
+    ->name('invitations.register');
+Route::post('/invitation/{workspace}/{token}/register', InvitationRegisterController::class)
+    ->name('invitations.register.store');
 
 Route::middleware(['auth'])->group(function () {
     Route::controller(NotificationController::class)->group(function () {

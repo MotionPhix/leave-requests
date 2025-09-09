@@ -31,6 +31,7 @@ Route::prefix('{tenant_slug}/{tenant_uuid}')
         // Invitations (authorize in controller: owner or privileged roles)
         Route::get('members/invitations', [\App\Http\Controllers\Tenant\InvitationsController::class, 'index'])->name('tenant.invitations.index');
         Route::post('members/invitations', [\App\Http\Controllers\Tenant\InvitationsController::class, 'store'])->name('tenant.invitations.store');
+        Route::get('dashboard/invite-member', [\App\Http\Controllers\Tenant\InvitationsController::class, 'create'])->name('tenant.dashboard.invite-member');
 
         // Leave Types management within tenant context
         Route::prefix('leave-types')

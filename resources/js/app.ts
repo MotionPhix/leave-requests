@@ -9,6 +9,7 @@ import { initializeTheme } from './composables/useAppearance';
 import { configureEcho } from '@laravel/echo-vue';
 import { renderApp } from '@inertiaui/modal-vue'
 import VueApexCharts from "vue3-apexcharts"
+import { putConfig } from '@inertiaui/modal-vue'
 
 configureEcho({
   broadcaster: 'pusher',
@@ -16,6 +17,27 @@ configureEcho({
   cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER,
   forceTLS: true,
 });
+
+putConfig({
+    type: 'modal',
+    navigate: false,
+    modal: {
+        closeButton: true,
+        closeExplicitly: false,
+        maxWidth: '2xl',
+        paddingClasses: 'p-0',
+        panelClasses: '',
+        position: 'center',
+    },
+    slideover: {
+        closeButton: true,
+        closeExplicitly: false,
+        maxWidth: 'md',
+        paddingClasses: 'p-4 sm:p-6',
+        panelClasses: 'bg-white min-h-screen',
+        position: 'right',
+    },
+})
 
 // Extend ImportMeta interface for Vite...
 declare module 'vite/client' {
