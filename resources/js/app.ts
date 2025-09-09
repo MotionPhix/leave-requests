@@ -8,6 +8,7 @@ import { ZiggyVue } from 'ziggy-js';
 import { initializeTheme } from './composables/useAppearance';
 import { configureEcho } from '@laravel/echo-vue';
 import { renderApp } from '@inertiaui/modal-vue'
+import VueApexCharts from "vue3-apexcharts"
 
 configureEcho({
   broadcaster: 'pusher',
@@ -40,6 +41,7 @@ createInertiaApp({
     createApp({ render: renderApp(App, props) })
       .use(plugin)
       .use(ZiggyVue)
+      .use(VueApexCharts)
       .mount(el);
   },
   progress: {

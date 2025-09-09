@@ -194,22 +194,6 @@ const calendarOptions = computed(() => ({
 }));
 
 // Computed properties for filtering and stats
-const filteredEvents = computed(() => {
-  let events = calendarEvents.value;
-
-  if (filters.value.search) {
-    const search = filters.value.search.toLowerCase();
-    events = events.filter(
-      (event) =>
-        event.title.toLowerCase().includes(search) ||
-        event.extendedProps.type.toLowerCase().includes(search) ||
-        event.extendedProps.reason?.toLowerCase().includes(search),
-    );
-  }
-
-  return events;
-});
-
 const statusCounts = computed(() => {
   const counts = {
     all: calendarEvents.value.length,
@@ -227,14 +211,6 @@ const statusCounts = computed(() => {
   });
 
   return counts;
-});
-
-const leaveTypeColors = computed(() => {
-  const colors: Record<string, string> = {};
-  leaveTypes.value.forEach((type) => {
-    colors[type.name] = type.color;
-  });
-  return colors;
 });
 
 async function fetchCalendarEvents() {

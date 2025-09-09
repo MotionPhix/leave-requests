@@ -43,4 +43,70 @@ export interface User {
   };
 }
 
+export interface Department {
+  id: number;
+  name: string;
+  employee_count?: number;
+}
+
+export interface Employee {
+  id: number;
+  name: string;
+  email: string;
+  position: string;
+  department?: Department;
+}
+
+export interface LeaveRequest {
+  id: number;
+  employee?: Employee;
+  user?: User;
+  start_date: string;
+  end_date: string;
+  days: number;
+  type: string;
+  status: string;
+  reason: string;
+  created_at: string;
+}
+
+export interface Holiday {
+  id: number;
+  name: string;
+  date: string;
+  is_recurring: boolean;
+}
+
+export interface Stats {
+  totalEmployees: number;
+  totalDepartments: number;
+  pendingLeaveRequests: number;
+  approvedLeaveRequests: number;
+  currentlyOnLeave: number;
+  companyPendingRequests: number;
+  thisMonthApproved: number;
+  nextHoliday: string | null;
+}
+
+export interface ChartData {
+  leaveTrends: Array<{
+    name: string;
+    data: number[];
+  }>;
+  departments: Array<{
+    name: string;
+    data: number[];
+  }>;
+}
+
+export interface DashboardProps {
+  stats: Stats;
+  departments: Department[];
+  recentLeaveRequests: LeaveRequest[];
+  teamPendingRequests: LeaveRequest[];
+  upcomingHolidays: Holiday[];
+  chartData: ChartData;
+  recentEmployees?: Employee[];
+}
+
 export type BreadcrumbItemType = BreadcrumbItem;

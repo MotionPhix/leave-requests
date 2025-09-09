@@ -1,7 +1,7 @@
 <template>
   <WorkspaceSelectionLayout>
     <Head title="Create Workspace" />
-    
+
     <div class="max-w-2xl mx-auto">
       <!-- Header -->
       <div class="text-center mb-12">
@@ -11,7 +11,7 @@
           </svg>
         </div>
         <h1 class="text-4xl font-bold text-gray-900 mb-4">
-          Create Your 
+          Create Your
           <span class="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
             Workspace
           </span>
@@ -116,9 +116,9 @@
                 <span>Create Workspace</span>
               </span>
             </button>
-            
-            <Link 
-              :href="route('workspaces.index')" 
+
+            <Link
+              :href="route('workspaces.index')"
               class="flex-none bg-gray-100 text-gray-700 py-4 px-8 rounded-xl font-semibold hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all duration-300 flex items-center justify-center space-x-2"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -133,7 +133,7 @@
   </WorkspaceSelectionLayout>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { Head, Link, useForm } from '@inertiajs/vue3'
 import WorkspaceSelectionLayout from '@/layouts/WorkspaceSelectionLayout.vue'
 

@@ -91,18 +91,6 @@ const updateStatus = async (status: 'approved' | 'rejected') => {
   }
 };
 
-// Add helper for status color
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case 'approved':
-      return 'text-success border-success';
-    case 'rejected':
-      return 'text-destructive border-destructive';
-    default:
-      return 'text-warning border-warning';
-  }
-};
-
 const getFileIcon = (mimeType: string) => {
   if (mimeType.startsWith('image/')) return FileImage;
   if (mimeType === 'application/pdf') return FileIcon;

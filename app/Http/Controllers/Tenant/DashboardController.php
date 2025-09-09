@@ -81,8 +81,12 @@ class DashboardController extends Controller
         if ($isOwner) {
             // Owner-specific data
             $data['stats'] = $this->getOwnerStats($user, $workspace);
+            $data['departments'] = $this->getDepartments($workspace);
+            $data['recentLeaveRequests'] = $this->getRecentLeaveRequests($workspace);
+            $data['recentEmployees'] = $this->getRecentEmployees($workspace);
             $data['teamPendingRequests'] = $this->getCompanyPendingRequests($workspace);
             $data['upcomingHolidays'] = $this->getUpcomingHolidays($workspace);
+            $data['chartData'] = $this->getChartData($workspace);
         } elseif (in_array($userRole, ['Manager', 'HR', 'Admin'])) {
             // Manager/HR/Admin dashboard data
             $data['stats'] = $this->getManagerStats($user, $workspace);
@@ -381,6 +385,115 @@ class DashboardController extends Controller
         return User::whereHas('workspaces', function ($query) use ($workspace) {
             $query->where('workspaces.id', $workspace->id);
         })->where('reporting_to', $user->id)->count();
+    }
+
+    /**
+     * Get departments for the workspace
+     */
+    private function getDepartments($workspace)
+    {
+        return \App\Models\Department::where('workspace_id', $workspace->id)
+            ->get()
+            ->map(function ($department) {
+                return [
+                    'id' => $department->id,
+                    'name' => $department->name,
+                    'employee_count' => $department->employees()->count(),
+                ];
+            });
+    }
+
+    /**
+     * Get recent employees for the workspace
+     */
+    private function getRecentEmployees($workspace)
+    {
+        return \App\Models\User::whereHas('workspaces', function ($query) use ($workspace) {
+            $query->where('workspaces.id', $workspace->id);
+        })
+        ->orderBy('created_at', 'desc')
+        ->limit(6)
+        ->get()
+        ->map(function ($user) {
+            return [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'position' => $user->position ?? 'Employee',
+            ];
+        });
+    }
+
+    /**
+     * Get recent leave requests for the workspace
+     */
+    private function getRecentLeaveRequests($workspace)
+    {
+        return LeaveRequest::with(['user', 'leaveType'])
+            ->where('workspace_id', $workspace->id)
+            ->orderBy('created_at', 'desc')
+            ->limit(10)
+            ->get()
+            ->map(function ($request) {
+                return [
+                    'id' => $request->id,
+                    'employee' => $request->user ? [
+                        'id' => $request->user->id,
+                        'name' => $request->user->name,
+                        'email' => $request->user->email,
+                    ] : null,
+                    'user' => $request->user ? [
+                        'id' => $request->user->id,
+                        'name' => $request->user->name,
+                    ] : null,
+                    'start_date' => $request->start_date,
+                    'end_date' => $request->end_date,
+                    'days' => $request->total_days,
+                    'type' => $request->leaveType->name,
+                    'status' => $request->status,
+                    'reason' => $request->reason,
+                    'created_at' => $request->created_at,
+                ];
+            });
+    }
+
+    /**
+     * Get chart data for the workspace
+     */
+    private function getChartData($workspace)
+    {
+        // Leave trends data (monthly for current year)
+        $leaveTrends = [];
+        for ($month = 1; $month <= 12; $month++) {
+            $count = LeaveRequest::where('workspace_id', $workspace->id)
+                ->where('status', 'approved')
+                ->whereMonth('created_at', $month)
+                ->whereYear('created_at', now()->year)
+                ->count();
+            $leaveTrends[] = $count;
+        }
+
+        // Department data
+        $departments = \App\Models\Department::where('workspace_id', $workspace->id)
+            ->withCount('employees')
+            ->get()
+            ->map(function ($department) {
+                return [
+                    'name' => $department->name,
+                    'data' => [$department->employees_count],
+                ];
+            })
+            ->toArray();
+
+        return [
+            'leaveTrends' => [
+                [
+                    'name' => 'Approved Requests',
+                    'data' => $leaveTrends,
+                ]
+            ],
+            'departments' => $departments,
+        ];
     }
 
     /**

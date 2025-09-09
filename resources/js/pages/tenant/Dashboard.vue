@@ -1,7 +1,7 @@
 <template>
   <TenantLayout>
     <Head :title="`${workspace?.name} - Dashboard`" />
-    
+
     <div class="space-y-8">
       <!-- Header Section -->
       <div class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl p-8 text-white">
@@ -113,8 +113,8 @@
         <div class="bg-white rounded-xl shadow-sm border border-gray-200">
           <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
             <h3 class="text-lg font-semibold text-gray-900">My Recent Requests</h3>
-            <Link 
-              :href="route('tenant.leave-requests.index', tenantParams)" 
+            <Link
+              :href="route('tenant.leave-requests.index', tenantParams)"
               class="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
             >
               View All
@@ -122,15 +122,15 @@
           </div>
           <div class="p-6">
             <div v-if="myRecentRequests.length > 0" class="space-y-4">
-              <div 
-                v-for="request in myRecentRequests" 
+              <div
+                v-for="request in myRecentRequests"
                 :key="request.id"
                 class="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
               >
                 <div class="flex-1">
                   <div class="flex items-center space-x-3">
                     <div class="font-medium text-gray-900">{{ request.type }}</div>
-                    <span 
+                    <span
                       class="px-2 py-1 text-xs font-medium rounded-full"
                       :class="getStatusBadgeClass(request.status)"
                     >
@@ -141,7 +141,7 @@
                     {{ formatDateRange(request.start_date, request.end_date) }}
                   </div>
                 </div>
-                <Link 
+                <Link
                   :href="route('tenant.leave-requests.show', { ...tenantParams, leaveRequest: request.id })"
                   class="text-indigo-600 hover:text-indigo-700"
                 >
@@ -154,7 +154,7 @@
             <div v-else class="text-center py-8">
               <CalendarIcon class="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <p class="text-gray-500">No recent leave requests</p>
-              <Link 
+              <Link
                 v-if="canCreateLeaveRequests"
                 :href="route('tenant.leave-requests.create', tenantParams)"
                 class="inline-flex items-center mt-3 text-sm text-indigo-600 hover:text-indigo-700"
@@ -181,8 +181,8 @@
           <div class="p-6">
             <!-- For Managers: Show pending team requests -->
             <div v-if="canApproveRequests && teamPendingRequests.length > 0" class="space-y-4">
-              <div 
-                v-for="request in teamPendingRequests" 
+              <div
+                v-for="request in teamPendingRequests"
                 :key="request.id"
                 class="flex items-center justify-between p-4 bg-amber-50 rounded-lg border border-amber-200"
               >
@@ -209,9 +209,9 @@
 
             <!-- For Everyone: Quick Actions -->
             <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Link 
+              <Link
                 v-if="canCreateLeaveRequests"
-                :href="route('tenant.leave-requests.create', tenantParams)" 
+                :href="route('tenant.leave-requests.create', tenantParams)"
                 class="flex items-center p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg hover:from-indigo-100 hover:to-purple-100 transition-all duration-200 group"
               >
                 <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center group-hover:bg-indigo-200 transition-colors">
@@ -225,8 +225,8 @@
                 </div>
               </Link>
 
-              <div 
-                v-else 
+              <div
+                v-else
                 class="flex items-center p-4 bg-gradient-to-r from-gray-50 to-slate-50 rounded-lg"
               >
                 <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
@@ -240,8 +240,8 @@
                 </div>
               </div>
 
-              <Link 
-                :href="route('tenant.leave-requests.index', tenantParams)" 
+              <Link
+                :href="route('tenant.leave-requests.index', tenantParams)"
                 class="flex items-center p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg hover:from-green-100 hover:to-emerald-100 transition-all duration-200 group"
               >
                 <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-green-200 transition-colors">
@@ -255,9 +255,9 @@
                 </div>
               </Link>
 
-              <Link 
+              <Link
                 v-if="canViewTeamStats"
-                :href="route('tenant.members.index', tenantParams)" 
+                :href="route('tenant.members.index', tenantParams)"
                 class="flex items-center p-4 bg-gradient-to-r from-orange-50 to-red-50 rounded-lg hover:from-orange-100 hover:to-red-100 transition-all duration-200 group"
               >
                 <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center group-hover:bg-orange-200 transition-colors">
@@ -284,8 +284,8 @@
           </div>
           <div class="p-6">
             <div v-if="upcomingHolidays.length > 0" class="space-y-4">
-              <div 
-                v-for="holiday in upcomingHolidays" 
+              <div
+                v-for="holiday in upcomingHolidays"
                 :key="holiday.id"
                 class="flex items-center justify-between p-3 bg-green-50 rounded-lg"
               >
@@ -293,7 +293,7 @@
                   <div class="font-medium text-gray-900">{{ holiday.name }}</div>
                   <div class="text-sm text-gray-600">{{ formatDate(holiday.date) }}</div>
                 </div>
-                <span 
+                <span
                   class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800"
                 >
                   {{ holiday.type }}
@@ -316,8 +316,8 @@
           </div>
           <div class="p-6">
             <div v-if="leaveSummary && leaveSummary.length > 0" class="space-y-4">
-              <div 
-                v-for="leave in leaveSummary" 
+              <div
+                v-for="leave in leaveSummary"
                 :key="leave.type"
                 class="space-y-2"
               >
@@ -326,7 +326,7 @@
                   <span class="text-sm text-gray-600">{{ leave.used }}/{{ leave.total }} days</span>
                 </div>
                 <div class="w-full bg-gray-200 rounded-full h-2">
-                  <div 
+                  <div
                     class="h-2 rounded-full transition-all duration-300"
                     :class="leave.color"
                     :style="{ width: `${(leave.used / leave.total) * 100}%` }"
@@ -344,145 +344,3 @@
     </div>
   </TenantLayout>
 </template>
-
-<script setup lang="ts">
-import { Head, Link, usePage } from '@inertiajs/vue3'
-import TenantLayout from '@/layouts/TenantLayout.vue'
-import { CalendarIcon } from 'lucide-vue-next'
-import { computed } from 'vue'
-import dayjs from 'dayjs'
-
-interface UserRole {
-  name: string;
-}
-
-interface AuthUser {
-  id: string | number;
-  name: string;
-  email: string;
-  roles?: UserRole[];
-}
-
-interface WorkspaceData {
-  slug: string;
-  uuid: string;
-  name: string;
-}
-
-interface LeaveRequest {
-  id: number;
-  type: string;
-  start_date: string;
-  end_date: string;
-  status: string;
-  employee_name?: string;
-}
-
-interface Holiday {
-  id: number;
-  name: string;
-  date: string;
-  type: string;
-}
-
-interface LeaveSummary {
-  type: string;
-  used: number;
-  total: number;
-  color: string;
-}
-
-interface Stats {
-  myLeaveBalance?: number;
-  myPendingRequests?: number;
-  teamPendingRequests?: number;
-  totalEmployees?: number;
-}
-
-interface PageProps extends /* @vue-ignore */ Record<string, any> {
-  auth: {
-    user: AuthUser;
-  };
-  workspace: WorkspaceData;
-  stats: Stats;
-  myRecentRequests: LeaveRequest[];
-  teamPendingRequests: LeaveRequest[];
-  upcomingHolidays: Holiday[];
-  leaveSummary: LeaveSummary[] | null;
-}
-
-const page = usePage<PageProps>();
-const { auth, workspace, stats, myRecentRequests, teamPendingRequests, upcomingHolidays, leaveSummary } = page.props;
-const user = auth.user;
-
-// Tenant route parameters
-const tenantParams = {
-  tenant_slug: workspace?.slug,
-  tenant_uuid: workspace?.uuid
-};
-
-// Current date
-const currentDate = computed(() => dayjs().format('MMMM D, YYYY'));
-
-// User role display
-const userRole = computed(() => {
-  if (!user.roles || user.roles.length === 0) return 'Employee';
-  return user.roles[0].name;
-});
-
-// Permission checks
-const userPermissions = computed(() => {
-  // This would come from the backend in a real implementation
-  // For now, we'll check based on roles
-  const roleNames = user.roles?.map(r => r.name) || [];
-  return {
-    canViewTeamStats: roleNames.some(role => 
-      ['Workspace Owner', 'Super Admin', 'HR Manager', 'Department Manager', 'Team Lead'].includes(role)
-    ),
-    canViewCompanyStats: roleNames.some(role => 
-      ['Workspace Owner', 'Super Admin', 'HR Manager'].includes(role)
-    ),
-    canApproveRequests: roleNames.some(role => 
-      ['Workspace Owner', 'Super Admin', 'HR Manager', 'Department Manager', 'Team Lead'].includes(role)
-    ),
-    canManageMembers: roleNames.some(role => 
-      ['Workspace Owner', 'Super Admin', 'HR Manager'].includes(role)
-    ),
-    // Workspace owners CANNOT request leave - they own the company!
-    // Only employees and managers can request leave, not the owners
-    canCreateLeaveRequests: roleNames.some(role => 
-      ['Employee', 'HR Manager', 'Department Manager', 'Team Lead', 'Project Manager', 'Senior Employee'].includes(role)
-    ) && !roleNames.includes('Workspace Owner') && !roleNames.includes('Super Admin')
-  };
-});
-
-const canViewTeamStats = computed(() => userPermissions.value.canViewTeamStats);
-const canViewCompanyStats = computed(() => userPermissions.value.canViewCompanyStats);
-const canApproveRequests = computed(() => userPermissions.value.canApproveRequests);
-const canCreateLeaveRequests = computed(() => userPermissions.value.canCreateLeaveRequests);
-
-// Utility functions
-const formatDate = (date: string) => dayjs(date).format('MMM D, YYYY');
-
-const formatDateRange = (startDate: string, endDate: string) => {
-  const start = dayjs(startDate);
-  const end = dayjs(endDate);
-  if (start.isSame(end, 'day')) {
-    return start.format('MMM D, YYYY');
-  }
-  return `${start.format('MMM D')} - ${end.format('MMM D, YYYY')}`;
-};
-
-const getStatusBadgeClass = (status: string) => {
-  const classes = {
-    'pending': 'bg-yellow-100 text-yellow-800',
-    'approved': 'bg-green-100 text-green-800',
-    'rejected': 'bg-red-100 text-red-800',
-    'cancelled': 'bg-gray-100 text-gray-800',
-  };
-  return classes[status as keyof typeof classes] || 'bg-gray-100 text-gray-800';
-};
-
-// Default props
-defineProps<PageProps>();
-</script>

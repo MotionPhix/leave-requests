@@ -3,7 +3,6 @@ import { computed } from 'vue';
 import { Head } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import ApexCharts from 'vue3-apexcharts';
 import { FileTextIcon, UserIcon, CalendarIcon, PercentIcon } from 'lucide-vue-next';
 import type { BreadcrumbItem } from '@/types';

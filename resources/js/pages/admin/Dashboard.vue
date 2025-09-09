@@ -73,11 +73,6 @@ const barOptions = {
   colors: ['#3b82f6']
 };
 
-const barSeries = [{
-  name: 'Leave Count',
-  data: props.chartData?.byType.map(t => t.count)
-}];
-
 async function fetchDashboardData() {
   const { data } = await axios.get('/api/admin/stats');
   monthlyLabels.value = Object.keys(data.monthly).map(m => `Month ${m}`);

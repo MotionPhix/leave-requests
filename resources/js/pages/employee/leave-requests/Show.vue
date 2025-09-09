@@ -13,15 +13,9 @@ import {
   DialogHeader,
   DialogOverlay,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from '@/components/ui/alert';
 import { Textarea } from '@/components/ui/textarea';
-import { Calendar, Clock, FileText, MessageSquare, AlertTriangle } from 'lucide-vue-next';
+import { Calendar, Clock, FileText, MessageSquare } from 'lucide-vue-next';
 import type { BreadcrumbItem } from '@/types';
 
 interface LeaveRequest {

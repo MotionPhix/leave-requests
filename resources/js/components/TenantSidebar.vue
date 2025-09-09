@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
+import { computed } from 'vue';
 import {
   Sidebar,
   SidebarContent,
@@ -12,13 +13,17 @@ import {
 } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { 
-  CalendarIcon, 
-  LayoutGrid, 
-  UsersIcon, 
+import { route } from 'ziggy-js';
+import {
+  CalendarIcon,
+  LayoutGrid,
+  UsersIcon,
   FileTextIcon,
   SettingsIcon,
-  UserPlusIcon
+  UserPlusIcon,
+  Building2,
+  BarChart3,
+  ClipboardList
 } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 
@@ -51,117 +56,144 @@ interface PageProps extends Record<string, any> {
 }
 
 const page = usePage<PageProps>();
-const user = page.props.auth.user;
-const workspace = page.props.workspace;
+
+const user = computed(() => page.props.auth.user);
+const workspace = computed(() => page.props.workspace);
 
 // Get current tenant parameters for route generation
-const tenantParams = {
-  tenant_slug: workspace?.slug,
-  tenant_uuid: workspace?.uuid
-};
+const tenantParams = computed(() => ({
+  tenant_slug: workspace.value?.slug,
+  tenant_uuid: workspace.value?.uuid
+}));
 
 // Main navigation items (for all users)
-const mainNavItems: NavItem[] = [
+const mainNavItems = computed((): NavItem[] => [
   {
     title: 'Dashboard',
-    href: tenantParams.tenant_slug && tenantParams.tenant_uuid 
-      ? route('tenant.dashboard', tenantParams) 
+    href: tenantParams.value.tenant_slug && tenantParams.value.tenant_uuid
+      ? route('tenant.dashboard', tenantParams.value)
       : '#',
     icon: LayoutGrid
   }
-];
+]);
 
 // Leave requests navigation - only for users who can actually request leave
 // Owners cannot request leave (they own the company!)
-/* @vue-ignore */
-const canRequestLeave = user?.permissions?.canCreateLeaveRequests && !user?.isOwner;
-
-if (canRequestLeave) {
-  mainNavItems.push({
-    title: 'My Leave Requests',
-    href: tenantParams.tenant_slug && tenantParams.tenant_uuid 
-      ? route('tenant.leave-requests.index', tenantParams) 
-      : '#',
-    icon: CalendarIcon
-  });
-}
+const canRequestLeave = computed(() => user.value?.permissions?.canCreateLeaveRequests && !user.value?.isOwner);
 
 // Admin navigation items (shown based on permissions)
-const adminNavItems: NavItem[] = [];
+const adminNavItems = computed((): NavItem[] => {
+  const items: NavItem[] = [];
 
-/* @vue-ignore */
-if (user?.permissions?.canViewAllUsers) {
-  adminNavItems.push({
-    title: 'Team Members',
-    href: tenantParams.tenant_slug && tenantParams.tenant_uuid 
-      ? route('tenant.members.index', tenantParams) 
-      : '#',
-    icon: UsersIcon,
-  });
-}
+  if (user.value?.permissions?.canViewAllUsers) {
+    items.push({
+      title: 'Team Members',
+      href: tenantParams.value.tenant_slug && tenantParams.value.tenant_uuid
+        ? route('tenant.members.index', tenantParams.value)
+        : '#',
+      icon: UsersIcon,
+    });
+  }
 
-/* @vue-ignore */
-if (user?.permissions?.canApproveLeave || user?.permissions?.canViewAllUsers) {
-  adminNavItems.push({
-    title: 'All Leave Requests',
-    href: tenantParams.tenant_slug && tenantParams.tenant_uuid 
-      ? route('tenant.admin.leave-requests.index', tenantParams) 
-      : '#',
-    icon: FileTextIcon,
-  });
-}
+  if (user.value?.permissions?.canApproveLeave || user.value?.permissions?.canViewAllUsers) {
+    items.push({
+      title: 'All Leave Requests',
+      href: tenantParams.value.tenant_slug && tenantParams.value.tenant_uuid
+        ? route('tenant.admin.leave-requests.index', tenantParams.value)
+        : '#',
+      icon: FileTextIcon,
+    });
+  }
 
-/* @vue-ignore */
-if (user?.permissions?.canViewAllUsers) {
-  adminNavItems.push({
-    title: 'Invitations',
-    href: tenantParams.tenant_slug && tenantParams.tenant_uuid 
-      ? route('tenant.invitations.index', tenantParams) 
-      : '#',
-    icon: UserPlusIcon,
-  });
-}
+  if (user.value?.permissions?.canViewAllUsers) {
+    items.push({
+      title: 'Invitations',
+      href: tenantParams.value.tenant_slug && tenantParams.value.tenant_uuid
+        ? route('tenant.invitations.index', tenantParams.value)
+        : '#',
+      icon: UserPlusIcon,
+    });
+  }
+
+  // Management features (Owners & Managers)
+  if (user.value?.isOwner || user.value?.roles?.some((role: UserRole) => role.name === 'Manager')) {
+    items.push(
+      {
+        title: 'Holidays',
+        href: tenantParams.value.tenant_slug && tenantParams.value.tenant_uuid
+          ? route('tenant.holidays.index', tenantParams.value)
+          : '#',
+        icon: CalendarIcon,
+      },
+      {
+        title: 'Leave Types',
+        href: tenantParams.value.tenant_slug && tenantParams.value.tenant_uuid
+          ? route('tenant.leave-types.index', tenantParams.value)
+          : '#',
+        icon: ClipboardList,
+      },
+      {
+        title: 'Departments',
+        href: tenantParams.value.tenant_slug && tenantParams.value.tenant_uuid
+          ? route('tenant.departments.index', tenantParams.value)
+          : '#',
+        icon: Building2,
+      },
+      {
+        title: 'Reports',
+        href: tenantParams.value.tenant_slug && tenantParams.value.tenant_uuid
+          ? route('tenant.reports.index', tenantParams.value)
+          : '#',
+        icon: BarChart3,
+      }
+    );
+  }
+
+  return items;
+});
 
 // Workspace management items (only for owners)
-const workspaceManagementItems: NavItem[] = [
+const workspaceManagementItems = computed((): NavItem[] => [
   {
-    title: 'Switch Workspace',
+    title: 'Workspaces',
     href: route('workspaces.index'),
     icon: SettingsIcon,
   }
-];
+]);
 
 // Check if user has admin access based on permissions
-/* @vue-ignore */
-const hasAdminAccess = user?.permissions?.canApproveLeave || user?.permissions?.canViewAllUsers || user?.isOwner;
+const hasAdminAccess = computed(() =>
+  user.value?.permissions?.canApproveLeave || user.value?.permissions?.canViewAllUsers || user.value?.isOwner
+);
 
 // Check if user is owner (can manage workspaces)
-/* @vue-ignore */
-const isWorkspaceOwner = user?.isOwner;
+const isWorkspaceOwner = computed(() => user.value?.isOwner);
 
 // Combine navigation items based on user permissions
-let combinedNavItems = [...mainNavItems];
+const combinedNavItems = computed((): NavItem[] => {
+  let items = [...mainNavItems.value];
 
-if (hasAdminAccess) {
-  combinedNavItems = [...combinedNavItems, ...adminNavItems];
-}
-
-if (isWorkspaceOwner) {
-  combinedNavItems = [...combinedNavItems, ...workspaceManagementItems];
-}
-
-const footerNavItems: NavItem[] = [
-  {
-    title: 'Switch Workspace',
-    href: route('workspaces.index'),
-    icon: SettingsIcon
-  },
-  {
-    title: 'Workspace Settings',
-    href: '#', // TODO: Add workspace settings route
-    icon: SettingsIcon
+  // Add leave requests for eligible users
+  if (canRequestLeave.value) {
+    items.push({
+      title: 'My Leave Requests',
+      href: tenantParams.value.tenant_slug && tenantParams.value.tenant_uuid
+        ? route('tenant.leave-requests.index', tenantParams.value)
+        : '#',
+      icon: CalendarIcon
+    });
   }
-];
+
+  if (hasAdminAccess.value) {
+    items = [...items, ...adminNavItems.value];
+  }
+
+  if (isWorkspaceOwner.value) {
+    items = [...items, ...workspaceManagementItems.value];
+  }
+
+  return items;
+});
 </script>
 
 <template>
@@ -170,8 +202,8 @@ const footerNavItems: NavItem[] = [
       <SidebarMenu>
         <SidebarMenuItem>
           <SidebarMenuButton size="lg" as-child>
-            <Link :href="tenantParams.tenant_slug && tenantParams.tenant_uuid 
-              ? route('tenant.dashboard', tenantParams) 
+            <Link :href="tenantParams.tenant_slug && tenantParams.tenant_uuid
+              ? route('tenant.dashboard', tenantParams)
               : '#'">
               <AppLogo />
             </Link>
@@ -190,7 +222,7 @@ const footerNavItems: NavItem[] = [
         <div class="font-medium text-foreground">{{ workspace?.name }}</div>
         <div class="truncate">{{ workspace?.slug }}</div>
       </div>
-      
+
       <NavUser />
     </SidebarFooter>
   </Sidebar>

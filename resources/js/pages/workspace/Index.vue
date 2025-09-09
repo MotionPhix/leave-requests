@@ -1,11 +1,11 @@
 <template>
   <WorkspaceSelectionLayout>
     <Head title="Select Workspace" />
-    
+
     <!-- Hero Section -->
     <div class="text-center mb-12" v-if="workspaces.length > 0">
       <h1 class="text-4xl font-bold text-gray-900 mb-4">
-        Welcome to your 
+        Welcome to your
         <span class="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
           workspace hub
         </span>
@@ -24,12 +24,12 @@
           {{ workspaces.length }} workspace{{ workspaces.length !== 1 ? 's' : '' }} available
         </div>
       </div>
-      
+
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         <!-- Workspace Cards -->
-        <div 
-          v-for="workspace in workspaces" 
-          :key="workspace.uuid" 
+        <div
+          v-for="workspace in workspaces"
+          :key="workspace.uuid"
           class="group relative bg-white rounded-2xl border border-gray-200 p-8 hover:shadow-xl hover:shadow-indigo-500/10 transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
           @click="selectWorkspace(workspace)"
         >
@@ -40,7 +40,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
               </svg>
             </div>
-            
+
             <!-- Status Badge -->
             <div class="flex items-center space-x-2">
               <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
@@ -85,22 +85,22 @@
         </div>
 
         <!-- Create New Workspace Section -->
-        <Link 
+        <Link
           as="button"
-          :href="route('workspaces.create')" 
+          :href="route('workspaces.create')"
           class="text-center cursor-pointer">
           <div class="bg-gradient-to-br from-gray-50 to-indigo-50 rounded-3xl p-12 border-2 border-dashed border-gray-300 hover:border-indigo-400 transition-colors duration-300">
-            
+
             <h3 class="text-2xl font-semibold text-gray-900 mb-4">
               {{ workspaces.length > 0 ? 'Create Another Workspace' : 'Create Your First Workspace' }}
             </h3>
             <!-- <p class="text-gray-600 mb-8 max-w-md mx-auto">
-              {{ workspaces.length > 0 
+              {{ workspaces.length > 0
                 ? 'Need to manage leave requests for another team or department? Set up a new workspace in minutes.'
                 : 'Get started by setting up your first workspace. It only takes a minute to get your team organized.'
               }}
             </p> -->
-            
+
             <div
               class="inline-flex items-center gap-x-1 bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-4 px-8 rounded-xl font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 hover:shadow-lg"
             >
@@ -132,9 +132,9 @@
       </p>
 
       <div>
-        <Link 
+        <Link
           :as="Button"
-          :href="route('workspaces.create')" 
+          :href="route('workspaces.create')"
           class="h-12 cursor-pointer">
           Create Your First Workspace
         </Link>
@@ -156,10 +156,6 @@ interface Workspace {
   member_count?: number
   is_owner?: boolean
 }
-
-const props = defineProps<{
-  workspaces: Workspace[]
-}>()
 
 const selectWorkspace = (workspace: Workspace) => {
   window.location.href = route('workspaces.switch', {

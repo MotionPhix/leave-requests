@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Link, router } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -350,9 +350,9 @@ const stats = computed(() => ({
             :disabled="!link.url || isLoading"
             :variant="link.active ? 'default' : 'outline'"
             size="sm"
-            @click="router.get(link.url)"
-            v-html="link.label"
-          />
+            @click="router.get(link.url)">
+            {{ link.label }}
+          </Button>
         </div>
       </div>
     </div>
