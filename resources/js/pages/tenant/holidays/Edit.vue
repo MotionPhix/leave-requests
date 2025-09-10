@@ -1,34 +1,26 @@
 <template>
-  <TenantLayout>
-    <Head title="Edit Holiday" />
-
+  <Head title="Edit Holiday" />
+  
+  <Modal 
+    ref="holidayModal"
+    panel-classes="bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-lg p-6 space-y-6">
     <div class="space-y-6">
       <!-- Header -->
-      <div class="flex items-center justify-between">
-        <div>
-          <h1 class="text-2xl font-semibold text-foreground">Edit Holiday</h1>
-          <p class="text-muted-foreground">
-            Update holiday information
-          </p>
-        </div>
-        <Link
-          :href="route('tenant.holidays.index', {
-            tenant_slug: workspace.slug,
-            tenant_uuid: workspace.uuid
-          })"
-          class="inline-flex items-center gap-2 px-4 py-2 border border-input rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
-        >
-          <ArrowLeft class="h-4 w-4" />
-          Back to Holidays
-        </Link>
+      <div>
+        <h1 class="text-2xl font-semibold text-neutral-900 dark:text-neutral-100">Edit Holiday</h1>
+        <p class="text-neutral-600 dark:text-neutral-400">
+          Update holiday information and settings
+        </p>
       </div>
+
+      <Separator />
 
       <!-- Form -->
       <div class="max-w-2xl">
         <form @submit.prevent="submit" class="space-y-6">
-          <div class="bg-card border rounded-lg p-6 space-y-6">
+          <div>
             <div class="space-y-4">
-              <h2 class="text-lg font-medium text-card-foreground">Holiday Details</h2>
+              <h2 class="text-lg font-medium text-neutral-900 dark:text-neutral-100">Holiday Details</h2>
               
               <!-- Name -->
               <div class="space-y-2">
@@ -37,24 +29,78 @@
                   id="name"
                   v-model="form.name"
                   type="text"
-                  placeholder="e.g., Christmas Day, Independence Day"
+                  :placeholder="getNamePlaceholder()"
                   :class="{ 'border-destructive': form.errors.name }"
                   required
                 />
                 <InputError :message="form.errors.name" />
               </div>
 
-              <!-- Date -->
+              <!-- Holiday Duration Type -->
               <div class="space-y-2">
-                <Label for="date">Date *</Label>
+                <Label>Holiday Duration *</Label>
+                <div class="grid grid-cols-2 gap-3">
+                  <div class="flex items-center space-x-2">
+                    <input
+                      id="single_day"
+                      v-model="holidayType"
+                      type="radio"
+                      value="single_day"
+                      class="h-4 w-4 text-primary"
+                    />
+                    <Label for="single_day" class="text-sm font-normal">Single Day</Label>
+                  </div>
+                  <div class="flex items-center space-x-2">
+                    <input
+                      id="date_range"
+                      v-model="holidayType"
+                      type="radio"
+                      value="date_range"
+                      class="h-4 w-4 text-primary"
+                    />
+                    <Label for="date_range" class="text-sm font-normal">Date Range</Label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Single Date (for single day holidays) -->
+              <div v-if="holidayType === 'single_day'" class="space-y-2">
+                <Label for="holiday_date">Holiday Date *</Label>
                 <Input
-                  id="date"
-                  v-model="form.date"
+                  id="holiday_date"
+                  v-model="form.start_date"
                   type="date"
-                  :class="{ 'border-destructive': form.errors.date }"
+                  :class="{ 'border-destructive': form.errors.start_date }"
                   required
+                  @input="updateEndDate"
                 />
-                <InputError :message="form.errors.date" />
+                <InputError :message="form.errors.start_date" />
+              </div>
+
+              <!-- Date Range (for multi-day holidays) -->
+              <div v-if="holidayType === 'date_range'" class="grid grid-cols-2 gap-4">
+                <div class="space-y-2">
+                  <Label for="start_date">Start Date *</Label>
+                  <Input
+                    id="start_date"
+                    v-model="form.start_date"
+                    type="date"
+                    :class="{ 'border-destructive': form.errors.start_date }"
+                    required
+                  />
+                  <InputError :message="form.errors.start_date" />
+                </div>
+                <div class="space-y-2">
+                  <Label for="end_date">End Date *</Label>
+                  <Input
+                    id="end_date"
+                    v-model="form.end_date"
+                    type="date"
+                    :class="{ 'border-destructive': form.errors.end_date }"
+                    required
+                  />
+                  <InputError :message="form.errors.end_date" />
+                </div>
               </div>
 
               <!-- Type -->
@@ -65,11 +111,17 @@
                     <SelectValue placeholder="Select holiday type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Public Holiday">Public Holiday</SelectItem>
+                    <SelectItem value="National Holiday">National Holiday</SelectItem>
+                    <SelectItem value="Religious Holiday">Religious Holiday</SelectItem>
                     <SelectItem value="Company Holiday">Company Holiday</SelectItem>
+                    <SelectItem value="Floating Holiday">Floating Holiday</SelectItem>
+                    <SelectItem value="Company Closure">Company Closure</SelectItem>
                   </SelectContent>
                 </Select>
                 <InputError :message="form.errors.type" />
+                <p class="text-xs text-muted-foreground">
+                  National/Religious holidays typically recur yearly, Company Closures are often one-time events
+                </p>
               </div>
 
               <!-- Description -->
@@ -85,33 +137,76 @@
                 <InputError :message="form.errors.description" />
               </div>
 
-              <!-- Recurring -->
+              <!-- Color -->
+              <div class="space-y-2">
+                <Label for="color">Holiday Color *</Label>
+                <Input
+                  id="color"
+                  v-model="form.color"
+                  type="color"
+                  :class="{ 'border-destructive': form.errors.color }"
+                  required
+                />
+                <InputError :message="form.errors.color" />
+              </div>
+
+              <!-- Recurring Options -->
+              <div class="space-y-3">
+                <div class="flex items-center space-x-2">
+                  <Checkbox
+                    id="is_recurring"
+                    v-model="form.is_recurring"
+                    @update:modelValue="handleRecurringChange"
+                  />
+                  <Label for="is_recurring" class="text-sm font-normal">
+                    This holiday repeats annually
+                  </Label>
+                </div>
+                
+                <div v-if="form.is_recurring" class="ml-6 space-y-3 p-3 bg-muted/30 rounded-md">
+                  <p class="text-xs text-muted-foreground">
+                    <strong>Example:</strong> Christmas Day will appear on December 25th every year
+                  </p>
+                  
+                  <div v-if="holidayType === 'date_range'" class="text-xs text-amber-600 bg-amber-50 p-2 rounded">
+                    <strong>Note:</strong> Multi-day recurring holidays will maintain the same duration each year. 
+                    For example, a 3-day company shutdown will always be 3 days starting from the recurring date.
+                  </div>
+
+                  <!-- Auto-set recurrence pattern based on context -->
+                  <input type="hidden" v-model="form.recurrence_pattern" value="yearly" />
+                </div>
+                
+                <p v-else class="text-xs text-muted-foreground ml-6">
+                  This will be a one-time holiday for the specified date(s) only
+                </p>
+              </div>
+
+              <!-- Visibility to Employees -->
               <div class="flex items-center space-x-2">
                 <Checkbox
-                  id="is_recurring"
-                  v-model="form.is_recurring"
+                  id="is_visible_to_employees"
+                  v-model="form.is_visible_to_employees"
                 />
-                <Label for="is_recurring" class="text-sm font-normal">
-                  This is a recurring annual holiday
+                <Label for="is_visible_to_employees" class="text-sm font-normal">
+                  Visible to employees
                 </Label>
               </div>
               <p class="text-xs text-muted-foreground">
-                Recurring holidays will automatically appear every year on the same date
+                When enabled, all employees can see this holiday in their calendar
               </p>
             </div>
           </div>
 
           <!-- Form Actions -->
           <div class="flex items-center justify-end gap-3">
-            <Link
-              :href="route('tenant.holidays.index', {
-                tenant_slug: workspace.slug,
-                tenant_uuid: workspace.uuid
-              })"
-              class="inline-flex items-center gap-2 px-4 py-2 border border-input rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
+            <Button 
+              type="button" 
+              variant="outline"
+              @click="router.visit(route('tenant.management.holidays.index', { tenant_slug: workspace.slug, tenant_uuid: workspace.uuid }))"
             >
               Cancel
-            </Link>
+            </Button>
             <Button 
               type="submit" 
               :disabled="form.processing"
@@ -125,12 +220,13 @@
         </form>
       </div>
     </div>
-  </TenantLayout>
+  </Modal>
 </template>
 
 <script setup lang="ts">
-import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
-import TenantLayout from '@/layouts/TenantLayout.vue';
+import { Head, useForm, usePage, router } from '@inertiajs/vue3';
+import { ref, watch } from 'vue';
+import { Modal } from '@inertiaui/modal-vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -145,19 +241,24 @@ import {
 } from '@/components/ui/select';
 import InputError from '@/components/InputError.vue';
 import {
-  ArrowLeft,
   Save,
   Loader2
 } from 'lucide-vue-next';
+import { Separator } from '@/components/ui/separator';
+import { toast } from 'vue-sonner';
 
 interface Holiday {
   id: number;
   uuid: string;
   name: string;
   type: string;
-  date: string;
+  start_date: string;
+  end_date: string;
   description: string;
+  color: string;
   is_recurring: boolean;
+  recurrence_pattern: string;
+  is_visible_to_employees: boolean;
 }
 
 const props = defineProps<{
@@ -166,23 +267,94 @@ const props = defineProps<{
 
 const page = usePage();
 const workspace = page.props.workspace as { uuid: string; slug: string; name: string };
+const holidayModal = ref(null);
+
+// Determine if this is a single day or date range holiday
+const holidayType = ref(
+  props.holiday.start_date === props.holiday.end_date ? 'single_day' : 'date_range'
+);
 
 const form = useForm({
   name: props.holiday.name,
-  date: props.holiday.date,
+  start_date: props.holiday.start_date,
+  end_date: props.holiday.end_date,
   type: props.holiday.type,
   description: props.holiday.description || '',
+  color: props.holiday.color || '#ef4444',
   is_recurring: props.holiday.is_recurring,
+  recurrence_pattern: props.holiday.recurrence_pattern || '',
+  is_visible_to_employees: props.holiday.is_visible_to_employees ?? true,
 });
 
+// Update end date when single day is selected
+const updateEndDate = () => {
+  if (holidayType.value === 'single_day') {
+    form.end_date = form.start_date;
+  }
+};
+
+// Handle recurring change with smart defaults
+const handleRecurringChange = (value: boolean) => {
+  if (value) {
+    form.recurrence_pattern = 'yearly';
+  } else {
+    form.recurrence_pattern = '';
+  }
+};
+
+// Watch for form type changes to auto-suggest recurring and colors
+watch(() => form.type, (newType) => {
+  // Auto-suggest recurring for national/religious holidays
+  if (['National Holiday', 'Religious Holiday'].includes(newType)) {
+    if (!form.is_recurring) {
+      form.is_recurring = true;
+      form.recurrence_pattern = 'yearly';
+    }
+  }
+  
+  // Auto-suggest colors based on holiday type (only if using default color)
+  const colorMap = {
+    'National Holiday': '#dc2626', // Red
+    'Religious Holiday': '#7c3aed', // Purple  
+    'Company Holiday': '#2563eb', // Blue
+    'Floating Holiday': '#059669', // Green
+    'Company Closure': '#ea580c', // Orange
+  };
+  
+  if (colorMap[newType] && form.color === '#ef4444') {
+    form.color = colorMap[newType];
+  }
+});
+
+// Watch holiday type to auto-update end date for single day
+watch(() => holidayType.value, () => {
+  if (holidayType.value === 'single_day' && form.start_date) {
+    updateEndDate();
+  }
+});
+
+// Get dynamic placeholder based on holiday type
+const getNamePlaceholder = () => {
+  const examples = {
+    'National Holiday': 'e.g., Independence Day, Memorial Day',
+    'Religious Holiday': 'e.g., Christmas Day, Eid al-Fitr, Diwali',
+    'Company Holiday': 'e.g., Company Anniversary, Founders Day',
+    'Floating Holiday': 'e.g., Personal Choice Day, Flexible PTO',
+    'Company Closure': 'e.g., Year-End Shutdown, Office Renovation',
+  };
+  
+  return examples[form.type] || 'e.g., Christmas Day, Independence Day';
+};
+
 const submit = () => {
-  form.put(route('tenant.holidays.update', {
+  form.put(route('tenant.management.holidays.update', {
     tenant_slug: workspace.slug,
     tenant_uuid: workspace.uuid,
-    holiday: props.holiday.id
+    holiday: props.holiday.uuid
   }), {
     onSuccess: () => {
-      // Redirect will be handled by the controller
+      holidayModal.value?.close();
+      toast.success('Holiday updated successfully!');
     },
   });
 };

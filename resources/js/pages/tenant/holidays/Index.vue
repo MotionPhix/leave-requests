@@ -84,16 +84,18 @@
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem as-child>
-                    <Link
+                    <ModalLink
+                      as="button"
                       :href="route('tenant.management.holidays.edit', {
                         tenant_slug: $page.props.workspace.slug,
                         tenant_uuid: $page.props.workspace.uuid,
                         holiday: holiday.uuid
                       })"
+                      class="cursor-pointer flex items-center w-full"
                     >
                       <Edit class="h-4 w-4 mr-2" />
                       Edit
-                    </Link>
+                    </ModalLink>
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     @click="deleteHoliday(holiday)"
