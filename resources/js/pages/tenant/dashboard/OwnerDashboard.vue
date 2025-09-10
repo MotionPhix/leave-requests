@@ -232,7 +232,7 @@ const greeting = computed(() => {
 
         <Link
           as="button"
-          :href="route('tenant.admin.leave-requests.index', tenantParams)"
+          :href="route('tenant.management.leave-requests.index', tenantParams)"
           class="cursor-pointer text-left group bg-white dark:bg-neutral-800 rounded-xl shadow-sm border border-neutral-200 dark:border-neutral-700 p-6 hover:shadow-md transition-shadow"
         >
           <div class="flex items-center space-x-3">
@@ -248,7 +248,7 @@ const greeting = computed(() => {
 
         <Link
           as="button"
-          :href="route('tenant.holidays.index', tenantParams)"
+          :href="route('tenant.management.holidays.index', tenantParams)"
           class="cursor-pointer text-left group bg-white dark:bg-neutral-800 rounded-xl shadow-sm border border-neutral-200 dark:border-neutral-700 p-6 hover:shadow-md transition-shadow"
         >
           <div class="flex items-center space-x-3">
@@ -264,7 +264,7 @@ const greeting = computed(() => {
 
         <Link
           as="button"
-          :href="route('tenant.departments.index', tenantParams)"
+          :href="route('tenant.management.departments.index', tenantParams)"
           class="cursor-pointer text-left group bg-white dark:bg-neutral-800 rounded-xl shadow-sm border border-neutral-200 dark:border-neutral-700 p-6 hover:shadow-md transition-shadow"
         >
           <div class="flex items-center space-x-3">
@@ -294,7 +294,7 @@ const greeting = computed(() => {
             <ModalLink
               :as="Button"
               class="cursor-pointer"
-              :href="route('tenant.dashboard.invite-member', tenantParams)">
+              :href="route('tenant.management.invite-member', tenantParams)">
               <Plus class="w-4 h-4" />
               Invite Member
             </ModalLink>
@@ -444,7 +444,7 @@ const greeting = computed(() => {
             <div class="flex items-center justify-between">
               <h3 class="text-lg font-semibold text-neutral-900 dark:text-neutral-100">Pending Leave Requests</h3>
               <Link
-                :href="route('tenant.admin.leave-requests.index', tenantParams)"
+                :href="route('tenant.management.leave-requests.index', tenantParams)"
                 class="text-sm text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100"
               >
                 View all
@@ -491,7 +491,7 @@ const greeting = computed(() => {
             <div class="flex items-center justify-between">
               <h3 class="text-lg font-semibold text-neutral-900 dark:text-neutral-100">Upcoming Holidays</h3>
               <Link
-                :href="route('tenant.holidays.index', tenantParams)"
+                :href="route('tenant.management.holidays.index', tenantParams)"
                 class="text-sm text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100"
               >
                 View all

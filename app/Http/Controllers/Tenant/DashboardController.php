@@ -9,7 +9,6 @@ use App\Models\LeaveType;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class DashboardController extends Controller
@@ -47,9 +46,9 @@ class DashboardController extends Controller
                     'canApproveLeave' => $canApproveLeave,
                     'canViewAllUsers' => $canViewAllUsers,
                     'canCreateLeaveRequests' => $canCreateLeaveRequests,
-                ]
+                ],
             ],
-            ...$dashboardData
+            ...$dashboardData,
         ]);
     }
 
@@ -62,7 +61,7 @@ class DashboardController extends Controller
             return 'tenant/dashboard/OwnerDashboard';
         }
 
-        return match($userRole) {
+        return match ($userRole) {
             'Manager' => 'tenant/dashboard/ManagerDashboard',
             'HR' => 'tenant/dashboard/ManagerDashboard', // HR uses manager dashboard for now
             'Admin' => 'tenant/dashboard/ManagerDashboard', // Admin uses manager dashboard for now
@@ -123,6 +122,7 @@ class DashboardController extends Controller
             $usedDays = $approvedRequests->sum(function ($request) {
                 $startDate = \Carbon\Carbon::parse($request->start_date);
                 $endDate = \Carbon\Carbon::parse($request->end_date);
+
                 return $startDate->diffInDays($endDate) + 1; // +1 to include both start and end dates
             });
 
@@ -234,6 +234,7 @@ class DashboardController extends Controller
         $usedDays = $approvedRequests->sum(function ($request) {
             $startDate = \Carbon\Carbon::parse($request->start_date);
             $endDate = \Carbon\Carbon::parse($request->end_date);
+
             return $startDate->diffInDays($endDate) + 1; // +1 to include both start and end dates
         });
 
@@ -411,18 +412,18 @@ class DashboardController extends Controller
         return \App\Models\User::whereHas('workspaces', function ($query) use ($workspace) {
             $query->where('workspaces.id', $workspace->id);
         })
-        ->where('users.id', '!=', \Illuminate\Support\Facades\Auth::id()) // Exclude the current user (owner)
-        ->orderBy('created_at', 'desc')
-        ->limit(6)
-        ->get()
-        ->map(function ($user) {
-            return [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'position' => $user->position ?? 'Employee',
-            ];
-        });
+            ->where('users.id', '!=', \Illuminate\Support\Facades\Auth::id()) // Exclude the current user (owner)
+            ->orderBy('created_at', 'desc')
+            ->limit(6)
+            ->get()
+            ->map(function ($user) {
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'position' => $user->position ?? 'Employee',
+                ];
+            });
     }
 
     /**
@@ -491,10 +492,49 @@ class DashboardController extends Controller
                 [
                     'name' => 'Approved Requests',
                     'data' => $leaveTrends,
-                ]
+                ],
             ],
             'departments' => $departments,
         ];
+    }
+
+    /**
+     * Management Dashboard for Owner/Manager/HR roles
+     */
+    public function managementDashboard(Request $request)
+    {
+        $workspace = $request->attributes->get('workspace');
+        $user = Auth::user();
+
+        // Get user's role information
+        $userRole = $user->getRoleNames()->first();
+        $isOwner = $user->hasRole('Owner');
+
+        // Always use Owner dashboard for management users
+        $dashboardComponent = 'tenant/dashboard/OwnerDashboard';
+
+        // Get management-specific data
+        $dashboardData = $this->getDashboardData($user, $workspace, $userRole, $isOwner, true);
+
+        return Inertia::render($dashboardComponent, [
+            'workspace' => [
+                'uuid' => $workspace?->uuid,
+                'slug' => $workspace?->slug,
+                'name' => $workspace?->name,
+            ],
+            'user' => [
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $userRole,
+                'isOwner' => $isOwner,
+                'permissions' => [
+                    'canApproveLeave' => true, // Management users can approve
+                    'canViewAllUsers' => true, // Management users can view all
+                    'canCreateLeaveRequests' => ! $isOwner, // Owners typically don't need leave
+                ],
+            ],
+            ...$dashboardData,
+        ]);
     }
 
     /**
@@ -511,6 +551,7 @@ class DashboardController extends Controller
         return $approvedRequests->sum(function ($request) {
             $startDate = \Carbon\Carbon::parse($request->start_date);
             $endDate = \Carbon\Carbon::parse($request->end_date);
+
             return $startDate->diffInDays($endDate) + 1;
         });
     }

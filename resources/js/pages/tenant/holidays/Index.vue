@@ -11,16 +11,18 @@
             Manage official company holidays and observances
           </p>
         </div>
-        <Link
-          :href="route('tenant.holidays.create', {
+
+        <ModalLink
+          as="button"
+          :href="route('tenant.management.holidays.create', {
             tenant_slug: $page.props.workspace.slug,
             tenant_uuid: $page.props.workspace.uuid
           })"
-          class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+          class="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
         >
           <Plus class="h-4 w-4" />
           Add Holiday
-        </Link>
+        </ModalLink>
       </div>
 
       <!-- Year Navigation -->
@@ -83,10 +85,10 @@
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem as-child>
                     <Link
-                      :href="route('tenant.holidays.edit', {
+                      :href="route('tenant.management.holidays.edit', {
                         tenant_slug: $page.props.workspace.slug,
                         tenant_uuid: $page.props.workspace.uuid,
-                        holiday: holiday.id
+                        holiday: holiday.uuid
                       })"
                     >
                       <Edit class="h-4 w-4 mr-2" />
@@ -138,7 +140,7 @@
           Start by adding your company's official holidays for {{ currentYear }}.
         </p>
         <Link
-          :href="route('tenant.holidays.create', {
+          :href="route('tenant.management.holidays.create', {
             tenant_slug: $page.props.workspace.slug,
             tenant_uuid: $page.props.workspace.uuid
           })"
@@ -153,7 +155,7 @@
 </template>
 
 <script setup lang="ts">
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import TenantLayout from '@/layouts/TenantLayout.vue';
 import { Button } from '@/components/ui/button';
@@ -173,9 +175,11 @@ import {
   Edit,
   Trash2
 } from 'lucide-vue-next';
+import { ModalLink } from '@inertiaui/modal-vue';
 
 interface Holiday {
   id: number;
+  uuid: string;
   name: string;
   description: string | null;
   date: string;
@@ -188,6 +192,9 @@ const props = defineProps<{
   holidays: Holiday[];
   year?: number;
 }>();
+
+const page = usePage();
+const workspace = page.props.workspace as { uuid: string; slug: string; name: string };
 
 const currentYear = ref(props.year || new Date().getFullYear());
 
@@ -236,9 +243,9 @@ const formatDate = (dateString: string) => {
 const navigateYear = (direction: number) => {
   currentYear.value += direction;
   router.get(
-    route('tenant.holidays.index', {
-      tenant_slug: window.location.pathname.split('/')[1],
-      tenant_uuid: window.location.pathname.split('/')[2],
+    route('tenant.management.holidays.index', {
+      tenant_slug: workspace.slug,
+      tenant_uuid: workspace.uuid,
       year: currentYear.value
     }),
     {},
@@ -252,10 +259,10 @@ const navigateYear = (direction: number) => {
 const deleteHoliday = (holiday: Holiday) => {
   if (confirm(`Are you sure you want to delete "${holiday.name}"? This action cannot be undone.`)) {
     router.delete(
-      route('tenant.holidays.destroy', {
-        tenant_slug: window.location.pathname.split('/')[1],
-        tenant_uuid: window.location.pathname.split('/')[2],
-        holiday: holiday.id
+      route('tenant.management.holidays.destroy', {
+        tenant_slug: workspace.slug,
+        tenant_uuid: workspace.uuid,
+        holiday: holiday.uuid
       }),
       {
         preserveScroll: true,

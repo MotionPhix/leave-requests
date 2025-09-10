@@ -47,6 +47,10 @@ require __DIR__.'/auth.php';
 // =====================================
 // TENANT-SPECIFIC ROUTES
 // =====================================
-// These routes are prefixed with /{tenant:slug}/tenant:{uuid}
-// and contain all tenant-specific functionality
-require __DIR__.'/tenant.php';
+// Routes are separated by role and functionality for better organization
+
+// Management routes (Owner, Manager, HR)
+require __DIR__.'/management.php';
+
+// Employee routes (all workspace members)
+require __DIR__.'/employee.php';

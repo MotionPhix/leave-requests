@@ -31,7 +31,6 @@ const { channel } = useEchoModel('App.Models.User', userId);
 
 channel().notification((notification: any) => {
   console.log('Toast notification received:', notification);
-
   const getToastConfig = (type: string) => {
     switch (type) {
       case 'leave_request_approved':
@@ -92,14 +91,15 @@ channel().notification((notification: any) => {
 </script>
 
 <template>
-  <TenantSidebarLayout :breadcrumbs="breadcrumbs">
-    <slot />
-  </TenantSidebarLayout>
-  
-  <Toaster 
-    position="top-right" 
+  <Toaster
+    position="top-right"
     :duration="4000"
     :close-button="true"
-    rich-colors 
+    rich-colors
   />
+
+  <TenantSidebarLayout
+    :breadcrumbs="breadcrumbs">
+    <slot />
+  </TenantSidebarLayout>
 </template>

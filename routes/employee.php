@@ -1,71 +1,55 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Illuminate\Foundation\Http\Middleware\HandlePrecognitiveRequests;
-use Inertia\Inertia;
 
-Route::group(['middleware' => 'auth'], function () {
+// =====================================
+// EMPLOYEE ROUTES
+// =====================================
+// Routes for employee-specific functionality
+// Accessible by: All workspace members (Employee role and above)
 
-  Route::prefix('leave-requests')->name('leave-requests.')->group(function () {
+Route::prefix('{tenant_slug}/{tenant_uuid}')
+    ->where([
+        'tenant_slug' => '[a-z0-9-]+',
+        'tenant_uuid' => '[a-f0-9-]{36}',
+    ])
+    ->middleware(['auth', 'workspace'])
+    ->group(function () {
+        // Employee Dashboard
+        Route::get('/dashboard', [\App\Http\Controllers\Tenant\DashboardController::class, 'index'])
+            ->name('tenant.dashboard');
 
-    Route::controller(\App\Http\Controllers\Employee\LeaveRequestController::class)->group(function () {
+        // Employee Leave Requests (their own requests)
+        Route::prefix('leave-requests')
+            ->group(function () {
+                Route::get('/', [\App\Http\Controllers\Tenant\LeaveRequestController::class, 'index'])
+                    ->name('tenant.leave-requests.index');
+                Route::get('/create', [\App\Http\Controllers\Tenant\LeaveRequestController::class, 'create'])
+                    ->name('tenant.leave-requests.create');
+                Route::post('/', [\App\Http\Controllers\Tenant\LeaveRequestController::class, 'store'])
+                    ->name('tenant.leave-requests.store');
+                Route::get('/{leaveRequest}', [\App\Http\Controllers\Tenant\LeaveRequestController::class, 'show'])
+                    ->name('tenant.leave-requests.show');
+                Route::patch('/{leaveRequest}/cancel', [\App\Http\Controllers\Tenant\LeaveRequestController::class, 'cancel'])
+                    ->name('tenant.leave-requests.cancel');
+            });
 
-      Route::get(
-        '/create',
-        'create'
-      )->name('create');
+        // Team Members (view-only for regular employees)
+        Route::get('members', [\App\Http\Controllers\Tenant\MembersController::class, 'index'])
+            ->name('tenant.members.index');
 
-      Route::post(
-        '/c/{leaveRequest:uuid}',
-        'cancel'
-      )->name('cancel');
+        // Employee Calendar View (view-only)
+        Route::prefix('calendar')
+            ->group(function () {
+                Route::get('/', [\App\Http\Controllers\Tenant\CalendarController::class, 'index'])
+                    ->name('tenant.calendar.index');
+                Route::get('/events', [\App\Http\Controllers\Tenant\CalendarController::class, 'events'])
+                    ->name('tenant.calendar.events');
+                Route::get('/conflicts', [\App\Http\Controllers\Tenant\CalendarController::class, 'conflicts'])
+                    ->name('tenant.calendar.conflicts');
+            });
 
-      Route::get(
-        '/s/{leaveRequest:uuid}',
-        'show'
-      )->name('show');
-
-      Route::get(
-        '/',
-        'index'
-      )->name('index');
-
-      Route::post(
-        '/',
-        'store'
-      )->name('store')
-        ->middleware([HandlePrecognitiveRequests::class]);
+        // Employee Holidays (view-only)
+        Route::get('holidays', [\App\Http\Controllers\Tenant\HolidayController::class, 'index'])
+            ->name('tenant.holidays.index');
     });
-
-  });
-
-  Route::controller(\App\Http\Controllers\Employee\DashboardController::class)->group(function () {
-    Route::get(
-      'dashboard',
-      'index'
-    )->name('dashboard');
-  });
-
-  Route::get('/calendar', function () {
-    return Inertia::render('employee/Calendar');
-  })->name('calendar');
-
-  Route::prefix('settings')->group(function () {
-    Route::redirect('', '/settings/profile');
-
-    Route::controller(\App\Http\Controllers\Employee\Settings\ProfileController::class)->group(function () {
-      Route::get('/profile', 'edit')->name('profile.edit');
-      Route::patch('/profile', 'update')->name('profile.update');
-      Route::delete('/profile', 'destroy')->name('profile.destroy');
-    });
-
-    Route::controller(\App\Http\Controllers\Employee\Settings\PasswordController::class)->group(function () {
-      Route::get('/password', 'edit')->name('password.edit');
-      Route::put('/password', 'update')->name('password.update');
-    });
-
-    Route::get('/appearance', function () {
-      return Inertia::render('employee/settings/Appearance');
-    })->name('appearance');
-  });
-});

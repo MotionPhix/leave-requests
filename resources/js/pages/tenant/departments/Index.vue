@@ -149,7 +149,7 @@
 </template>
 
 <script setup lang="ts">
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import TenantLayout from '@/layouts/TenantLayout.vue';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -186,9 +186,12 @@ interface Department {
   updated_at: string;
 }
 
-defineProps<{
+const props = defineProps<{
   departments: Department[];
 }>();
+
+const page = usePage();
+const workspace = page.props.workspace as { uuid: string; slug: string; name: string };
 
 const deleteDepartment = (department: Department) => {
   if (department.employees_count > 0) {
@@ -199,8 +202,8 @@ const deleteDepartment = (department: Department) => {
   if (confirm(`Are you sure you want to delete "${department.name}"? This action cannot be undone.`)) {
     router.delete(
       route('tenant.departments.destroy', {
-        tenant_slug: window.location.pathname.split('/')[1],
-        tenant_uuid: window.location.pathname.split('/')[2],
+        tenant_slug: workspace.slug,
+        tenant_uuid: workspace.uuid,
         department: department.id
       }),
       {

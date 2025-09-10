@@ -175,6 +175,15 @@ class LeaveRequest extends Model implements HasMedia
     $query->where('status', 'rejected');
   }
 
+  /**
+   * Scope for date range filtering
+   */
+  public function scopeInDateRange($query, $start = null, $end = null)
+  {
+    return $query->when($start, fn($q) => $q->where('end_date', '>=', $start))
+                 ->when($end, fn($q) => $q->where('start_date', '<=', $end));
+  }
+
   public function approve(User $approver, ?string $notes = null): bool
   {
     $this->update([

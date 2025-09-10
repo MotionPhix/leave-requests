@@ -38,7 +38,7 @@
                 <SelectValue placeholder="All statuses" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All statuses</SelectItem>
+                <SelectItem value="all">All statuses</SelectItem>
                 <SelectItem value="pending">Pending</SelectItem>
                 <SelectItem value="approved">Approved</SelectItem>
                 <SelectItem value="rejected">Rejected</SelectItem>
@@ -54,7 +54,7 @@
                 <SelectValue placeholder="All types" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All types</SelectItem>
+                <SelectItem value="all">All types</SelectItem>
                 <SelectItem 
                   v-for="type in leaveTypes" 
                   :key="type.id" 
@@ -308,7 +308,7 @@ const filters = ref({ ...initialFilters });
 
 // Computed properties
 const hasActiveFilters = computed(() => 
-  Object.values(filters.value).some(value => value && value !== '')
+  Object.values(filters.value).some(value => value && value !== '' && value !== 'all')
 );
 
 // Methods
@@ -317,7 +317,12 @@ const toggleFilters = () => {
 };
 
 const applyFilters = debounce(() => {
-  router.get(route('tenant.leave-requests.index', tenantParams), filters.value, {
+  // Convert "all" values to empty strings for the backend
+  const cleanedFilters = { ...filters.value };
+  if (cleanedFilters.status === 'all') cleanedFilters.status = '';
+  if (cleanedFilters.leave_type_id === 'all') cleanedFilters.leave_type_id = '';
+  
+  router.get(route('tenant.leave-requests.index', tenantParams), cleanedFilters, {
     preserveState: true,
     preserveScroll: true,
   });
@@ -325,8 +330,8 @@ const applyFilters = debounce(() => {
 
 const clearFilters = () => {
   filters.value = {
-    status: '',
-    leave_type_id: '',
+    status: 'all',
+    leave_type_id: 'all',
     date_from: '',
     date_to: '',
   };

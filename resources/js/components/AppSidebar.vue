@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
 import {
@@ -11,63 +10,59 @@ import {
   SidebarMenuButton,
   SidebarMenuItem
 } from '@/components/ui/sidebar';
-import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { CalendarIcon, CalendarDaysIcon, LayoutGrid, UsersIcon, ShieldIcon, DoorOpenIcon } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
+import { type NavItem } from '@/types';
+import {
+  LayoutGrid,
+  Building2,
+  UsersIcon,
+  SettingsIcon,
+  BarChart3,
+  Shield,
+  CreditCard,
+  Bell,
+  CalendarDaysIcon,
+  Clock
+} from 'lucide-vue-next';
 
-const user = usePage().props.auth.user
+interface User {
+  id: string | number;
+  name: string;
+  email: string;
+  is_system_admin?: boolean;
+}
 
-const mainNavItems: NavItem[] = [
+interface PageProps extends Record<string, any> {
+  auth: {
+    user: User;
+  };
+}
+
+const page = usePage<PageProps>();
+const user = page.props.auth.user;
+
+// System Admin navigation items (for super admin users)
+const navItems: NavItem[] = [
+  // Core Admin Features
   {
     title: 'Dashboard',
-    href: user?.isEmployee ? '/dashboard' : '/admin/dashboard',
+    href: route('home'),
     icon: LayoutGrid
   },
-  {
-    title: 'Leave Requests',
-    href: user?.isEmployee ? '/leave-requests' : '/admin/leave-requests',
-    icon: CalendarIcon
-  }
-];
 
-// Admin-only navigation items
-const adminNavItems: NavItem[] = [
+  // Workspace Management
   {
-    title: 'Employees',
-    href: '/admin/employees',
-    icon: UsersIcon,
+    title: 'Workspaces',
+    href: route('workspaces.index'),
+    icon: Building2,
   },
-  {
-    title: 'Roles & Permissions',
-    href: '/admin/roles',
-    icon: ShieldIcon,
-  },
-  {
-    title: 'Leave Types',
-    href: '/admin/leave-types',
-    icon: DoorOpenIcon,
-  },
-  {
-    title: 'Holidays',
-    href: route('admin.holidays.index'),
-    icon: CalendarDaysIcon,
-  }
-];
 
-// Filter admin items based on permissions
-// const filteredAdminItems = adminNavItems.filter(item => item.show);
-
-// Combine navigation items based on user role
-const combinedNavItems = user?.isEmployee
-  ? mainNavItems
-  : [...mainNavItems, ...adminNavItems];
-
-const footerNavItems: NavItem[] = [
+  // Communication
   {
-    title: 'Calendar',
-    href: user?.isEmployee ? '/calendar' : '/admin/calendar',
-    icon: CalendarIcon
+    title: 'Notifications',
+    href: route('notifications.index'),
+    icon: Bell,
   }
 ];
 </script>
@@ -77,12 +72,8 @@ const footerNavItems: NavItem[] = [
     <SidebarHeader>
       <SidebarMenu>
         <SidebarMenuItem>
-          <SidebarMenuButton
-            size="lg" as-child>
-            <Link
-              :href="user?.isEmployee
-              ? route('dashboard')
-              : route('admin.dashboard')">
+          <SidebarMenuButton size="lg" as-child>
+            <Link :href="route('home')">
               <AppLogo />
             </Link>
           </SidebarMenuButton>
@@ -91,13 +82,17 @@ const footerNavItems: NavItem[] = [
     </SidebarHeader>
 
     <SidebarContent>
-      <NavMain :items="combinedNavItems" />
+      <NavMain :items="navItems" />
     </SidebarContent>
 
     <SidebarFooter>
-      <NavFooter :items="footerNavItems" />
+      <!-- System Admin Info -->
+      <div class="px-2 py-2 text-xs text-muted-foreground border-t">
+        <div class="font-medium text-foreground">System Administration</div>
+        <div class="text-xs text-amber-600 dark:text-amber-400">Super Admin Access</div>
+      </div>
+
       <NavUser />
     </SidebarFooter>
   </Sidebar>
-  <slot />
 </template>

@@ -72,6 +72,14 @@ Route::middleware(['auth:sanctum'])->group(function () {
     [\App\Http\Controllers\Employee\Api\CalendarController::class, 'holidays']
   )->name('api.calendar.holidays');
 
+  // Comprehensive Holiday API
+  Route::prefix('holidays')->name('api.holidays.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Api\HolidayController::class, 'index'])->name('index');
+    Route::get('/stats', [\App\Http\Controllers\Api\HolidayController::class, 'stats'])->name('stats');
+    Route::get('/conflicts', [\App\Http\Controllers\Api\HolidayController::class, 'conflicts'])->name('conflicts');
+    Route::get('/export/{format}', [\App\Http\Controllers\Api\HolidayController::class, 'export'])->name('export');
+  });
+
   // Notification routes
   Route::get(
     '/notifications',

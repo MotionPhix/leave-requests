@@ -6,8 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\LeaveType;
 use App\Models\Workspace;
 use Illuminate\Http\Request;
-use Inertia\Response;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class LeaveTypeController extends Controller
 {
@@ -19,15 +19,19 @@ class LeaveTypeController extends Controller
             ->where('workspace_id', $workspace->id)
             ->orderBy('name')
             ->paginate(10)
-            ->through(fn($leaveType) => [
+            ->through(fn ($leaveType) => [
                 'id' => $leaveType->id,
                 'uuid' => $leaveType->uuid,
                 'name' => $leaveType->name,
-                'days_allowed' => $leaveType->days_allowed,
                 'description' => $leaveType->description,
-                'is_active' => $leaveType->is_active,
-                'carry_forward' => $leaveType->carry_forward,
-                'max_carry_forward_days' => $leaveType->max_carry_forward_days,
+                'max_days_per_year' => $leaveType->max_days_per_year,
+                'requires_documentation' => $leaveType->requires_documentation,
+                'gender_specific' => $leaveType->gender_specific,
+                'gender' => $leaveType->gender,
+                'frequency_years' => $leaveType->frequency_years,
+                'pay_percentage' => $leaveType->pay_percentage,
+                'minimum_notice_days' => $leaveType->minimum_notice_days,
+                'allow_negative_balance' => $leaveType->allow_negative_balance,
             ]);
 
         return Inertia::render('tenant/leave-types/Index', [
@@ -51,11 +55,15 @@ class LeaveTypeController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'days_allowed' => 'required|integer|min:1|max:365',
-            'description' => 'nullable|string',
-            'is_active' => 'boolean',
-            'carry_forward' => 'boolean',
-            'max_carry_forward_days' => 'nullable|integer|min:0|max:365',
+            'description' => 'nullable|string|max:1000',
+            'max_days_per_year' => 'required|integer|min:0|max:365',
+            'requires_documentation' => 'boolean',
+            'gender_specific' => 'boolean',
+            'gender' => 'required|string|in:any,male,female',
+            'frequency_years' => 'required|integer|min:1|max:10',
+            'pay_percentage' => 'required|numeric|min:0|max:100',
+            'minimum_notice_days' => 'required|integer|min:0|max:365',
+            'allow_negative_balance' => 'boolean',
         ]);
 
         $validated['workspace_id'] = $workspace->id;
@@ -94,11 +102,15 @@ class LeaveTypeController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'days_allowed' => 'required|integer|min:1|max:365',
-            'description' => 'nullable|string',
-            'is_active' => 'boolean',
-            'carry_forward' => 'boolean',
-            'max_carry_forward_days' => 'nullable|integer|min:0|max:365',
+            'description' => 'nullable|string|max:1000',
+            'max_days_per_year' => 'required|integer|min:0|max:365',
+            'requires_documentation' => 'boolean',
+            'gender_specific' => 'boolean',
+            'gender' => 'required|string|in:any,male,female',
+            'frequency_years' => 'required|integer|min:1|max:10',
+            'pay_percentage' => 'required|numeric|min:0|max:100',
+            'minimum_notice_days' => 'required|integer|min:0|max:365',
+            'allow_negative_balance' => 'boolean',
         ]);
 
         $leaveType->update($validated);

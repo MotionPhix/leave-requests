@@ -49,6 +49,7 @@ const submitInvitation = () => {
   inviteForm.post(route('tenant.invitations.store', tenantParams.value), {
     onSuccess: () => {
       inviteForm.reset()
+      toast.success('Invitation sent successfully!')
       inviteModal.value?.close()
     },
     onError: () => {

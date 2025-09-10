@@ -3,8 +3,8 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 class RolesAndPermissionsSeeder extends Seeder
 {
@@ -140,11 +140,8 @@ class RolesAndPermissionsSeeder extends Seeder
 
     private function createRoles(): void
     {
-        // Super Admin Role (System-wide access, not tenant-specific)
-        $superAdminRole = Role::firstOrCreate(['name' => 'Super Admin']);
-        $superAdminRole->givePermissionTo(Permission::all());
-
-        // Note: All workspace-specific roles (Owner, Admin, HR, Manager, Employee) 
+        // No global roles needed - system admin uses is_system_admin flag
+        // All workspace-specific roles (Owner, Admin, HR, Manager, Employee)
         // are created per workspace by WorkspaceRoleService with appropriate permissions.
         // This keeps the permission system clean and workspace-scoped.
     }

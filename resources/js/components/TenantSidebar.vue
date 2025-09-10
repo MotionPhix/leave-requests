@@ -11,21 +11,28 @@ import {
   SidebarMenuButton,
   SidebarMenuItem
 } from '@/components/ui/sidebar';
-import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { route } from 'ziggy-js';
-import {
-  CalendarIcon,
-  LayoutGrid,
-  UsersIcon,
-  FileTextIcon,
-  SettingsIcon,
-  UserPlusIcon,
-  Building2,
-  BarChart3,
-  ClipboardList
-} from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
+import { type NavItem } from '@/types';
+
+// Import all necessary icons
+import {
+  LayoutDashboard,
+  UsersIcon,
+  CalendarDays,
+  FileText,
+  SettingsIcon,
+  Building2,
+  BadgeDollarSign,
+  ShieldCheck,
+  TrendingUp,
+  CalendarIcon,
+  ClipboardList,
+  BarChart3,
+  Users,
+  Home,
+  Star
+} from 'lucide-vue-next';
 
 interface WorkspaceData {
   slug: string;
@@ -41,11 +48,9 @@ interface AuthUser {
   roles?: UserRole[];
   role?: string;
   isOwner?: boolean;
-  permissions?: {
-    canApproveLeave?: boolean;
-    canViewAllUsers?: boolean;
-    canCreateLeaveRequests?: boolean;
-  };
+  is_system_admin?: boolean;
+  name: string;
+  email: string;
 }
 
 interface PageProps extends Record<string, any> {
@@ -66,133 +71,282 @@ const tenantParams = computed(() => ({
   tenant_uuid: workspace.value?.uuid
 }));
 
-// Main navigation items (for all users)
-const mainNavItems = computed((): NavItem[] => [
-  {
-    title: 'Dashboard',
-    href: tenantParams.value.tenant_slug && tenantParams.value.tenant_uuid
-      ? route('tenant.dashboard', tenantParams.value)
-      : '#',
-    icon: LayoutGrid
-  }
-]);
-
-// Leave requests navigation - only for users who can actually request leave
-// Owners cannot request leave (they own the company!)
-const canRequestLeave = computed(() => user.value?.permissions?.canCreateLeaveRequests && !user.value?.isOwner);
-
-// Admin navigation items (shown based on permissions)
-const adminNavItems = computed((): NavItem[] => {
-  const items: NavItem[] = [];
-
-  if (user.value?.permissions?.canViewAllUsers) {
-    items.push({
-      title: 'Team Members',
-      href: tenantParams.value.tenant_slug && tenantParams.value.tenant_uuid
-        ? route('tenant.members.index', tenantParams.value)
-        : '#',
-      icon: UsersIcon,
-    });
+/**
+ * Determines the user's primary role within the current workspace
+ */
+const getUserPrimaryRole = (): 'owner' | 'manager' | 'hr' | 'employee' => {
+  if (user.value?.isOwner) {
+    return 'owner';
   }
 
-  if (user.value?.permissions?.canApproveLeave || user.value?.permissions?.canViewAllUsers) {
-    items.push({
-      title: 'All Leave Requests',
-      href: tenantParams.value.tenant_slug && tenantParams.value.tenant_uuid
-        ? route('tenant.admin.leave-requests.index', tenantParams.value)
-        : '#',
-      icon: FileTextIcon,
-    });
+  if (!user.value?.roles || !Array.isArray(user.value.roles)) {
+    return 'employee';
   }
 
-  if (user.value?.permissions?.canViewAllUsers) {
-    items.push({
-      title: 'Invitations',
-      href: tenantParams.value.tenant_slug && tenantParams.value.tenant_uuid
-        ? route('tenant.invitations.index', tenantParams.value)
-        : '#',
-      icon: UserPlusIcon,
-    });
+  // Check for roles in priority order
+  const roles = user.value.roles.map((role: any) => role.name.toLowerCase());
+  
+  if (roles.includes('manager')) {
+    return 'manager';
   }
-
-  // Management features (Owners & Managers)
-  if (user.value?.isOwner || user.value?.roles?.some((role: UserRole) => role.name === 'Manager')) {
-    items.push(
-      {
-        title: 'Holidays',
-        href: tenantParams.value.tenant_slug && tenantParams.value.tenant_uuid
-          ? route('tenant.holidays.index', tenantParams.value)
-          : '#',
-        icon: CalendarIcon,
-      },
-      {
-        title: 'Leave Types',
-        href: tenantParams.value.tenant_slug && tenantParams.value.tenant_uuid
-          ? route('tenant.leave-types.index', tenantParams.value)
-          : '#',
-        icon: ClipboardList,
-      },
-      {
-        title: 'Departments',
-        href: tenantParams.value.tenant_slug && tenantParams.value.tenant_uuid
-          ? route('tenant.departments.index', tenantParams.value)
-          : '#',
-        icon: Building2,
-      },
-      {
-        title: 'Reports',
-        href: tenantParams.value.tenant_slug && tenantParams.value.tenant_uuid
-          ? route('tenant.reports.index', tenantParams.value)
-          : '#',
-        icon: BarChart3,
-      }
-    );
+  
+  if (roles.includes('hr') || roles.includes('human resources')) {
+    return 'hr';
   }
+  
+  return 'employee';
+};
 
-  return items;
+// Define navigation items based on user role
+const getNavItemsForRole = (role: string): NavItem[] => {
+  const baseParams = tenantParams.value;
+  
+  switch (role) {
+    case 'owner':
+      return [
+        {
+          title: 'Dashboard',
+          href: baseParams.tenant_slug && baseParams.tenant_uuid
+            ? route('tenant.management.dashboard', baseParams)
+            : '#',
+          icon: Home,
+        },
+        {
+          title: 'Team Members',
+          href: baseParams.tenant_slug && baseParams.tenant_uuid
+            ? route('tenant.management.members.index', baseParams)
+            : '#',
+          icon: UsersIcon,
+        },
+        {
+          title: 'Leave Requests',
+          href: baseParams.tenant_slug && baseParams.tenant_uuid
+            ? route('tenant.management.leave-requests.index', baseParams)
+            : '#',
+          icon: CalendarDays,
+        },
+        {
+          title: 'Calendar',
+          href: baseParams.tenant_slug && baseParams.tenant_uuid
+            ? route('tenant.management.calendar.index', baseParams)
+            : '#',
+          icon: CalendarIcon,
+        },
+        {
+          title: 'Leave Types',
+          href: baseParams.tenant_slug && baseParams.tenant_uuid
+            ? route('tenant.management.leave-types.index', baseParams)
+            : '#',
+          icon: ClipboardList,
+        },
+        {
+          title: 'Holidays',
+          href: baseParams.tenant_slug && baseParams.tenant_uuid
+            ? route('tenant.management.holidays.index', baseParams)
+            : '#',
+          icon: Star,
+        },
+        {
+          title: 'Roles & Permissions',
+          href: baseParams.tenant_slug && baseParams.tenant_uuid
+            ? route('tenant.management.roles.index', baseParams)
+            : '#',
+          icon: ShieldCheck,
+        },
+        {
+          title: 'Departments',
+          href: baseParams.tenant_slug && baseParams.tenant_uuid
+            ? route('tenant.management.departments.index', baseParams)
+            : '#',
+          icon: Building2,
+        },
+        {
+          title: 'Reports',
+          href: baseParams.tenant_slug && baseParams.tenant_uuid
+            ? route('tenant.management.reports.index', baseParams)
+            : '#',
+          icon: BarChart3,
+        },
+        {
+          title: 'Settings',
+          href: baseParams.tenant_slug && baseParams.tenant_uuid
+            ? route('tenant.management.settings.index', baseParams)
+            : '#',
+          icon: SettingsIcon,
+        },
+      ];
+    case 'manager':
+      return [
+        {
+          title: 'Dashboard',
+          href: baseParams.tenant_slug && baseParams.tenant_uuid
+            ? route('tenant.management.dashboard', baseParams)
+            : '#',
+          icon: LayoutDashboard,
+        },
+        {
+          title: 'Team Members',
+          href: baseParams.tenant_slug && baseParams.tenant_uuid
+            ? route('tenant.management.members.index', baseParams)
+            : '#',
+          icon: UsersIcon,
+        },
+        {
+          title: 'Leave Requests',
+          href: baseParams.tenant_slug && baseParams.tenant_uuid
+            ? route('tenant.management.leave-requests.index', baseParams)
+            : '#',
+          icon: CalendarDays,
+        },
+        {
+          title: 'Calendar',
+          href: baseParams.tenant_slug && baseParams.tenant_uuid
+            ? route('tenant.management.calendar.index', baseParams)
+            : '#',
+          icon: CalendarIcon,
+        },
+        {
+          title: 'Leave Types',
+          href: baseParams.tenant_slug && baseParams.tenant_uuid
+            ? route('tenant.management.leave-types.index', baseParams)
+            : '#',
+          icon: ClipboardList,
+        },
+        {
+          title: 'Holidays',
+          href: baseParams.tenant_slug && baseParams.tenant_uuid
+            ? route('tenant.management.holidays.index', baseParams)
+            : '#',
+          icon: Star,
+        },
+        {
+          title: 'Departments',
+          href: baseParams.tenant_slug && baseParams.tenant_uuid
+            ? route('tenant.management.departments.index', baseParams)
+            : '#',
+          icon: Building2,
+        },
+        {
+          title: 'Reports',
+          href: baseParams.tenant_slug && baseParams.tenant_uuid
+            ? route('tenant.management.reports.index', baseParams)
+            : '#',
+          icon: BarChart3,
+        }
+      ];
+    case 'hr':
+      return [
+        {
+          title: 'Dashboard',
+          href: baseParams.tenant_slug && baseParams.tenant_uuid
+            ? route('tenant.management.dashboard', baseParams)
+            : '#',
+          icon: LayoutDashboard,
+        },
+        {
+          title: 'Members',
+          href: baseParams.tenant_slug && baseParams.tenant_uuid
+            ? route('tenant.management.members.index', baseParams)
+            : '#',
+          icon: UsersIcon,
+        },
+        {
+          title: 'Leave Requests',
+          href: baseParams.tenant_slug && baseParams.tenant_uuid
+            ? route('tenant.management.leave-requests.index', baseParams)
+            : '#',
+          icon: CalendarDays,
+        },
+        {
+          title: 'Calendar',
+          href: baseParams.tenant_slug && baseParams.tenant_uuid
+            ? route('tenant.management.calendar.index', baseParams)
+            : '#',
+          icon: CalendarIcon,
+        },
+        {
+          title: 'Leave Types',
+          href: baseParams.tenant_slug && baseParams.tenant_uuid
+            ? route('tenant.management.leave-types.index', baseParams)
+            : '#',
+          icon: ClipboardList,
+        },
+        {
+          title: 'Holidays',
+          href: baseParams.tenant_slug && baseParams.tenant_uuid
+            ? route('tenant.management.holidays.index', baseParams)
+            : '#',
+          icon: Star,
+        },
+        {
+          title: 'Reports',
+          href: baseParams.tenant_slug && baseParams.tenant_uuid
+            ? route('tenant.management.reports.index', baseParams)
+            : '#',
+          icon: BarChart3,
+        }
+      ];
+    case 'employee':
+    default:
+      return [
+        {
+          title: 'Dashboard',
+          href: baseParams.tenant_slug && baseParams.tenant_uuid
+            ? route('tenant.dashboard', baseParams)
+            : '#',
+          icon: LayoutDashboard,
+        },
+        {
+          title: 'My Leave Requests',
+          href: baseParams.tenant_slug && baseParams.tenant_uuid
+            ? route('tenant.leave-requests.index', baseParams)
+            : '#',
+          icon: CalendarDays,
+        },
+        {
+          title: 'Apply for Leave',
+          href: baseParams.tenant_slug && baseParams.tenant_uuid
+            ? route('tenant.leave-requests.create', baseParams)
+            : '#',
+          icon: FileText,
+        },
+        {
+          title: 'Team Members',
+          href: baseParams.tenant_slug && baseParams.tenant_uuid
+            ? route('tenant.members.index', baseParams)
+            : '#',
+          icon: Users,
+        }
+      ];
+  }
+};
+
+const primaryRole = computed(() => getUserPrimaryRole());
+const navItems = computed(() => getNavItemsForRole(primaryRole.value));
+const userRoleDisplay = computed(() => {
+  switch (primaryRole.value) {
+    case 'owner': return 'Owner';
+    case 'manager': return 'Manager'; 
+    case 'hr': return 'HR';
+    case 'employee': 
+    default: return 'Employee';
+  }
 });
+const isAdmin = computed(() => ['owner', 'manager', 'hr'].includes(primaryRole.value));
 
-// Workspace management items (only for owners)
-const workspaceManagementItems = computed((): NavItem[] => [
-  {
-    title: 'Workspaces',
-    href: route('workspaces.index'),
-    icon: SettingsIcon,
+// Determine the correct dashboard route based on user role
+const dashboardRoute = computed(() => {
+  if (!tenantParams.value.tenant_slug || !tenantParams.value.tenant_uuid) {
+    return '#';
   }
-]);
-
-// Check if user has admin access based on permissions
-const hasAdminAccess = computed(() =>
-  user.value?.permissions?.canApproveLeave || user.value?.permissions?.canViewAllUsers || user.value?.isOwner
-);
-
-// Check if user is owner (can manage workspaces)
-const isWorkspaceOwner = computed(() => user.value?.isOwner);
-
-// Combine navigation items based on user permissions
-const combinedNavItems = computed((): NavItem[] => {
-  let items = [...mainNavItems.value];
-
-  // Add leave requests for eligible users
-  if (canRequestLeave.value) {
-    items.push({
-      title: 'My Leave Requests',
-      href: tenantParams.value.tenant_slug && tenantParams.value.tenant_uuid
-        ? route('tenant.leave-requests.index', tenantParams.value)
-        : '#',
-      icon: CalendarIcon
-    });
+  
+  // Management roles use management dashboard
+  if (['owner', 'manager', 'hr'].includes(primaryRole.value)) {
+    return route('tenant.management.dashboard', tenantParams.value);
   }
-
-  if (hasAdminAccess.value) {
-    items = [...items, ...adminNavItems.value];
-  }
-
-  if (isWorkspaceOwner.value) {
-    items = [...items, ...workspaceManagementItems.value];
-  }
-
-  return items;
+  
+  // Employees use regular dashboard
+  return route('tenant.dashboard', tenantParams.value);
 });
 </script>
 
@@ -202,9 +356,7 @@ const combinedNavItems = computed((): NavItem[] => {
       <SidebarMenu>
         <SidebarMenuItem>
           <SidebarMenuButton size="lg" as-child>
-            <Link :href="tenantParams.tenant_slug && tenantParams.tenant_uuid
-              ? route('tenant.dashboard', tenantParams)
-              : '#'">
+            <Link :href="dashboardRoute">
               <AppLogo />
             </Link>
           </SidebarMenuButton>
@@ -213,7 +365,8 @@ const combinedNavItems = computed((): NavItem[] => {
     </SidebarHeader>
 
     <SidebarContent>
-      <NavMain :items="combinedNavItems" />
+      <!-- Role-based navigation -->
+      <NavMain :items="navItems" />
     </SidebarContent>
 
     <SidebarFooter>
@@ -221,6 +374,10 @@ const combinedNavItems = computed((): NavItem[] => {
       <div class="px-2 py-2 text-xs text-muted-foreground border-t">
         <div class="font-medium text-foreground">{{ workspace?.name }}</div>
         <div class="truncate">{{ workspace?.slug }}</div>
+        <div class="text-xs text-muted-foreground mt-1">
+          Role: {{ userRoleDisplay }}
+          <span v-if="isAdmin" class="text-blue-600 dark:text-blue-400 ml-1">•</span>
+        </div>
       </div>
 
       <NavUser />

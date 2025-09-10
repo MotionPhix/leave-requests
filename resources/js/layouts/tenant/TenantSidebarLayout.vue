@@ -19,7 +19,8 @@ withDefaults(defineProps<Props>(), {
     <SidebarProvider :default-open="true">
       <AppShell variant="sidebar">
         <TenantSidebar />
-        <main class="flex-1 overflow-auto p-6">
+        
+        <main class="flex-1 overflow-auto p-6 max-w-5xl">
           <slot />
         </main>
       </AppShell>

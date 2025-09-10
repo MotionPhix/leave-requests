@@ -12,9 +12,9 @@
           </p>
         </div>
         <Link
-          :href="route('tenant.leave-types.create', {
-            tenant_slug: $page.props.workspace.slug,
-            tenant_uuid: $page.props.workspace.uuid
+          :href="route('tenant.management.leave-types.create', {
+            tenant_slug: workspace.slug,
+            tenant_uuid: workspace.uuid
           })"
           class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
         >
@@ -44,10 +44,10 @@
               <DropdownMenuContent align="end">
                 <DropdownMenuItem as-child>
                   <Link
-                    :href="route('tenant.leave-types.edit', {
-                      tenant_slug: $page.props.workspace.slug,
-                      tenant_uuid: $page.props.workspace.uuid,
-                      leave_type: leaveType.id
+                    :href="route('tenant.management.leave-types.edit', {
+                      tenant_slug: workspace.slug,
+                      tenant_uuid: workspace.uuid,
+                      leaveType: leaveType.id
                     })"
                   >
                     <Edit class="h-4 w-4 mr-2" />
@@ -71,20 +71,24 @@
               <div class="font-medium">{{ leaveType.max_days_per_year || 'Unlimited' }}</div>
             </div>
             <div>
-              <span class="text-muted-foreground">Carry Forward:</span>
-              <div class="font-medium">
-                <Badge :variant="leaveType.can_carry_forward ? 'default' : 'secondary'">
-                  {{ leaveType.can_carry_forward ? 'Yes' : 'No' }}
-                </Badge>
-              </div>
+              <span class="text-muted-foreground">Pay Percentage:</span>
+              <div class="font-medium">{{ leaveType.pay_percentage }}%</div>
             </div>
           </div>
 
-          <div class="text-sm">
-            <span class="text-muted-foreground">Requires Approval:</span>
-            <Badge :variant="leaveType.requires_approval ? 'default' : 'secondary'" class="ml-2">
-              {{ leaveType.requires_approval ? 'Yes' : 'No' }}
-            </Badge>
+          <div class="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <span class="text-muted-foreground">Requires Documentation:</span>
+              <Badge :variant="leaveType.requires_documentation ? 'default' : 'secondary'" class="ml-2">
+                {{ leaveType.requires_documentation ? 'Yes' : 'No' }}
+              </Badge>
+            </div>
+            <div>
+              <span class="text-muted-foreground">Gender Specific:</span>
+              <Badge :variant="leaveType.gender_specific ? 'default' : 'secondary'" class="ml-2">
+                {{ leaveType.gender_specific ? leaveType.gender.charAt(0).toUpperCase() + leaveType.gender.slice(1) : 'No' }}
+              </Badge>
+            </div>
           </div>
         </div>
       </div>
@@ -99,9 +103,9 @@
           Get started by creating your first leave type for your workspace.
         </p>
         <Link
-          :href="route('tenant.leave-types.create', {
-            tenant_slug: $page.props.workspace.slug,
-            tenant_uuid: $page.props.workspace.uuid
+          :href="route('tenant.management.leave-types.create', {
+            tenant_slug: workspace.slug,
+            tenant_uuid: workspace.uuid
           })"
           class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
         >
@@ -114,7 +118,7 @@
 </template>
 
 <script setup lang="ts">
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import TenantLayout from '@/layouts/TenantLayout.vue';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -137,23 +141,29 @@ interface LeaveType {
   name: string;
   description: string;
   max_days_per_year: number | null;
-  can_carry_forward: boolean;
-  requires_approval: boolean;
-  created_at: string;
-  updated_at: string;
+  requires_documentation: boolean;
+  gender_specific: boolean;
+  gender: string;
+  frequency_years: number;
+  pay_percentage: number;
+  minimum_notice_days: number;
+  allow_negative_balance: boolean;
 }
 
-defineProps<{
+const props = defineProps<{
   leaveTypes: LeaveType[];
 }>();
+
+const page = usePage();
+const workspace = page.props.workspace as { uuid: string; slug: string; name: string };
 
 const deleteLeaveType = (leaveType: LeaveType) => {
   if (confirm(`Are you sure you want to delete "${leaveType.name}"? This action cannot be undone.`)) {
     router.delete(
-      route('tenant.leave-types.destroy', {
-        tenant_slug: window.location.pathname.split('/')[1],
-        tenant_uuid: window.location.pathname.split('/')[2],
-        leave_type: leaveType.id
+      route('tenant.management.leave-types.destroy', {
+        tenant_slug: workspace.slug,
+        tenant_uuid: workspace.uuid,
+        leaveType: leaveType.id
       }),
       {
         preserveScroll: true,

@@ -1,7 +1,7 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
+  <div class="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-indigo-900">
     <!-- Top Navigation Bar -->
-    <nav class="bg-white/90 backdrop-blur-md border-b border-gray-200/50 sticky top-0 z-50">
+    <nav class="bg-white/90 dark:bg-gray-800/90 backdrop-blur-md border-b border-gray-200/50 dark:border-gray-700/50 sticky top-0 z-50">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-16">
           <!-- Logo -->
@@ -15,15 +15,18 @@
               <h1 class="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
                 QHub
               </h1>
-              <p class="text-xs text-gray-500">Leave Management</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400">Leave Management</p>
             </div>
           </div>
 
           <!-- User Info -->
           <div class="flex items-center space-x-4">
+            <!-- Theme Toggle -->
+            <AppearanceTabs />
+            
             <div class="text-right">
-              <p class="text-sm font-medium text-gray-900">{{ page.props.auth.user.name }}</p>
-              <p class="text-xs text-gray-500">{{ page.props.auth.user.email }}</p>
+              <p class="text-sm font-medium text-gray-900 dark:text-white">{{ page.props.auth.user.name }}</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400">{{ page.props.auth.user.email }}</p>
             </div>
             
             <!-- User Avatar -->
@@ -35,7 +38,7 @@
             <Link 
               :href="route('logout')" 
               method="post" 
-              class="text-gray-400 hover:text-gray-600 transition-colors"
+              class="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors"
               title="Sign out"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -54,15 +57,16 @@
 
     <!-- Background Decorative Elements -->
     <div class="fixed inset-0 overflow-hidden pointer-events-none">
-      <div class="absolute -top-40 -right-40 w-80 h-80 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
-      <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-indigo-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
-      <div class="absolute top-40 left-40 w-80 h-80 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
+      <div class="absolute -top-40 -right-40 w-80 h-80 bg-purple-300 dark:bg-purple-600 rounded-full mix-blend-multiply filter blur-xl opacity-20 dark:opacity-10 animate-blob"></div>
+      <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-indigo-300 dark:bg-indigo-600 rounded-full mix-blend-multiply filter blur-xl opacity-20 dark:opacity-10 animate-blob animation-delay-2000"></div>
+      <div class="absolute top-40 left-40 w-80 h-80 bg-pink-300 dark:bg-pink-600 rounded-full mix-blend-multiply filter blur-xl opacity-20 dark:opacity-10 animate-blob animation-delay-4000"></div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3'
+import AppearanceTabs from '@/components/AppearanceTabs.vue'
 
 interface User {
   id: number

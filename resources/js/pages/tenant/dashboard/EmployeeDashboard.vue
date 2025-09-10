@@ -213,7 +213,7 @@
           </Link>
 
           <Link 
-            :href="route('tenant.holidays.index', tenantParams)"
+            :href="route('tenant.management.holidays.index', tenantParams)"
             class="flex flex-col items-center justify-center p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
           >
             <CalendarIcon class="w-8 h-8 text-purple-600 mb-2" />

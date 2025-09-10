@@ -2,64 +2,65 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\WorkspaceCreated;
 use App\Models\Workspace;
+use App\Services\WorkspaceRoleService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Thunk\Verbs\Facades\Verbs;
-use App\Events\WorkspaceCreated;
-use App\Services\WorkspaceRoleService;
 use Spatie\Permission\PermissionRegistrar;
 
 class WorkspaceController extends Controller
 {
-  public function index(Request $request)
-  {
-    $workspaces = $request->user()?->load('workspaces')?->workspaces->map(fn ($w) => [
-      'uuid' => $w->uuid,
-      'slug' => $w->slug,
-      'name' => $w->name,
-    ]);
+    public function index(Request $request)
+    {
+        $user = $request->user();
 
-    return Inertia::render('workspaces/Index', [
-      'workspaces' => $workspaces,
-    ]);
-  }
+        $workspaces = $user?->workspaces?->map(fn ($w) => [
+            'uuid' => $w->uuid,
+            'slug' => $w->slug,
+            'name' => $w->name,
+        ]) ?? collect();
 
-  public function store(Request $request)
-  {
-    $validated = $request->validate([
-      'name' => ['required', 'string', 'max:255'],
-    ]);
+        return Inertia::render('workspace/Index', [
+            'workspaces' => $workspaces,
+        ]);
+    }
 
-    $workspace = Workspace::create([
-      'name' => $validated['name'],
-      'owner_id' => $request->user()->id,
-    ]);
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+        ]);
 
-  // Attach owner as admin
-    $workspace->users()->attach($request->user()->id, ['role' => 'owner']);
+        $workspace = Workspace::create([
+            'name' => $validated['name'],
+            'owner_id' => $request->user()->id,
+        ]);
 
-  // Seed core roles for this workspace
-  app(WorkspaceRoleService::class)->seedCoreRoles($workspace);
+        // Attach owner as admin
+        $workspace->users()->attach($request->user()->id, ['role' => 'owner']);
 
-  // Assign Owner role scoped to this workspace
-  /** @var PermissionRegistrar $registrar */
-  $registrar = app(PermissionRegistrar::class);
-  $registrar->setPermissionsTeamId($workspace->getKey());
-  $request->user()->assignRole('Owner');
+        // Seed core roles for this workspace
+        app(WorkspaceRoleService::class)->seedCoreRoles($workspace);
 
-  // Emit event for auditing/real-time pipelines
-  WorkspaceCreated::fire(
-    workspace_id: $workspace->id,
-    workspace_name: $workspace->name,
-    owner_id: $workspace->owner_id
-  );
+        // Assign Owner role scoped to this workspace
+        /** @var PermissionRegistrar $registrar */
+        $registrar = app(PermissionRegistrar::class);
+        $registrar->setPermissionsTeamId($workspace->getKey());
+        $request->user()->assignRole('Owner');
 
-    return redirect()->route('workspaces.index')->with('success', 'Workspace created');
-  }
+        // Emit event for auditing/real-time pipelines
+        WorkspaceCreated::fire(
+            workspace_id: $workspace->id,
+            workspace_name: $workspace->name,
+            owner_id: $workspace->owner_id
+        );
 
-  public function open(string $slug, string $uuid)
-  {
-    return redirect()->route('tenant.dashboard', ['tenant_slug' => $slug, 'tenant_uuid' => $uuid]);
-  }
+        return redirect()->route('workspaces.index')->with('success', 'Workspace created');
+    }
+
+    public function open(string $slug, string $uuid)
+    {
+        return redirect()->route('tenant.dashboard', ['tenant_slug' => $slug, 'tenant_uuid' => $uuid]);
+    }
 }
