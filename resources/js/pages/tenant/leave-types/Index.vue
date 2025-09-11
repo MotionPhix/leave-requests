@@ -12,6 +12,7 @@
           </p>
         </div>
         <Link
+          v-if="canManageLeaveTypes"
           :href="route('tenant.management.leave-types.create', {
             tenant_slug: workspace.slug,
             tenant_uuid: workspace.uuid
@@ -26,16 +27,16 @@
       <!-- Leave Types Grid -->
       <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <div
-          v-for="leaveType in leaveTypes"
+          v-for="leaveType in filteredLeaveTypes"
           :key="leaveType.id"
           class="bg-card border rounded-lg p-6 space-y-4"
         >
           <div class="flex items-start justify-between">
             <div class="space-y-2">
-              <h3 class="font-medium text-card-foreground">{{ leaveType.name }}</h3>
-              <p class="text-sm text-muted-foreground">{{ leaveType.description }}</p>
+              <h3 class="font-medium text-card-foreground">{{ leaveType?.name || 'Unnamed Leave Type' }}</h3>
+              <p v-if="leaveType?.description" class="text-sm text-muted-foreground">{{ leaveType.description }}</p>
             </div>
-            <DropdownMenu>
+            <DropdownMenu v-if="canManageLeaveTypes">
               <DropdownMenuTrigger as-child>
                 <Button variant="ghost" size="sm">
                   <MoreHorizontal class="h-4 w-4" />
@@ -47,7 +48,7 @@
                     :href="route('tenant.management.leave-types.edit', {
                       tenant_slug: workspace.slug,
                       tenant_uuid: workspace.uuid,
-                      leaveType: leaveType.id
+                      leaveType: leaveType.uuid
                     })"
                   >
                     <Edit class="h-4 w-4 mr-2" />
@@ -68,25 +69,25 @@
           <div class="grid grid-cols-2 gap-4 text-sm">
             <div>
               <span class="text-muted-foreground">Max Days:</span>
-              <div class="font-medium">{{ leaveType.max_days_per_year || 'Unlimited' }}</div>
+              <div class="font-medium">{{ leaveType?.max_days_per_year || 'Unlimited' }}</div>
             </div>
             <div>
               <span class="text-muted-foreground">Pay Percentage:</span>
-              <div class="font-medium">{{ leaveType.pay_percentage }}%</div>
+              <div class="font-medium">{{ leaveType?.pay_percentage || 0 }}%</div>
             </div>
           </div>
 
           <div class="grid grid-cols-2 gap-4 text-sm">
             <div>
               <span class="text-muted-foreground">Requires Documentation:</span>
-              <Badge :variant="leaveType.requires_documentation ? 'default' : 'secondary'" class="ml-2">
-                {{ leaveType.requires_documentation ? 'Yes' : 'No' }}
+              <Badge :variant="leaveType?.requires_documentation ? 'default' : 'secondary'" class="ml-2">
+                {{ leaveType?.requires_documentation ? 'Yes' : 'No' }}
               </Badge>
             </div>
             <div>
               <span class="text-muted-foreground">Gender Specific:</span>
-              <Badge :variant="leaveType.gender_specific ? 'default' : 'secondary'" class="ml-2">
-                {{ leaveType.gender_specific ? leaveType.gender.charAt(0).toUpperCase() + leaveType.gender.slice(1) : 'No' }}
+              <Badge :variant="leaveType?.gender_specific ? 'default' : 'secondary'" class="ml-2">
+                {{ leaveType?.gender_specific ? (leaveType?.gender?.charAt(0).toUpperCase() + leaveType?.gender?.slice(1)) : 'No' }}
               </Badge>
             </div>
           </div>
@@ -94,15 +95,19 @@
       </div>
 
       <!-- Empty State -->
-      <div v-if="leaveTypes.length === 0" class="text-center py-12">
+      <div v-if="filteredLeaveTypes.length === 0" class="text-center py-12">
         <div class="mx-auto w-24 h-24 bg-muted rounded-full flex items-center justify-center mb-4">
           <FileText class="h-8 w-8 text-muted-foreground" />
         </div>
         <h3 class="text-lg font-medium text-foreground mb-2">No leave types yet</h3>
-        <p class="text-muted-foreground mb-6">
+        <p v-if="canManageLeaveTypes" class="text-muted-foreground mb-6">
           Get started by creating your first leave type for your workspace.
         </p>
+        <p v-else class="text-muted-foreground mb-6">
+          No leave types have been configured yet. Contact your workspace owner or HR to set up leave types.
+        </p>
         <Link
+          v-if="canManageLeaveTypes"
           :href="route('tenant.management.leave-types.create', {
             tenant_slug: workspace.slug,
             tenant_uuid: workspace.uuid
@@ -119,6 +124,7 @@
 
 <script setup lang="ts">
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
+import { computed } from 'vue';
 import TenantLayout from '@/layouts/TenantLayout.vue';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -138,8 +144,9 @@ import {
 
 interface LeaveType {
   id: number;
+  uuid: string;
   name: string;
-  description: string;
+  description: string | null;
   max_days_per_year: number | null;
   requires_documentation: boolean;
   gender_specific: boolean;
@@ -150,12 +157,27 @@ interface LeaveType {
   allow_negative_balance: boolean;
 }
 
+type CurrentUser = {
+  uuid: string;
+  role: string | null;
+}
+
 const props = defineProps<{
   leaveTypes: LeaveType[];
+  currentUser?: CurrentUser;
 }>();
 
 const page = usePage();
 const workspace = page.props.workspace as { uuid: string; slug: string; name: string };
+
+const filteredLeaveTypes = computed(() => {
+  return (props.leaveTypes || []).filter(leaveType => leaveType && leaveType.id);
+});
+
+const canManageLeaveTypes = computed(() => {
+  const role = props.currentUser?.role?.toLowerCase();
+  return role === 'owner' || role === 'hr';
+});
 
 const deleteLeaveType = (leaveType: LeaveType) => {
   if (confirm(`Are you sure you want to delete "${leaveType.name}"? This action cannot be undone.`)) {
@@ -163,7 +185,7 @@ const deleteLeaveType = (leaveType: LeaveType) => {
       route('tenant.management.leave-types.destroy', {
         tenant_slug: workspace.slug,
         tenant_uuid: workspace.uuid,
-        leaveType: leaveType.id
+        leaveType: leaveType.uuid
       }),
       {
         preserveScroll: true,

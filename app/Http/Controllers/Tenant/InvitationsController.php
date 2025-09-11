@@ -2,31 +2,30 @@
 
 namespace App\Http\Controllers\Tenant;
 
+use App\Events\WorkspaceInvitationCancelled;
+use App\Events\WorkspaceMemberInvited;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Tenant\InviteMemberRequest;
 use App\Models\Workspace;
 use App\Models\WorkspaceInvitation;
-use App\Notifications\WorkspaceInvitationNotification;
+use App\Services\WorkspaceRoleService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Notification;
-use Illuminate\Support\Str;
 use Inertia\Inertia;
-use App\Services\WorkspaceRoleService;
 
 class InvitationsController extends Controller
 {
     public function index(Request $request, string $tenant_slug, string $tenant_uuid)
     {
         $workspace = Workspace::query()->where('slug', $tenant_slug)->where('uuid', $tenant_uuid)->firstOrFail();
-    /** @var \App\Models\Workspace $workspace */
-    $invitations = WorkspaceInvitation::query()
+        /** @var \App\Models\Workspace $workspace */
+        $invitations = WorkspaceInvitation::query()
             ->where('workspace_id', $workspace->id)
             ->latest()
             ->get();
 
-    return Inertia::render('tenant/Members/Index', [
+        return Inertia::render('tenant/Members/Index', [
             'workspace' => $workspace,
             'invitations' => $invitations,
         ]);
@@ -43,21 +42,17 @@ class InvitationsController extends Controller
             abort(403);
         }
 
-    // Ensure roles exist for this workspace
-    app(WorkspaceRoleService::class)->seedCoreRoles($workspace);
+        // Ensure roles exist for this workspace
+        app(WorkspaceRoleService::class)->seedCoreRoles($workspace);
 
-        $invitation = WorkspaceInvitation::create([
-            'workspace_id' => $workspace->id,
-            'email' => strtolower($data['email']),
-            'role' => $data['role'],
-            'token' => Str::random(64),
-            'inviter_id' => Auth::id(),
-            'expires_at' => now()->addDays(7),
-        ]);
-
-        // Send email to the invited address
-        Notification::route('mail', $invitation->email)
-            ->notify(new WorkspaceInvitationNotification($invitation));
+        // Fire the Verbs event instead of direct database operations
+        WorkspaceMemberInvited::commit(
+            workspace_id: (string) $workspace->id,
+            email: $data['email'],
+            role: $data['role'],
+            inviter_id: (string) Auth::id(),
+            expires_at: now()->addDays(7)->toISOString()
+        );
 
         return back()->with('success', 'Invitation sent.');
     }
@@ -75,5 +70,25 @@ class InvitationsController extends Controller
         return Inertia::render('tenant/dashboard/InviteMemberModal', [
             'workspace' => $workspace,
         ]);
+    }
+
+    public function destroy(Request $request, string $tenant_slug, string $tenant_uuid, int $invitationId): RedirectResponse
+    {
+        $workspace = Workspace::query()->where('slug', $tenant_slug)->where('uuid', $tenant_uuid)->firstOrFail();
+
+        // Authorization: only Owner/Admin/HR/Manager can cancel invitations
+        app(\Spatie\Permission\PermissionRegistrar::class)->setPermissionsTeamId($workspace->id);
+        if (! $request->user()->hasAnyRole(['Owner', 'Admin', 'HR', 'Manager', 'Super Admin'])) {
+            abort(403);
+        }
+
+        // Fire the Verbs event instead of direct database operations
+        WorkspaceInvitationCancelled::commit(
+            workspace_id: (string) $workspace->id,
+            invitation_id: $invitationId,
+            cancelled_by_id: (string) $request->user()->id
+        );
+
+        return back()->with('success', 'Invitation cancelled successfully.');
     }
 }

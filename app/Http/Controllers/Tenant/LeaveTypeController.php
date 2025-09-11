@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers\Tenant;
 
+use App\Events\LeaveTypeCreated;
+use App\Events\LeaveTypeDeleted;
+use App\Events\LeaveTypeUpdated;
 use App\Http\Controllers\Controller;
 use App\Models\LeaveType;
 use App\Models\Workspace;
@@ -15,11 +18,17 @@ class LeaveTypeController extends Controller
     {
         $workspace = Workspace::query()->where('slug', $tenant_slug)->where('uuid', $tenant_uuid)->firstOrFail();
 
+        // Authorization: only Owner/HR can manage leave types
+        app(\Spatie\Permission\PermissionRegistrar::class)->setPermissionsTeamId($workspace->id);
+        if (! $request->user()->hasAnyRole(['Owner', 'HR', 'Super Admin'])) {
+            abort(403, 'Only workspace owners and HR can manage leave types.');
+        }
+
         $leaveTypes = LeaveType::query()
             ->where('workspace_id', $workspace->id)
             ->orderBy('name')
-            ->paginate(10)
-            ->through(fn ($leaveType) => [
+            ->get()
+            ->map(fn ($leaveType) => [
                 'id' => $leaveType->id,
                 'uuid' => $leaveType->uuid,
                 'name' => $leaveType->name,
@@ -32,17 +41,27 @@ class LeaveTypeController extends Controller
                 'pay_percentage' => $leaveType->pay_percentage,
                 'minimum_notice_days' => $leaveType->minimum_notice_days,
                 'allow_negative_balance' => $leaveType->allow_negative_balance,
-            ]);
+            ])->toArray();
 
         return Inertia::render('tenant/leave-types/Index', [
             'leaveTypes' => $leaveTypes,
             'workspace' => $workspace,
+            'currentUser' => [
+                'uuid' => $request->user()->uuid,
+                'role' => $request->user()->roles->first()?->name,
+            ],
         ]);
     }
 
     public function create(Request $request, string $tenant_slug, string $tenant_uuid): Response
     {
         $workspace = Workspace::query()->where('slug', $tenant_slug)->where('uuid', $tenant_uuid)->firstOrFail();
+
+        // Authorization: only Owner/HR can manage leave types
+        app(\Spatie\Permission\PermissionRegistrar::class)->setPermissionsTeamId($workspace->id);
+        if (! $request->user()->hasAnyRole(['Owner', 'HR', 'Super Admin'])) {
+            abort(403, 'Only workspace owners and HR can manage leave types.');
+        }
 
         return Inertia::render('tenant/leave-types/Create', [
             'workspace' => $workspace,
@@ -52,6 +71,12 @@ class LeaveTypeController extends Controller
     public function store(Request $request, string $tenant_slug, string $tenant_uuid)
     {
         $workspace = Workspace::query()->where('slug', $tenant_slug)->where('uuid', $tenant_uuid)->firstOrFail();
+
+        // Authorization: only Owner/HR can manage leave types
+        app(\Spatie\Permission\PermissionRegistrar::class)->setPermissionsTeamId($workspace->id);
+        if (! $request->user()->hasAnyRole(['Owner', 'HR', 'Super Admin'])) {
+            abort(403, 'Only workspace owners and HR can manage leave types.');
+        }
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -66,11 +91,23 @@ class LeaveTypeController extends Controller
             'allow_negative_balance' => 'boolean',
         ]);
 
-        $validated['workspace_id'] = $workspace->id;
+        // Fire the Verbs event instead of direct database operations
+        LeaveTypeCreated::commit(
+            workspace_id: (string) $workspace->id,
+            name: $validated['name'],
+            description: $validated['description'],
+            max_days_per_year: $validated['max_days_per_year'],
+            requires_documentation: $validated['requires_documentation'] ?? false,
+            gender_specific: $validated['gender_specific'] ?? false,
+            gender: $validated['gender'],
+            frequency_years: $validated['frequency_years'],
+            pay_percentage: (float) $validated['pay_percentage'],
+            minimum_notice_days: $validated['minimum_notice_days'],
+            allow_negative_balance: $validated['allow_negative_balance'] ?? false,
+            created_by_id: (string) $request->user()->id
+        );
 
-        LeaveType::create($validated);
-
-        return redirect()->route('tenant.leave-types.index', [
+        return redirect()->route('tenant.management.leave-types.index', [
             'tenant_slug' => $tenant_slug,
             'tenant_uuid' => $tenant_uuid,
         ])->with('success', 'Leave type created successfully');
@@ -79,6 +116,12 @@ class LeaveTypeController extends Controller
     public function edit(Request $request, string $tenant_slug, string $tenant_uuid, LeaveType $leaveType): Response
     {
         $workspace = Workspace::query()->where('slug', $tenant_slug)->where('uuid', $tenant_uuid)->firstOrFail();
+
+        // Authorization: only Owner/HR can manage leave types
+        app(\Spatie\Permission\PermissionRegistrar::class)->setPermissionsTeamId($workspace->id);
+        if (! $request->user()->hasAnyRole(['Owner', 'HR', 'Super Admin'])) {
+            abort(403, 'Only workspace owners and HR can manage leave types.');
+        }
 
         // Ensure the leave type belongs to this workspace
         if ($leaveType->workspace_id !== $workspace->id) {
@@ -95,6 +138,12 @@ class LeaveTypeController extends Controller
     {
         $workspace = Workspace::query()->where('slug', $tenant_slug)->where('uuid', $tenant_uuid)->firstOrFail();
 
+        // Authorization: only Owner/HR can manage leave types
+        app(\Spatie\Permission\PermissionRegistrar::class)->setPermissionsTeamId($workspace->id);
+        if (! $request->user()->hasAnyRole(['Owner', 'HR', 'Super Admin'])) {
+            abort(403, 'Only workspace owners and HR can manage leave types.');
+        }
+
         // Ensure the leave type belongs to this workspace
         if ($leaveType->workspace_id !== $workspace->id) {
             abort(404);
@@ -113,9 +162,24 @@ class LeaveTypeController extends Controller
             'allow_negative_balance' => 'boolean',
         ]);
 
-        $leaveType->update($validated);
+        // Fire the Verbs event instead of direct database operations
+        LeaveTypeUpdated::commit(
+            leave_type_uuid: $leaveType->uuid,
+            workspace_id: (string) $workspace->id,
+            name: $validated['name'],
+            description: $validated['description'],
+            max_days_per_year: $validated['max_days_per_year'],
+            requires_documentation: $validated['requires_documentation'] ?? false,
+            gender_specific: $validated['gender_specific'] ?? false,
+            gender: $validated['gender'],
+            frequency_years: $validated['frequency_years'],
+            pay_percentage: (float) $validated['pay_percentage'],
+            minimum_notice_days: $validated['minimum_notice_days'],
+            allow_negative_balance: $validated['allow_negative_balance'] ?? false,
+            updated_by_id: (string) $request->user()->id
+        );
 
-        return redirect()->route('tenant.leave-types.index', [
+        return redirect()->route('tenant.management.leave-types.index', [
             'tenant_slug' => $tenant_slug,
             'tenant_uuid' => $tenant_uuid,
         ])->with('success', 'Leave type updated successfully');
@@ -125,24 +189,30 @@ class LeaveTypeController extends Controller
     {
         $workspace = Workspace::query()->where('slug', $tenant_slug)->where('uuid', $tenant_uuid)->firstOrFail();
 
-        // Ensure the leave type belongs to this workspace
-        if ($leaveType->workspace_id !== $workspace->id) {
-            abort(404);
+        // Authorization: only Owner/HR can manage leave types
+        app(\Spatie\Permission\PermissionRegistrar::class)->setPermissionsTeamId($workspace->id);
+        if (! $request->user()->hasAnyRole(['Owner', 'HR', 'Super Admin'])) {
+            abort(403, 'Only workspace owners and HR can manage leave types.');
         }
 
-        // Check if leave type is used in any leave requests
-        if ($leaveType->leaveRequests()->count() > 0) {
-            return redirect()->route('tenant.leave-types.index', [
+        try {
+            // Fire the Verbs event with validation (will check usage and ownership)
+            LeaveTypeDeleted::commit(
+                leave_type_uuid: $leaveType->uuid,
+                workspace_id: (string) $workspace->id,
+                deleted_by_id: (string) $request->user()->id
+            );
+
+            return redirect()->route('tenant.management.leave-types.index', [
                 'tenant_slug' => $tenant_slug,
                 'tenant_uuid' => $tenant_uuid,
-            ])->with('error', 'Cannot delete leave type as it is being used in leave requests');
+            ])->with('success', 'Leave type deleted successfully');
+
+        } catch (\Exception $e) {
+            return redirect()->route('tenant.management.leave-types.index', [
+                'tenant_slug' => $tenant_slug,
+                'tenant_uuid' => $tenant_uuid,
+            ])->with('error', $e->getMessage());
         }
-
-        $leaveType->delete();
-
-        return redirect()->route('tenant.leave-types.index', [
-            'tenant_slug' => $tenant_slug,
-            'tenant_uuid' => $tenant_uuid,
-        ])->with('success', 'Leave type deleted successfully');
     }
 }

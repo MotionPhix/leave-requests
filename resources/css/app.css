@@ -6,6 +6,8 @@
 @source '../../node_modules/@inertiaui/modal-vue/src/**/*.{js,vue}';
 @source '../../storage/framework/views/*.php';
 
+@plugin 'tailwind-scrollbar';
+
 @custom-variant dark (&:is(.dark *));
 
 /*@theme inline {

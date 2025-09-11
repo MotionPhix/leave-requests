@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useForm, usePage } from '@inertiajs/vue3';
+import { Link, useForm, usePage } from '@inertiajs/vue3';
 import TenantLayout from '@/layouts/TenantLayout.vue';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, PlusCircle, FileText, Users, Calendar, Shield } from 'lucide-vue-next';
+import { FormNumberField } from '@/components/forms';
 
 type Workspace = {
   uuid: string;
@@ -56,17 +57,17 @@ const genderOptions = [
       <!-- Header -->
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-4">
-          <Button
+          <Link
             variant="ghost"
             size="sm"
             :href="route('tenant.management.leave-types.index', {
               tenant_slug: workspace.slug,
               tenant_uuid: workspace.uuid
             })"
-            as="a">
+            :as="Button">
             <ArrowLeft class="w-4 h-4 mr-2" />
             Back to Leave Types
-          </Button>
+          </Link>
         </div>
       </div>
 
@@ -137,82 +138,73 @@ const genderOptions = [
           <CardContent class="space-y-4">
             <div class="grid md:grid-cols-2 gap-4">
               <div>
-                <Label for="max_days_per_year">Maximum Days Per Year *</Label>
-                <Input
+                <FormNumberField
                   id="max_days_per_year"
-                  v-model.number="form.max_days_per_year"
-                  type="number"
-                  min="0"
-                  max="365"
-                  class="mt-1"
-                  :class="{ 'border-red-500': form.errors.max_days_per_year }"
+                  v-model="form.max_days_per_year"
+                  label="Maximum Days Per Year"
+                  :min="0"
+                  :max="365"
+                  :step="1"
+                  :error="form.errors.max_days_per_year"
+                  show-buttons
+                  button-position="stacked"
                   required
                 />
                 <p class="text-sm text-muted-foreground mt-1">
                   Total days available per calendar year
                 </p>
-                <p v-if="form.errors.max_days_per_year" class="text-sm text-red-600 mt-1">
-                  {{ form.errors.max_days_per_year }}
-                </p>
               </div>
 
               <div>
-                <Label for="minimum_notice_days">Minimum Notice (Days)</Label>
-                <Input
+                <FormNumberField
                   id="minimum_notice_days"
-                  v-model.number="form.minimum_notice_days"
-                  type="number"
-                  min="0"
-                  max="365"
-                  class="mt-1"
-                  :class="{ 'border-red-500': form.errors.minimum_notice_days }"
+                  v-model="form.minimum_notice_days"
+                  label="Minimum Notice (Days)"
+                  :min="0"
+                  :max="365"
+                  :step="1"
+                  :error="form.errors.minimum_notice_days"
+                  show-buttons
+                  button-position="stacked"
                 />
                 <p class="text-sm text-muted-foreground mt-1">
                   How many days in advance must this leave be requested
-                </p>
-                <p v-if="form.errors.minimum_notice_days" class="text-sm text-red-600 mt-1">
-                  {{ form.errors.minimum_notice_days }}
                 </p>
               </div>
             </div>
 
             <div class="grid md:grid-cols-2 gap-4">
               <div>
-                <Label for="pay_percentage">Pay Percentage (%)</Label>
-                <Input
+                <FormNumberField
                   id="pay_percentage"
-                  v-model.number="form.pay_percentage"
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="0.01"
-                  class="mt-1"
-                  :class="{ 'border-red-500': form.errors.pay_percentage }"
+                  v-model="form.pay_percentage"
+                  label="Pay Percentage (%)"
+                  :min="0"
+                  :max="100"
+                  :step="0.01"
+                  :error="form.errors.pay_percentage"
+                  show-buttons
+                  button-position="inline"
                 />
                 <p class="text-sm text-muted-foreground mt-1">
                   Percentage of salary paid during this leave (0-100%)
                 </p>
-                <p v-if="form.errors.pay_percentage" class="text-sm text-red-600 mt-1">
-                  {{ form.errors.pay_percentage }}
-                </p>
               </div>
 
               <div>
-                <Label for="frequency_years">Frequency (Years)</Label>
-                <Input
+                <FormNumberField
                   id="frequency_years"
-                  v-model.number="form.frequency_years"
-                  type="number"
-                  min="1"
-                  max="10"
-                  class="mt-1"
-                  :class="{ 'border-red-500': form.errors.frequency_years }"
+                  v-model="form.frequency_years"
+                  label="Frequency (Years)"
+                  :min="1"
+                  :max="10"
+                  :step="1"
+                  :error="form.errors.frequency_years"
+                  show-buttons
+                  button-position="stacked"
                 />
                 <p class="text-sm text-muted-foreground mt-1">
                   How often this leave can be taken (1 = annually)
-                </p>
-                <p v-if="form.errors.frequency_years" class="text-sm text-red-600 mt-1">
-                  {{ form.errors.frequency_years }}
                 </p>
               </div>
             </div>

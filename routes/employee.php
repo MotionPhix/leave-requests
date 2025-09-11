@@ -35,7 +35,7 @@ Route::prefix('{tenant_slug}/{tenant_uuid}')
             });
 
         // Team Members (view-only for regular employees)
-        Route::get('members', [\App\Http\Controllers\Tenant\MembersController::class, 'index'])
+        Route::get('members', [\App\Http\Controllers\Employee\MembersController::class, 'index'])
             ->name('tenant.members.index');
 
         // Employee Calendar View (view-only)

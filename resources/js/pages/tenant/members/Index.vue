@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { UserPlus, Mail, Users, Crown, Shield, UserCheck, Trash2 } from 'lucide-vue-next';
+import { UserPlus, Mail, Users, Crown, Shield, UserCheck, Trash2, X } from 'lucide-vue-next';
 
 type Member = { 
   uuid: string; 
@@ -26,10 +26,16 @@ type Invitation = {
   expires_at: string | null;
 }
 
+type CurrentUser = {
+  uuid: string;
+  role: string | null;
+}
+
 const props = defineProps<{
   members: Member[];
   roles: string[];
   invitations?: Invitation[];
+  currentUser: CurrentUser;
 }>();
 
 const page = usePage();
@@ -42,10 +48,15 @@ const inviteForm = useForm({
 
 const showRemoveDialog = ref(false);
 const memberToRemove = ref<Member | null>(null);
+const showCancelInviteDialog = ref(false);
+const invitationToCancel = ref<Invitation | null>(null);
+const isUpdatingRole = ref<string | null>(null);
+const isCancellingInvite = ref<number | null>(null);
+const isRemovingMember = ref(false);
 
 const inviteUser = () => {
   inviteForm.post(
-    route('tenant.invitations.store', {
+    route('tenant.management.invitations.store', {
       tenant_slug: workspace.slug,
       tenant_uuid: workspace.uuid,
     }),
@@ -59,14 +70,20 @@ const inviteUser = () => {
 };
 
 const updateRole = (userUuid: string, role: string) => {
+  isUpdatingRole.value = userUuid;
   router.put(
-    route('tenant.members.update', {
+    route('tenant.management.members.update', {
       tenant_slug: workspace.slug,
       tenant_uuid: workspace.uuid,
       userUuid,
     }),
     { role },
-    { preserveScroll: true },
+    { 
+      preserveScroll: true,
+      onFinish: () => {
+        isUpdatingRole.value = null;
+      }
+    },
   );
 };
 
@@ -78,8 +95,9 @@ const confirmRemove = (member: Member) => {
 const removeMember = () => {
   if (!memberToRemove.value) return;
   
+  isRemovingMember.value = true;
   router.delete(
-    route('tenant.members.destroy', {
+    route('tenant.management.members.destroy', {
       tenant_slug: workspace.slug,
       tenant_uuid: workspace.uuid,
       userUuid: memberToRemove.value.uuid,
@@ -89,9 +107,67 @@ const removeMember = () => {
       onSuccess: () => {
         showRemoveDialog.value = false;
         memberToRemove.value = null;
+      },
+      onFinish: () => {
+        isRemovingMember.value = false;
       }
     },
   );
+};
+
+const confirmCancelInvite = (invitation: Invitation) => {
+  invitationToCancel.value = invitation;
+  showCancelInviteDialog.value = true;
+};
+
+const cancelInvitation = () => {
+  if (!invitationToCancel.value) return;
+  
+  isCancellingInvite.value = invitationToCancel.value.id;
+  router.delete(
+    route('tenant.management.invitations.destroy', {
+      tenant_slug: workspace.slug,
+      tenant_uuid: workspace.uuid,
+      invitationId: invitationToCancel.value.id,
+    }),
+    { 
+      preserveScroll: true,
+      onSuccess: () => {
+        showCancelInviteDialog.value = false;
+        invitationToCancel.value = null;
+      },
+      onFinish: () => {
+        isCancellingInvite.value = null;
+      }
+    },
+  );
+};
+
+const canManageMembers = computed(() => {
+  const role = props.currentUser.role?.toLowerCase();
+  return role === 'owner' || role === 'admin' || role === 'hr' || role === 'manager';
+});
+
+const canChangeRoles = computed(() => {
+  const role = props.currentUser.role?.toLowerCase();
+  return role === 'owner' || role === 'admin';
+});
+
+const getAvailableRoles = (currentRole: string | null) => {
+  const role = props.currentUser.role?.toLowerCase();
+  let availableRoles = [...props.roles];
+  
+  // Non-owners cannot assign Owner role
+  if (role !== 'owner') {
+    availableRoles = availableRoles.filter(r => r !== 'Owner');
+  }
+  
+  // Admins cannot assign Owner role and cannot change their own role
+  if (role === 'admin') {
+    availableRoles = availableRoles.filter(r => r !== 'Owner');
+  }
+  
+  return availableRoles;
 };
 
 const getRoleIcon = (role: string) => {
@@ -194,7 +270,7 @@ const memberStats = computed(() => ({
       </div>
 
       <!-- Invite Member Section -->
-      <Card>
+      <Card v-if="canManageMembers">
         <CardHeader>
           <CardTitle class="flex items-center gap-2">
             <UserPlus class="h-5 w-5" />
@@ -215,6 +291,7 @@ const memberStats = computed(() => ({
                 v-model="inviteForm.email"
                 :disabled="inviteForm.processing"
                 class="mt-1"
+                required
               />
               <p v-if="inviteForm.errors.email" class="text-sm text-destructive mt-1">
                 {{ inviteForm.errors.email }}
@@ -222,19 +299,22 @@ const memberStats = computed(() => ({
             </div>
             <div class="w-full sm:w-48">
               <Label>Role</Label>
-              <Select v-model="inviteForm.role" :disabled="inviteForm.processing">
+              <Select v-model="inviteForm.role" :disabled="inviteForm.processing" required>
                 <SelectTrigger class="mt-1">
                   <SelectValue placeholder="Select role" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem v-for="role in roles" :key="role" :value="role">
+                  <SelectItem v-for="role in roles.filter(r => r !== 'Owner')" :key="role" :value="role">
                     {{ role }}
                   </SelectItem>
                 </SelectContent>
               </Select>
+              <p v-if="inviteForm.errors.role" class="text-sm text-destructive mt-1">
+                {{ inviteForm.errors.role }}
+              </p>
             </div>
             <div class="flex items-end">
-              <Button type="submit" :disabled="inviteForm.processing" class="w-full sm:w-auto">
+              <Button type="submit" :disabled="inviteForm.processing || !inviteForm.email || !inviteForm.role" class="w-full sm:w-auto">
                 <UserPlus class="mr-2 h-4 w-4" />
                 {{ inviteForm.processing ? 'Sending...' : 'Send Invitation' }}
               </Button>
@@ -268,30 +348,46 @@ const memberStats = computed(() => ({
                 <TableCell>
                   <div class="flex items-center gap-2">
                     <component :is="getRoleIcon(member.role || '')" class="h-4 w-4" />
-                    <Select 
-                      :model-value="member.role || 'Employee'" 
-                      @update:model-value="(value) => updateRole(member.uuid, value as string)"
-                    >
-                      <SelectTrigger class="w-32">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem v-for="role in roles" :key="role" :value="role">
-                          {{ role }}
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <template v-if="canChangeRoles && member.uuid !== currentUser.uuid">
+                      <Select 
+                        :model-value="member.role || 'Employee'" 
+                        @update:model-value="(value) => updateRole(member.uuid, value as string)"
+                        :disabled="isUpdatingRole === member.uuid"
+                      >
+                        <SelectTrigger class="w-32">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem v-for="role in getAvailableRoles(member.role)" :key="role" :value="role">
+                            {{ role }}
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <div v-if="isUpdatingRole === member.uuid" class="text-xs text-muted-foreground">
+                        Updating...
+                      </div>
+                    </template>
+                    <template v-else>
+                      <Badge :variant="getRoleBadgeVariant(member.role || '')">
+                        {{ member.role || 'Employee' }}
+                      </Badge>
+                    </template>
                   </div>
                 </TableCell>
                 <TableCell class="text-right">
                   <Button 
+                    v-if="canManageMembers && member.uuid !== currentUser.uuid"
                     variant="ghost" 
                     size="sm" 
                     @click="confirmRemove(member)"
                     class="text-destructive hover:text-destructive"
+                    :title="'Remove ' + member.name + ' from workspace'"
                   >
                     <Trash2 class="h-4 w-4" />
                   </Button>
+                  <span v-else-if="member.uuid === currentUser.uuid" class="text-xs text-muted-foreground">
+                    (You)
+                  </span>
                 </TableCell>
               </TableRow>
               <TableRow v-if="members.length === 0">
@@ -305,7 +401,7 @@ const memberStats = computed(() => ({
       </Card>
 
       <!-- Pending Invitations -->
-      <Card v-if="invitations && invitations.length > 0">
+      <Card v-if="canManageMembers && invitations && invitations.length > 0">
         <CardHeader>
           <CardTitle>Pending Invitations</CardTitle>
           <CardDescription>
@@ -326,11 +422,23 @@ const memberStats = computed(() => ({
                   <p class="text-sm text-muted-foreground">Role: {{ invitation.role }}</p>
                 </div>
               </div>
-              <div class="text-right">
-                <Badge variant="secondary">Pending</Badge>
-                <p v-if="invitation.expires_at" class="text-xs text-muted-foreground mt-1">
-                  Expires: {{ new Date(invitation.expires_at).toLocaleDateString() }}
-                </p>
+              <div class="flex items-center gap-3">
+                <div class="text-right">
+                  <Badge variant="secondary">Pending</Badge>
+                  <p v-if="invitation.expires_at" class="text-xs text-muted-foreground mt-1">
+                    Expires: {{ new Date(invitation.expires_at).toLocaleDateString() }}
+                  </p>
+                </div>
+                <Button
+                  v-if="canManageMembers"
+                  variant="ghost"
+                  size="sm"
+                  @click="confirmCancelInvite(invitation)"
+                  :disabled="isCancellingInvite === invitation.id"
+                  class="text-destructive hover:text-destructive"
+                >
+                  <X class="h-4 w-4" />
+                </Button>
               </div>
             </div>
           </div>
@@ -349,9 +457,28 @@ const memberStats = computed(() => ({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel @click="showRemoveDialog = false">Cancel</AlertDialogCancel>
-          <AlertDialogAction @click="removeMember" class="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-            Remove Member
+          <AlertDialogCancel @click="showRemoveDialog = false" :disabled="isRemovingMember">Cancel</AlertDialogCancel>
+          <AlertDialogAction @click="removeMember" :disabled="isRemovingMember" class="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            {{ isRemovingMember ? 'Removing...' : 'Remove Member' }}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+
+    <!-- Cancel Invitation Dialog -->
+    <AlertDialog :open="showCancelInviteDialog" @update:open="showCancelInviteDialog = $event">
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Cancel Invitation</AlertDialogTitle>
+          <AlertDialogDescription>
+            Are you sure you want to cancel the invitation for <strong>{{ invitationToCancel?.email }}</strong>? 
+            This will prevent them from joining the workspace using this invitation link.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel @click="showCancelInviteDialog = false">Cancel</AlertDialogCancel>
+          <AlertDialogAction @click="cancelInvitation" class="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            Cancel Invitation
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

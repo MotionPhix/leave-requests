@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Tenant;
 
 use App\Events\WorkspaceMemberInvited;
+use App\Events\WorkspaceMemberRemoved;
+use App\Events\WorkspaceMemberRoleUpdated;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Workspace;
@@ -21,12 +23,35 @@ class MembersController extends Controller
         /** @var Workspace $workspace */
         $workspace = $request->attributes->get('workspace');
 
-        $members = $workspace->users()->with('roles')->get()->map(fn ($u) => [
-            'uuid' => $u->uuid,
-            'name' => $u->name,
-            'email' => $u->email,
-            'role' => $u->roles->first()?->name,
-        ]);
+        // Set permission team ID for role checking
+        app(\Spatie\Permission\PermissionRegistrar::class)->setPermissionsTeamId($workspace->getKey());
+
+        // Get the workspace owner
+        $ownerRole = Role::where('workspace_id', $workspace->getKey())
+            ->where('name', 'Owner')
+            ->first();
+
+        $ownerId = null;
+        if ($ownerRole) {
+            $ownerId = \Illuminate\Support\Facades\DB::table('model_has_roles')
+                ->where('role_id', $ownerRole->id)
+                ->where('workspace_id', $workspace->getKey())
+                ->value('model_id');
+        }
+
+        // Get members excluding the owner
+        $members = $workspace->users()
+            ->with('roles')
+            ->when($ownerId, function ($query) use ($ownerId) {
+                return $query->where('users.id', '!=', $ownerId);
+            })
+            ->get()
+            ->map(fn ($u) => [
+                'uuid' => $u->uuid,
+                'name' => $u->name,
+                'email' => $u->email,
+                'role' => $u->roles->first()?->name,
+            ]);
 
         $roles = Role::query()
             ->where('workspace_id', $workspace->getKey())
@@ -42,6 +67,10 @@ class MembersController extends Controller
             'members' => $members,
             'roles' => $roles,
             'invitations' => $invitations,
+            'currentUser' => [
+                'uuid' => $request->user()->uuid,
+                'role' => $request->user()->roles->first()?->name,
+            ],
         ]);
     }
 
@@ -78,13 +107,13 @@ class MembersController extends Controller
             'role' => ['required', Rule::in(['Owner', 'Admin', 'HR', 'Manager', 'Employee'])],
         ]);
 
-        $user = User::where('uuid', $userUuid)->firstOrFail();
-
-        // Ensure core roles exist for safety
-        app(\App\Services\WorkspaceRoleService::class)->seedCoreRoles($workspace);
-
-        app(\Spatie\Permission\PermissionRegistrar::class)->setPermissionsTeamId($workspace->getKey());
-        $user->syncRoles([$validated['role']]);
+        // Fire the Verbs event instead of direct database operations
+        WorkspaceMemberRoleUpdated::commit(
+            workspace_id: (string) $workspace->id,
+            user_uuid: $userUuid,
+            new_role: $validated['role'],
+            updated_by_id: (string) $request->user()->id
+        );
 
         return back()->with('success', 'Member role updated');
     }
@@ -93,9 +122,13 @@ class MembersController extends Controller
     {
         /** @var Workspace $workspace */
         $workspace = $request->attributes->get('workspace');
-        $user = User::where('uuid', $userUuid)->firstOrFail();
-        $workspace->users()->detach($user->id);
-        $user->syncRoles([]);
+
+        // Fire the Verbs event instead of direct database operations
+        WorkspaceMemberRemoved::commit(
+            workspace_id: (string) $workspace->id,
+            user_uuid: $userUuid,
+            removed_by_id: (string) $request->user()->id
+        );
 
         return back()->with('success', 'Member removed');
     }

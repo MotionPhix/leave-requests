@@ -46,6 +46,7 @@ Route::prefix('{tenant_slug}/{tenant_uuid}')
                 // Invitations Management
                 Route::get('members/invitations', [\App\Http\Controllers\Tenant\InvitationsController::class, 'index'])->name('tenant.management.invitations.index');
                 Route::post('members/invitations', [\App\Http\Controllers\Tenant\InvitationsController::class, 'store'])->name('tenant.management.invitations.store');
+                Route::delete('members/invitations/{invitationId}', [\App\Http\Controllers\Tenant\InvitationsController::class, 'destroy'])->name('tenant.management.invitations.destroy');
                 Route::get('dashboard/invite-member', [\App\Http\Controllers\Tenant\InvitationsController::class, 'create'])->name('tenant.management.invite-member');
 
                 // Leave Types Management
