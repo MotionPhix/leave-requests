@@ -31,11 +31,19 @@ type CurrentUser = {
   role: string | null;
 }
 
+type AssignableRole = {
+  id: number;
+  name: string;
+  label: string;
+}
+
 const props = defineProps<{
   members: Member[];
   roles: string[];
+  assignableRoles: AssignableRole[];
   invitations?: Invitation[];
   currentUser: CurrentUser;
+  canManageRoles: boolean;
 }>();
 
 const page = usePage();
@@ -149,25 +157,11 @@ const canManageMembers = computed(() => {
 });
 
 const canChangeRoles = computed(() => {
-  const role = props.currentUser.role?.toLowerCase();
-  return role === 'owner' || role === 'admin';
+  return props.canManageRoles;
 });
 
-const getAvailableRoles = (currentRole: string | null) => {
-  const role = props.currentUser.role?.toLowerCase();
-  let availableRoles = [...props.roles];
-  
-  // Non-owners cannot assign Owner role
-  if (role !== 'owner') {
-    availableRoles = availableRoles.filter(r => r !== 'Owner');
-  }
-  
-  // Admins cannot assign Owner role and cannot change their own role
-  if (role === 'admin') {
-    availableRoles = availableRoles.filter(r => r !== 'Owner');
-  }
-  
-  return availableRoles;
+const getAvailableRoles = () => {
+  return props.assignableRoles;
 };
 
 const getRoleIcon = (role: string) => {
@@ -304,8 +298,8 @@ const memberStats = computed(() => ({
                   <SelectValue placeholder="Select role" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem v-for="role in roles.filter(r => r !== 'Owner')" :key="role" :value="role">
-                    {{ role }}
+                  <SelectItem v-for="role in assignableRoles" :key="role.name" :value="role.name">
+                    {{ role.label }}
                   </SelectItem>
                 </SelectContent>
               </Select>
@@ -358,8 +352,8 @@ const memberStats = computed(() => ({
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem v-for="role in getAvailableRoles(member.role)" :key="role" :value="role">
-                            {{ role }}
+                          <SelectItem v-for="role in getAvailableRoles()" :key="role.name" :value="role.name">
+                            {{ role.label }}
                           </SelectItem>
                         </SelectContent>
                       </Select>

@@ -29,20 +29,33 @@
         <div
           v-for="leaveType in filteredLeaveTypes"
           :key="leaveType.id"
-          class="bg-card border rounded-lg p-6 space-y-4"
+          class="bg-card border rounded-lg p-6 space-y-4 hover:shadow-md transition-shadow"
         >
+          <!-- Header -->
           <div class="flex items-start justify-between">
-            <div class="space-y-2">
-              <h3 class="font-medium text-card-foreground">{{ leaveType?.name || 'Unnamed Leave Type' }}</h3>
-              <p v-if="leaveType?.description" class="text-sm text-muted-foreground">{{ leaveType.description }}</p>
+            <div class="space-y-2 flex-1">
+              <h3 class="text-lg font-semibold text-card-foreground">{{ leaveType?.name || 'Unnamed Leave Type' }}</h3>
+              <p v-if="leaveType?.description" class="text-sm text-muted-foreground line-clamp-2">{{ leaveType.description }}</p>
             </div>
             <DropdownMenu v-if="canManageLeaveTypes">
               <DropdownMenuTrigger as-child>
-                <Button variant="ghost" size="sm">
+                <Button variant="ghost" size="sm" class="ml-2">
                   <MoreHorizontal class="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                <DropdownMenuItem as-child>
+                  <Link
+                    :href="route('tenant.management.leave-types.show', {
+                      tenant_slug: workspace.slug,
+                      tenant_uuid: workspace.uuid,
+                      leaveType: leaveType.uuid
+                    })"
+                  >
+                    <Eye class="h-4 w-4 mr-2" />
+                    View Details
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem as-child>
                   <Link
                     :href="route('tenant.management.leave-types.edit', {
@@ -66,30 +79,32 @@
             </DropdownMenu>
           </div>
 
-          <div class="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <span class="text-muted-foreground">Max Days:</span>
-              <div class="font-medium">{{ leaveType?.max_days_per_year || 'Unlimited' }}</div>
+          <!-- Essential Details -->
+          <div class="space-y-3 divide-y divide-muted-foreground/50">
+            <div class="flex items-center justify-between pb-3">
+              <span class="text-sm text-muted-foreground">Annual Allowance</span>
+              <span class="text-sm font-semibold">{{ leaveType?.max_days_per_year || 'Unlimited' }} days</span>
             </div>
-            <div>
-              <span class="text-muted-foreground">Pay Percentage:</span>
-              <div class="font-medium">{{ leaveType?.pay_percentage || 0 }}%</div>
+            
+            <div class="flex items-center justify-between">
+              <span class="text-sm text-muted-foreground">Pay Rate</span>
+              <span class="text-sm font-semibold">{{ leaveType?.pay_percentage || 0 }}%</span>
             </div>
           </div>
 
-          <div class="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <span class="text-muted-foreground">Requires Documentation:</span>
-              <Badge :variant="leaveType?.requires_documentation ? 'default' : 'secondary'" class="ml-2">
-                {{ leaveType?.requires_documentation ? 'Yes' : 'No' }}
-              </Badge>
-            </div>
-            <div>
-              <span class="text-muted-foreground">Gender Specific:</span>
-              <Badge :variant="leaveType?.gender_specific ? 'default' : 'secondary'" class="ml-2">
-                {{ leaveType?.gender_specific ? (leaveType?.gender?.charAt(0).toUpperCase() + leaveType?.gender?.slice(1)) : 'No' }}
-              </Badge>
-            </div>
+          <!-- Key Features -->
+          <div class="flex justify-between gap-2 pt-5 border-t border-muted-foreground/50">
+            <Badge v-if="leaveType?.requires_documentation" variant="secondary" class="text-xs">
+              📋 Docs Required
+            </Badge>
+            
+            <Badge v-if="leaveType?.gender_specific" variant="secondary" class="text-xs">
+              👤 {{ leaveType?.gender?.charAt(0).toUpperCase() + leaveType?.gender?.slice(1) }}
+            </Badge>
+            
+            <Badge v-if="leaveType?.minimum_notice_days > 0" variant="outline" class="text-xs">
+              ⏰ {{ leaveType?.minimum_notice_days }}d notice
+            </Badge>
           </div>
         </div>
       </div>
@@ -139,7 +154,8 @@ import {
   MoreHorizontal,
   Edit,
   Trash2,
-  FileText
+  FileText,
+  Eye
 } from 'lucide-vue-next';
 
 interface LeaveType {

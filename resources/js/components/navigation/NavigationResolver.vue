@@ -145,7 +145,7 @@ const ownerNavItems = computed((): NavItem[] => [
   {
     title: 'Roles & Permissions',
     href: tenantParams.value.tenant_slug && tenantParams.value.tenant_uuid
-      ? route('tenant.management.roles.index', tenantParams.value)
+      ? route('tenant.management.roles-permissions.index', tenantParams.value)
       : '#',
     icon: ShieldCheck,
   },

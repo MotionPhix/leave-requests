@@ -157,6 +157,33 @@ const form = useForm({
     :show-buttons="false"
     placeholder="Enter age"
   />
+  
+  <!-- Percentage formatting -->
+  <FormNumberField
+    id="completion_rate"
+    v-model="form.completion_rate"
+    label="Completion Rate"
+    :min="0"
+    :max="1"
+    :step="0.01"
+    :format-options="{ style: 'percent' }"
+    show-buttons
+  />
+  
+  <!-- Currency formatting -->
+  <FormNumberField
+    id="salary"
+    v-model="form.salary"
+    label="Annual Salary"
+    :min="0"
+    :step="100"
+    :format-options="{ 
+      style: 'currency', 
+      currency: 'USD',
+      currencyDisplay: 'symbol' 
+    }"
+    show-buttons
+  />
 </template>
 ```
 
@@ -173,6 +200,7 @@ const form = useForm({
 - `max?: number` - Maximum value
 - `step?: number` - Step increment
 - `disabled?: boolean` - Disable the field
+- `formatOptions?: Intl.NumberFormatOptions` - Number formatting options (currency, percentage, etc.)
 
 #### Features
 - **Number Type**: Returns actual numbers, not strings

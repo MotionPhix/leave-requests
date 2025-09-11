@@ -32,7 +32,7 @@ const form = useForm({
   gender_specific: false,
   gender: 'any',
   frequency_years: 1,
-  pay_percentage: 100.00,
+  pay_percentage: 1.00,
   minimum_notice_days: 0,
   allow_negative_balance: false,
 });
@@ -178,16 +178,19 @@ const genderOptions = [
                 <FormNumberField
                   id="pay_percentage"
                   v-model="form.pay_percentage"
-                  label="Pay Percentage (%)"
+                  label="Pay Percentage"
                   :min="0"
-                  :max="100"
+                  :max="1"
                   :step="0.01"
+                  :format-options="{
+                    style: 'percent',
+                  }"
                   :error="form.errors.pay_percentage"
                   show-buttons
                   button-position="inline"
                 />
                 <p class="text-sm text-muted-foreground mt-1">
-                  Percentage of salary paid during this leave (0-100%)
+                  Percentage of salary paid during this leave
                 </p>
               </div>
 

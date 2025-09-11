@@ -107,16 +107,7 @@ Route::prefix('{tenant_slug}/{tenant_uuid}')
         // =====================================
         Route::middleware(['role:Owner'])
             ->group(function () {
-                // Roles and Permissions (Owner only)
-                Route::prefix('management/roles')
-                    ->group(function () {
-                        Route::get('/', [\App\Http\Controllers\Tenant\RoleController::class, 'index'])->name('tenant.management.roles.index');
-                        Route::get('/create', [\App\Http\Controllers\Tenant\RoleController::class, 'create'])->name('tenant.management.roles.create');
-                        Route::post('/', [\App\Http\Controllers\Tenant\RoleController::class, 'store'])->name('tenant.management.roles.store');
-                        Route::get('/{role:uuid}/edit', [\App\Http\Controllers\Tenant\RoleController::class, 'edit'])->name('tenant.management.roles.edit');
-                        Route::put('/{role}', [\App\Http\Controllers\Tenant\RoleController::class, 'update'])->name('tenant.management.roles.update');
-                        Route::delete('/{role}', [\App\Http\Controllers\Tenant\RoleController::class, 'destroy'])->name('tenant.management.roles.destroy');
-                    });
+                // Note: Roles and Permissions are now handled via management.php routes
 
                 // Settings (Owner only)
                 Route::prefix('management/settings')

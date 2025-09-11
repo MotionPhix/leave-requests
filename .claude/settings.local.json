@@ -13,7 +13,10 @@
       "Bash(find:*)",
       "Bash(php artisan test:*)",
       "mcp__laravel-boost__application-info",
-      "Bash(vendor/bin/pint.bat:*)"
+      "Bash(vendor/bin/pint.bat:*)",
+      "Bash(npm run build:*)",
+      "mcp__herd__get_site_information",
+      "mcp__laravel-boost__get-absolute-url"
     ]
   },
   "enableAllProjectMcpServers": true,

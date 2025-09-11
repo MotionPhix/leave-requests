@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceInvitation;
+use App\Services\RolePermissionService;
 use App\Services\WorkspaceRoleService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -18,6 +19,10 @@ use Thunk\Verbs\Facades\Verbs;
 
 class MembersController extends Controller
 {
+    public function __construct(
+        private RolePermissionService $rolePermissionService
+    ) {}
+
     public function index(Request $request)
     {
         /** @var Workspace $workspace */
@@ -53,6 +58,16 @@ class MembersController extends Controller
                 'role' => $u->roles->first()?->name,
             ]);
 
+        // Get assignable roles for the current user
+        $assignableRoles = $this->rolePermissionService->getAssignableRoles($request->user(), $workspace)
+            ->map(function ($role) {
+                return [
+                    'id' => $role->id,
+                    'name' => $role->name,
+                    'label' => $this->rolePermissionService->getWorkspaceRoleDefinitions()[$role->name]['label'] ?? $role->name,
+                ];
+            });
+
         $roles = Role::query()
             ->where('workspace_id', $workspace->getKey())
             ->pluck('name');
@@ -66,11 +81,13 @@ class MembersController extends Controller
         return Inertia::render('tenant/members/Index', [
             'members' => $members,
             'roles' => $roles,
+            'assignableRoles' => $assignableRoles,
             'invitations' => $invitations,
             'currentUser' => [
                 'uuid' => $request->user()->uuid,
                 'role' => $request->user()->roles->first()?->name,
             ],
+            'canManageRoles' => $this->rolePermissionService->canManageRoles($request->user(), $workspace),
         ]);
     }
 
@@ -79,9 +96,14 @@ class MembersController extends Controller
         /** @var Workspace $workspace */
         $workspace = $request->attributes->get('workspace');
 
+        // Get valid role names for this workspace
+        $validRoles = $this->rolePermissionService->getAssignableRoles($request->user(), $workspace)
+            ->pluck('name')
+            ->toArray();
+
         $validated = $request->validate([
             'email' => ['required', 'email', Rule::exists('users', 'email')],
-            'role' => ['required', Rule::in(['Owner', 'Admin', 'HR', 'Manager', 'Employee'])],
+            'role' => ['required', Rule::in($validRoles)],
         ]);
 
         $user = User::where('email', $validated['email'])->firstOrFail();
@@ -103,8 +125,13 @@ class MembersController extends Controller
     {
         /** @var Workspace $workspace */
         $workspace = $request->attributes->get('workspace');
+        // Get valid role names for this workspace
+        $validRoles = $this->rolePermissionService->getAssignableRoles($request->user(), $workspace)
+            ->pluck('name')
+            ->toArray();
+
         $validated = $request->validate([
-            'role' => ['required', Rule::in(['Owner', 'Admin', 'HR', 'Manager', 'Employee'])],
+            'role' => ['required', Rule::in($validRoles)],
         ]);
 
         // Fire the Verbs event instead of direct database operations

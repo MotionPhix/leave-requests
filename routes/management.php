@@ -62,12 +62,35 @@ Route::prefix('{tenant_slug}/{tenant_uuid}/management')
                     ->name('tenant.management.leave-types.create');
                 Route::post('/', [\App\Http\Controllers\Tenant\LeaveTypeController::class, 'store'])
                     ->name('tenant.management.leave-types.store');
+                Route::get('/{leaveType:uuid}', [\App\Http\Controllers\Tenant\LeaveTypeController::class, 'show'])
+                    ->name('tenant.management.leave-types.show');
                 Route::get('/{leaveType:uuid}/edit', [\App\Http\Controllers\Tenant\LeaveTypeController::class, 'edit'])
                     ->name('tenant.management.leave-types.edit');
                 Route::put('/{leaveType}', [\App\Http\Controllers\Tenant\LeaveTypeController::class, 'update'])
                     ->name('tenant.management.leave-types.update');
                 Route::delete('/{leaveType}', [\App\Http\Controllers\Tenant\LeaveTypeController::class, 'destroy'])
                     ->name('tenant.management.leave-types.destroy');
+            });
+
+        // Roles & Permissions Management
+        Route::prefix('roles-permissions')
+            ->group(function () {
+                Route::get('/', [\App\Http\Controllers\Tenant\RolePermissionController::class, 'index'])
+                    ->name('tenant.management.roles-permissions.index');
+                Route::get('/create', [\App\Http\Controllers\Tenant\RolePermissionController::class, 'create'])
+                    ->name('tenant.management.roles-permissions.create');
+                Route::post('/', [\App\Http\Controllers\Tenant\RolePermissionController::class, 'store'])
+                    ->name('tenant.management.roles-permissions.store');
+                Route::get('/{role:uuid}', [\App\Http\Controllers\Tenant\RolePermissionController::class, 'show'])
+                    ->name('tenant.management.roles-permissions.show');
+                Route::get('/{role:uuid}/edit', [\App\Http\Controllers\Tenant\RolePermissionController::class, 'edit'])
+                    ->name('tenant.management.roles-permissions.edit');
+                Route::put('/{role:uuid}', [\App\Http\Controllers\Tenant\RolePermissionController::class, 'update'])
+                    ->name('tenant.management.roles-permissions.update');
+                Route::post('/assign-role', [\App\Http\Controllers\Tenant\RolePermissionController::class, 'assignRole'])
+                    ->name('tenant.management.roles-permissions.assign-role');
+                Route::delete('/remove-role', [\App\Http\Controllers\Tenant\RolePermissionController::class, 'removeRole'])
+                    ->name('tenant.management.roles-permissions.remove-role');
             });
 
         // Departments Management
@@ -137,23 +160,6 @@ Route::prefix('{tenant_slug}/{tenant_uuid}/management')
         // =====================================
         Route::middleware(['role:Owner'])
             ->group(function () {
-                // Roles and Permissions (Owner only)
-                Route::prefix('roles')
-                    ->group(function () {
-                        Route::get('/', [\App\Http\Controllers\Tenant\RoleController::class, 'index'])
-                            ->name('tenant.management.roles.index');
-                        Route::get('/create', [\App\Http\Controllers\Tenant\RoleController::class, 'create'])
-                            ->name('tenant.management.roles.create');
-                        Route::post('/', [\App\Http\Controllers\Tenant\RoleController::class, 'store'])
-                            ->name('tenant.management.roles.store');
-                        Route::get('/{role:uuid}/edit', [\App\Http\Controllers\Tenant\RoleController::class, 'edit'])
-                            ->name('tenant.management.roles.edit');
-                        Route::put('/{role}', [\App\Http\Controllers\Tenant\RoleController::class, 'update'])
-                            ->name('tenant.management.roles.update');
-                        Route::delete('/{role}', [\App\Http\Controllers\Tenant\RoleController::class, 'destroy'])
-                            ->name('tenant.management.roles.destroy');
-                    });
-
                 // Settings (Owner only)
                 Route::prefix('settings')
                     ->group(function () {

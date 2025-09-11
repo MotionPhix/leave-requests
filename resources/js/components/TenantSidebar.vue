@@ -149,7 +149,7 @@ const getNavItemsForRole = (role: string): NavItem[] => {
         {
           title: 'Roles & Permissions',
           href: baseParams.tenant_slug && baseParams.tenant_uuid
-            ? route('tenant.management.roles.index', baseParams)
+            ? route('tenant.management.roles-permissions.index', baseParams)
             : '#',
           icon: ShieldCheck,
         },

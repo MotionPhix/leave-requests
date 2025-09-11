@@ -68,6 +68,41 @@ class LeaveTypeController extends Controller
         ]);
     }
 
+    public function show(Request $request, string $tenant_slug, string $tenant_uuid, LeaveType $leaveType): Response
+    {
+        $workspace = Workspace::query()->where('slug', $tenant_slug)->where('uuid', $tenant_uuid)->firstOrFail();
+
+        // Authorization: only Owner/HR can manage leave types
+        app(\Spatie\Permission\PermissionRegistrar::class)->setPermissionsTeamId($workspace->id);
+        if (! $request->user()->hasAnyRole(['Owner', 'HR', 'Super Admin'])) {
+            abort(403, 'Only workspace owners and HR can view leave type details.');
+        }
+
+        // Ensure the leave type belongs to this workspace
+        if ($leaveType->workspace_id !== $workspace->id) {
+            abort(404);
+        }
+
+        // Get analytics data
+        $analytics = [
+            'total_employees_eligible' => $this->getEligibleEmployeesCount($leaveType),
+            'total_requests_this_year' => $this->getTotalRequestsThisYear($leaveType),
+            'total_days_taken' => $this->getTotalDaysTaken($leaveType),
+            'average_days_per_employee' => $this->getAverageDaysPerEmployee($leaveType),
+            'pending_requests' => $this->getPendingRequests($leaveType),
+            'approved_requests' => $this->getApprovedRequests($leaveType),
+            'rejected_requests' => $this->getRejectedRequests($leaveType),
+            'most_common_months' => $this->getMostCommonMonths($leaveType),
+        ];
+
+        return Inertia::render('tenant/leave-types/Show', [
+            'leaveType' => $leaveType,
+            'analytics' => $analytics,
+            'workspace' => $workspace,
+            'canManageLeaveTypes' => true,
+        ]);
+    }
+
     public function store(Request $request, string $tenant_slug, string $tenant_uuid)
     {
         $workspace = Workspace::query()->where('slug', $tenant_slug)->where('uuid', $tenant_uuid)->firstOrFail();
@@ -214,5 +249,115 @@ class LeaveTypeController extends Controller
                 'tenant_uuid' => $tenant_uuid,
             ])->with('error', $e->getMessage());
         }
+    }
+
+    private function getEligibleEmployeesCount(LeaveType $leaveType): int
+    {
+        // Using User model as employees - filter by workspace membership
+        // Exclude owners as they should not be counted as eligible employees for leave
+        return \App\Models\User::whereHas('workspaces', function ($query) use ($leaveType) {
+                $query->where('workspaces.id', $leaveType->workspace_id);
+            })
+            ->whereDoesntHave('roles', function ($query) use ($leaveType) {
+                $query->where('roles.name', 'Owner')
+                      ->where('roles.workspace_id', $leaveType->workspace_id);
+            })
+            ->when($leaveType->gender_specific && $leaveType->gender !== 'any', function ($query) use ($leaveType) {
+                return $query->where('users.gender', $leaveType->gender);
+            })
+            ->count();
+    }
+
+    private function getTotalRequestsThisYear(LeaveType $leaveType): int
+    {
+        // Check if LeaveRequest model exists and has the relationship
+        if (class_exists(\App\Models\LeaveRequest::class)) {
+            return \App\Models\LeaveRequest::where('leave_type_id', $leaveType->id)
+                ->whereYear('created_at', now()->year)
+                ->count();
+        }
+        
+        return 0; // Return placeholder if model doesn't exist yet
+    }
+
+    private function getTotalDaysTaken(LeaveType $leaveType): int
+    {
+        // Check if LeaveRequest model exists
+        if (class_exists(\App\Models\LeaveRequest::class)) {
+            return \App\Models\LeaveRequest::where('leave_type_id', $leaveType->id)
+                ->where('status', 'approved')
+                ->whereYear('start_date', now()->year)
+                ->sum(\DB::raw('DATEDIFF(end_date, start_date) + 1')) ?? 0;
+        }
+        
+        return 0; // Return placeholder if model doesn't exist yet
+    }
+
+    private function getAverageDaysPerEmployee(LeaveType $leaveType): float
+    {
+        $totalDays = $this->getTotalDaysTaken($leaveType);
+        $eligibleEmployees = $this->getEligibleEmployeesCount($leaveType);
+        
+        return $eligibleEmployees > 0 ? round($totalDays / $eligibleEmployees, 1) : 0;
+    }
+
+    private function getPendingRequests(LeaveType $leaveType): int
+    {
+        if (class_exists(\App\Models\LeaveRequest::class)) {
+            return \App\Models\LeaveRequest::where('leave_type_id', $leaveType->id)
+                ->where('status', 'pending')
+                ->whereYear('created_at', now()->year)
+                ->count();
+        }
+        
+        return 0;
+    }
+
+    private function getApprovedRequests(LeaveType $leaveType): int
+    {
+        if (class_exists(\App\Models\LeaveRequest::class)) {
+            return \App\Models\LeaveRequest::where('leave_type_id', $leaveType->id)
+                ->where('status', 'approved')
+                ->whereYear('created_at', now()->year)
+                ->count();
+        }
+        
+        return 0;
+    }
+
+    private function getRejectedRequests(LeaveType $leaveType): int
+    {
+        if (class_exists(\App\Models\LeaveRequest::class)) {
+            return \App\Models\LeaveRequest::where('leave_type_id', $leaveType->id)
+                ->where('status', 'rejected')
+                ->whereYear('created_at', now()->year)
+                ->count();
+        }
+        
+        return 0;
+    }
+
+    private function getMostCommonMonths(LeaveType $leaveType): array
+    {
+        if (!class_exists(\App\Models\LeaveRequest::class)) {
+            return [];
+        }
+
+        // Get the most common months for this leave type
+        $months = \App\Models\LeaveRequest::where('leave_type_id', $leaveType->id)
+            ->where('status', 'approved')
+            ->whereYear('start_date', now()->year)
+            ->get()
+            ->groupBy(function($request) {
+                return \Carbon\Carbon::parse($request->start_date)->format('F');
+            })
+            ->sortByDesc(function($group) {
+                return $group->count();
+            })
+            ->take(3)
+            ->keys()
+            ->toArray();
+
+        return $months;
     }
 }

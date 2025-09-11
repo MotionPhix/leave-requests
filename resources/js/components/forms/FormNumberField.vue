@@ -10,7 +10,6 @@ import {
 import { Label } from '@/components/ui/label'
 import InputError from '@/components/InputError.vue'
 import { cn } from '@/lib/utils'
-import { Minus, Plus } from 'lucide-vue-next'
 
 interface Props extends Omit<NumberFieldRootProps, 'modelValue'> {
   label?: string;
@@ -21,6 +20,7 @@ interface Props extends Omit<NumberFieldRootProps, 'modelValue'> {
   class?: string;
   showButtons?: boolean;
   buttonPosition?: 'inline' | 'stacked';
+  formatOptions?: Intl.NumberFormatOptions;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -40,67 +40,63 @@ const value = defineModel<number | undefined>({ required: true });
       <span v-if="required" class="text-destructive">*</span>
     </Label>
     
-    <!-- Number Field -->
+    <!-- Number Field with stacked buttons -->
     <NumberField
+      v-if="showButtons && buttonPosition === 'stacked'"
       :id="id"
       v-model="value"
       :min="min"
       :max="max"
       :step="step"
       :disabled="disabled"
+      :format-options="formatOptions"
       :class="cn(
         error && '[&_input]:border-destructive [&_input]:focus-visible:ring-destructive'
       )"
     >
-      <NumberFieldContent
-        v-if="showButtons && buttonPosition === 'inline'"
-        class="relative"
-      >
-        <NumberFieldDecrement
-          class="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 rounded-sm hover:bg-accent"
-        >
-          <Minus class="h-3 w-3" />
-        </NumberFieldDecrement>
-        
-        <NumberFieldInput
-          :placeholder="placeholder"
-          class="pl-8 pr-8 text-center"
-        />
-        
-        <NumberFieldIncrement
-          class="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 rounded-sm hover:bg-accent"
-        >
-          <Plus class="h-3 w-3" />
-        </NumberFieldIncrement>
+      <NumberFieldContent class="flex items-center gap-2">
+        <NumberFieldDecrement />
+        <NumberFieldInput :placeholder="placeholder" />
+        <NumberFieldIncrement />
       </NumberFieldContent>
-      
-      <div
-        v-else-if="showButtons && buttonPosition === 'stacked'"
-        class="flex items-center gap-2"
-      >
-        <NumberFieldDecrement
-          class="flex-shrink-0 w-9 h-9 rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50"
-        >
-          <Minus class="h-4 w-4" />
-        </NumberFieldDecrement>
-        
-        <NumberFieldInput
-          :placeholder="placeholder"
-          class="flex-1 text-center"
-        />
-        
-        <NumberFieldIncrement
-          class="flex-shrink-0 w-9 h-9 rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50"
-        >
-          <Plus class="h-4 w-4" />
-        </NumberFieldIncrement>
-      </div>
-      
-      <!-- No buttons, just input -->
-      <NumberFieldInput
-        v-else
-        :placeholder="placeholder"
-      />
+    </NumberField>
+    
+    <!-- Number Field with inline buttons -->
+    <NumberField
+      v-else-if="showButtons && buttonPosition === 'inline'"
+      :id="id"
+      v-model="value"
+      :min="min"
+      :max="max"
+      :step="step"
+      :disabled="disabled"
+      :format-options="formatOptions"
+      :class="cn(
+        error && '[&_input]:border-destructive [&_input]:focus-visible:ring-destructive'
+      )"
+    >
+      <NumberFieldContent>
+        <NumberFieldDecrement />
+        <NumberFieldInput :placeholder="placeholder" />
+        <NumberFieldIncrement />
+      </NumberFieldContent>
+    </NumberField>
+    
+    <!-- Number Field without buttons -->
+    <NumberField
+      v-else
+      :id="id"
+      v-model="value"
+      :min="min"
+      :max="max"
+      :step="step"
+      :disabled="disabled"
+      :format-options="formatOptions"
+      :class="cn(
+        error && '[&_input]:border-destructive [&_input]:focus-visible:ring-destructive'
+      )"
+    >
+      <NumberFieldInput :placeholder="placeholder" />
     </NumberField>
     
     <!-- Error Message -->

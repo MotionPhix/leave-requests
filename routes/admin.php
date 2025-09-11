@@ -6,7 +6,7 @@ use Inertia\Inertia;
 
 Route::group([
   'prefix' => 'admin',
-  'middleware' => ['auth', 'role:Admin|Manager|HR']
+  'middleware' => ['auth', 'can:manage-system-roles']
 ], function () {
 
   Route::controller(App\Http\Controllers\Admin\LeaveRequestController::class)
@@ -76,14 +76,14 @@ Route::group([
         ->name('admin.roles.store')
         ->middleware(HandlePrecognitiveRequests::class);
 
-      Route::get('/e/{role}', 'edit')
+      Route::get('/e/{role:uuid}', 'edit')
         ->name('admin.roles.edit');
 
-      Route::put('/u/{role}', 'update')
+      Route::put('/u/{role:uuid}', 'update')
         ->name('admin.roles.update')
         ->middleware(HandlePrecognitiveRequests::class);
 
-      Route::delete('/d/{role}', 'destroy')->name('admin.roles.destroy');
+      Route::delete('/d/{role:uuid}', 'destroy')->name('admin.roles.destroy');
     });
 
   });
