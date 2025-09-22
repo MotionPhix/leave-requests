@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import AdminLayout from '@/layouts/AdminLayout.vue';
+import AppLayout from '@/layouts/AppLayout.vue';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -15,7 +15,7 @@ import { Plus, ShieldCheck, Users, Settings, Calendar } from 'lucide-vue-next';
 import { Link } from '@inertiajs/vue3';
 
 defineOptions({
-    layout: AdminLayout,
+    layout: AppLayout,
 });
 
 interface Permission {

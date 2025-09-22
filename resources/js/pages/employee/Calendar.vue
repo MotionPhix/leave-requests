@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { Head, router } from '@inertiajs/vue3'
-import { ModalLink, visitModal, Modal } from '@inertiaui/modal-vue'
+import { visitModal } from '@inertiaui/modal-vue'
 import TenantLayout from '@/layouts/TenantLayout.vue'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -9,17 +9,6 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu'
-import DateRangePicker from '@/components/DateRangePicker.vue'
-
-// DateActionModal for choosing what to add on date click
-import DateActionModal from './DateActionModal.vue'
 
 // FullCalendar imports
 import FullCalendar from '@fullcalendar/vue3'
@@ -32,19 +21,12 @@ import interactionPlugin from '@fullcalendar/interaction'
 import {
   Calendar as CalendarDays,
   Plus as CalendarPlus,
-  Users,
-  BarChart3,
-  ChevronDown,
   Clock,
-  Download,
-  Eye,
-  FileText,
-  Filter,
   RefreshCw,
   Search,
   UserIcon,
-  XIcon,
-  MoreHorizontal,
+  Filter,
+  FileText,
   RotateCcw,
 } from 'lucide-vue-next'
 
@@ -61,7 +43,7 @@ interface User {
   email: string
 }
 
-interface LeaveEvent {
+interface CalendarEvent {
   id: string
   title: string
   start: string
@@ -119,26 +101,18 @@ interface CalendarStats {
 
 interface Props {
   workspace: any
-  userRole: 'owner' | 'manager' | 'hr' | 'employee'
-  teamMembers: User[]
-  canManageHolidays: boolean
-  canManageLeave: boolean
+  user: User
 }
 
 const props = defineProps<Props>()
 
 // State
-const calendarEvents = ref<LeaveEvent[]>([])
-const holidayEvents = ref<LeaveEvent[]>([])
-// Date action modal state
-const showDateActionModal = ref(false)
-const selectedDate = ref('')
+const calendarEvents = ref<CalendarEvent[]>([])
 const leaveTypes = ref<LeaveType[]>([])
 const calendarRef = ref(null)
 const isLoading = ref(false)
 const isLoadingStats = ref(false)
 const searchQuery = ref('')
-// Utilization data handled by route-based modal
 
 const calendarStats = ref<CalendarStats>({
   total_requests: 0,
@@ -161,12 +135,8 @@ const filters = ref({
   search: '',
 })
 
-// Team filter state for management view
-const selectedTeamMembers = ref<number[]>([])
-const showTeamFilter = ref(false)
-
 // Calendar view storage
-const currentView = useStorage('tenant_calendar_view', 'dayGridMonth')
+const currentView = useStorage('employee_calendar_view', 'dayGridMonth')
 
 // Tenant params for route generation
 const tenantParams = computed(() => ({
@@ -184,7 +154,7 @@ const calendarOptions = computed(() => ({
   },
   initialView: currentView.value,
   height: 'auto',
-  events: [...calendarEvents.value, ...holidayEvents.value],
+  events: calendarEvents.value,
   eventDisplay: 'block',
   dayMaxEvents: 3,
   moreLinkClick: 'popover',
@@ -201,16 +171,21 @@ const calendarOptions = computed(() => ({
     info.el.style.transition = 'all 0.2s ease'
   },
   eventClick(info: any) {
-    if (info.event.extendedProps.type !== 'holiday') {
-      // Use InertiaUI Modal to open leave request details
-      const leaveRequestId = info.event.id
-      const routeName = props.canManageLeave 
-        ? 'tenant.management.leave-requests.show'
-        : 'tenant.leave-requests.show'
-      
-      visitModal(route(routeName, {
+    const event = info.event
+    
+    if (event.extendedProps.type === 'holiday') {
+      toast.info(`Holiday: ${event.title}`)
+    } else if (event.extendedProps.type === 'event') {
+      // Show event details for employees (read-only)
+      visitModal(route('tenant.events.show', {
         ...tenantParams.value,
-        leaveRequest: leaveRequestId
+        event: event.id
+      }))
+    } else {
+      // Leave request - navigate to employee view
+      visitModal(route('tenant.leave-requests.show', {
+        ...tenantParams.value,
+        leaveRequest: event.id
       }))
     }
   },
@@ -218,37 +193,59 @@ const calendarOptions = computed(() => ({
     const clickedDate = info.dateStr
     
     // Check if there are existing events/holidays on this date
-    const eventsOnDate = [...calendarEvents.value, ...holidayEvents.value].filter(event => {
+    const eventsOnDate = calendarEvents.value.filter(event => {
       const eventStart = new Date(event.start).toISOString().split('T')[0]
       const eventEnd = event.end ? new Date(event.end).toISOString().split('T')[0] : eventStart
       return clickedDate >= eventStart && clickedDate <= eventEnd
     })
     
-    // If there are events/holidays on this date, show them instead of action modal
-    if (eventsOnDate.length > 0) {
-      handleDateWithEvents(clickedDate, eventsOnDate)
-      return
+    // If there are company events/holidays, show them in toast
+    const companyEventsOnDate = eventsOnDate.filter(e => 
+      e.extendedProps.type === 'holiday' || e.extendedProps.type === 'event'
+    )
+    
+    if (companyEventsOnDate.length > 0) {
+      const eventTitles = companyEventsOnDate.map(e => e.title).join(', ')
+      toast.info(`Events on this date: ${eventTitles}`)
     }
     
-    // Handle empty date clicks based on user role
-    handleEmptyDateClick(clickedDate)
+    // Always allow employees to create leave requests
+    visitModal(route('tenant.leave-requests.create', {
+      ...tenantParams.value,
+      date: clickedDate
+    }))
   },
   eventContent(arg: any) {
-    if (arg.event.extendedProps.type === 'holiday') {
+    const event = arg.event
+    const status = event.extendedProps.status
+    const type = event.extendedProps.type
+
+    if (type === 'holiday') {
       return {
-        html: `<div class="fc-holiday-event">${arg.event.title}</div>`,
+        html: `<div class="fc-holiday-event">${event.title}</div>`,
       }
     }
 
-    const status = arg.event.extendedProps.status
-    const type = arg.event.extendedProps.leaveType || arg.event.title
-    const duration = arg.event.extendedProps.duration || arg.event.extendedProps.period || 1
+    if (type === 'event') {
+      return {
+        html: `
+          <div class="fc-event-content-wrapper">
+            <div class="fc-event-title">${event.title}</div>
+            ${event.extendedProps.isMandatory ? '<div class="fc-event-mandatory">Required</div>' : ''}
+          </div>
+        `,
+      }
+    }
+
+    // Leave request
+    const leaveType = event.extendedProps.leaveType || event.title
+    const duration = event.extendedProps.duration || event.extendedProps.period || 1
 
     return {
       html: `
         <div class="fc-event-content-wrapper">
           <div class="fc-event-title-container">
-            <div class="fc-event-title">${type}</div>
+            <div class="fc-event-title">${leaveType}</div>
             <div class="fc-event-status">${status}</div>
           </div>
           <div class="fc-event-period">${duration} day${duration > 1 ? 's' : ''}</div>
@@ -261,30 +258,23 @@ const calendarOptions = computed(() => ({
 // Computed properties
 const statusCounts = computed(() => {
   const counts = {
-    all: calendarEvents.value.length,
+    all: calendarEvents.value.filter(e => e.extendedProps.type === 'leave').length,
     pending: 0,
     approved: 0,
     rejected: 0,
     cancelled: 0,
   }
 
-  calendarEvents.value.forEach((event) => {
-    const status = event.extendedProps.status
-    if (status && counts.hasOwnProperty(status)) {
-      counts[status as keyof typeof counts]++
-    }
-  })
+  calendarEvents.value
+    .filter(e => e.extendedProps.type === 'leave')
+    .forEach((event) => {
+      const status = event.extendedProps.status
+      if (status && counts.hasOwnProperty(status)) {
+        counts[status as keyof typeof counts]++
+      }
+    })
 
   return counts
-})
-
-const filteredTeamMembers = computed(() => {
-  if (selectedTeamMembers.value.length === 0) {
-    return props.teamMembers
-  }
-  return props.teamMembers.filter(member => 
-    selectedTeamMembers.value.includes(member.id)
-  )
 })
 
 // Functions
@@ -296,30 +286,15 @@ async function fetchCalendarEvents() {
       search: searchQuery.value,
     })
 
-    // Add team member filter for management roles
-    if (props.canManageLeave && selectedTeamMembers.value.length > 0) {
-      selectedTeamMembers.value.forEach(memberId => {
-        params.append('team_members[]', memberId.toString())
-      })
-    }
-
-    const routeName = props.canManageLeave 
-      ? 'tenant.management.calendar.events'
-      : 'tenant.calendar.events'
-      
-    const response = await axios.get(route(routeName, tenantParams.value), { params })
-    
-    // Separate events by type
-    const events = response.data
-    calendarEvents.value = events.filter((e: LeaveEvent) => e.extendedProps.type === 'leave')
-    holidayEvents.value = events.filter((e: LeaveEvent) => e.extendedProps.type === 'holiday' || e.extendedProps.type === 'event')
+    const response = await axios.get(route('tenant.calendar.events', tenantParams.value), { params })
+    calendarEvents.value = response.data
 
     // Update the calendar's events
     await nextTick()
     const calendarApi = calendarRef.value?.getApi()
     if (calendarApi) {
       calendarApi.removeAllEvents()
-      calendarApi.addEventSource([...calendarEvents.value, ...holidayEvents.value])
+      calendarApi.addEventSource(calendarEvents.value)
     }
   } catch (error) {
     console.error('Error fetching calendar events:', error)
@@ -330,81 +305,15 @@ async function fetchCalendarEvents() {
 }
 
 async function fetchStatistics() {
-  if (props.userRole === 'employee') {
-    // Use employee API route for statistics
-    try {
-      isLoadingStats.value = true
-      const response = await axios.get('/api/calendar/statistics')
-      calendarStats.value = response.data
-    } catch (error) {
-      console.error('Error fetching statistics:', error)
-      toast.error('Failed to fetch statistics')
-    } finally {
-      isLoadingStats.value = false
-    }
-  } else {
-    // For management roles, we'll need to implement management statistics endpoint
-    // For now, calculate from current events
-    calculateStatsFromEvents()
-  }
-}
-
-function calculateStatsFromEvents() {
-  const currentYear = new Date().getFullYear()
-  const currentMonth = new Date().getMonth()
-  
-  const yearEvents = calendarEvents.value.filter(event => 
-    new Date(event.start).getFullYear() === currentYear
-  )
-  
-  calendarStats.value = {
-    total_requests: yearEvents.length,
-    pending_requests: yearEvents.filter(e => e.extendedProps.status === 'pending').length,
-    approved_requests: yearEvents.filter(e => e.extendedProps.status === 'approved').length,
-    rejected_requests: yearEvents.filter(e => e.extendedProps.status === 'rejected').length,
-    cancelled_requests: yearEvents.filter(e => e.extendedProps.status === 'cancelled').length,
-    total_days_taken: yearEvents
-      .filter(e => e.extendedProps.status === 'approved')
-      .reduce((sum, e) => sum + (e.extendedProps.duration || 1), 0),
-    upcoming_leaves: calendarEvents.value
-      .filter(e => e.extendedProps.status === 'approved' && new Date(e.start) > new Date()).length,
-    current_month_requests: calendarEvents.value
-      .filter(e => new Date(e.start).getMonth() === currentMonth && new Date(e.start).getFullYear() === currentYear).length,
-    leave_balance_summary: [],
-  }
-}
-
-async function loadUtilizationData() {
-  if (!props.canManageLeave) return
-  
-  // Use InertiaUI Modal to open utilization report route
-  visitModal(route('tenant.management.reports.leave-summary', tenantParams.value))
-}
-
-async function exportCalendar(format: 'ics' | 'pdf' | 'csv') {
   try {
-    const params = new URLSearchParams(filters.value)
-    
-    const response = await axios.get(`/api/calendar/export/${format}`, {
-      params,
-      responseType: 'blob',
-    })
-
-    const blob = new Blob([response.data], {
-      type: response.headers['content-type'],
-    })
-
-    const url = window.URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `leave-calendar.${format}`
-    link.click()
-    window.URL.revokeObjectURL(url)
-
-    toast.success(`Calendar exported as ${format.toUpperCase()}`)
+    isLoadingStats.value = true
+    const response = await axios.get('/api/calendar/statistics')
+    calendarStats.value = response.data
   } catch (error) {
-    console.error('Export failed:', error)
-    toast.error('Failed to export calendar')
+    console.error('Error fetching statistics:', error)
+    toast.error('Failed to fetch statistics')
+  } finally {
+    isLoadingStats.value = false
   }
 }
 
@@ -417,7 +326,6 @@ function clearFilters() {
     search: '',
   }
   searchQuery.value = ''
-  selectedTeamMembers.value = []
 }
 
 function goToToday() {
@@ -439,89 +347,8 @@ async function refreshData() {
   await Promise.all([fetchCalendarEvents(), fetchStatistics()])
 }
 
-// Close team filter when clicking outside
-function closeTeamFilter(event: Event) {
-  if (!(event.target as Element)?.closest('.team-filter-container')) {
-    showTeamFilter.value = false
-  }
-}
-
-// Date action modal handlers
-function closeDateActionModal() {
-  showDateActionModal.value = false
-  selectedDate.value = ''
-}
-
-function handleChildModalClosed() {
-  // Refresh calendar data when nested modal is closed
-  refreshData()
-}
-
-// Enhanced date click handlers
-function handleDateWithEvents(clickedDate: string, eventsOnDate: LeaveEvent[]) {
-  // If only one event/holiday, navigate directly to it
-  if (eventsOnDate.length === 1) {
-    const event = eventsOnDate[0]
-    
-    if (event.extendedProps.type === 'holiday') {
-      // Navigate to holiday details (management only) or just show in toast for employees
-      if (props.canManageHolidays) {
-        // Assuming holidays have a uuid or similar identifier
-        // visitModal(route('tenant.management.holidays.show', {
-        //   ...tenantParams.value, 
-        //   holiday: event.id
-        // }))
-        toast.info(`Holiday: ${event.title}`)
-      } else {
-        toast.info(`Holiday: ${event.title}`)
-      }
-    } else if (event.extendedProps.type === 'event') {
-      // Navigate to event details
-      visitModal(route('tenant.management.events.show', {
-        ...tenantParams.value,
-        event: event.id
-      }))
-    } else {
-      // Leave request - use existing eventClick logic
-      const routeName = props.canManageLeave 
-        ? 'tenant.management.leave-requests.show'
-        : 'tenant.leave-requests.show'
-      
-      visitModal(route(routeName, {
-        ...tenantParams.value,
-        leaveRequest: event.id
-      }))
-    }
-  } else {
-    // Multiple events - show a summary modal or list
-    showDateEventsModal(clickedDate, eventsOnDate)
-  }
-}
-
-function handleEmptyDateClick(clickedDate: string) {
-  if (props.userRole === 'employee') {
-    // Employees can only create leave requests on empty dates
-    visitModal(route('tenant.leave-requests.create', {
-      ...tenantParams.value,
-      date: clickedDate
-    }))
-  } else {
-    // Management users see the action modal to choose what to create
-    selectedDate.value = clickedDate
-    visitModal('#date-action-modal')
-  }
-}
-
-function showDateEventsModal(clickedDate: string, eventsOnDate: LeaveEvent[]) {
-  // For now, show a simple toast with count, but this could be enhanced to show a proper modal
-  const eventTypes = eventsOnDate.map(e => e.extendedProps.type).join(', ')
-  toast.info(`${eventsOnDate.length} items on ${new Date(clickedDate).toLocaleDateString()}: ${eventTypes}`)
-  
-  // If management user wants to add more on this date, still show action modal
-  if (props.canManageHolidays) {
-    selectedDate.value = clickedDate
-    visitModal('#date-action-modal')
-  }
+function createLeaveRequest() {
+  visitModal(route('tenant.leave-requests.create', tenantParams.value))
 }
 
 // Real-time updates
@@ -542,9 +369,6 @@ onMounted(async () => {
 
   // Fetch initial data
   await refreshData()
-
-  // Event listeners
-  document.addEventListener('click', closeTeamFilter)
 
   // Navigate to the selected view after initial load
   await nextTick()
@@ -571,41 +395,29 @@ watch(currentView, async (newView) => {
   await nextTick()
   changeView(newView)
 })
-
-watch(selectedTeamMembers, () => {
-  fetchCalendarEvents()
-})
 </script>
 
 <template>
   <TenantLayout>
-    <Head :title="`Calendar - ${workspace.name}`" />
+    <Head :title="`My Calendar - ${workspace.name}`" />
 
     <div class="space-y-6">
       <!-- Header -->
       <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <h1 class="text-3xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
-            {{ userRole === 'employee' ? 'My Leave Calendar' : 'Team Calendar' }}
+            My Leave Calendar
           </h1>
           <p class="text-neutral-600 dark:text-neutral-400">
-            {{ userRole === 'employee' 
-              ? 'View and manage your leave requests in calendar format' 
-              : 'Manage team schedules and leave requests' 
-            }}
+            View your leave requests, company events, and holidays in calendar format
           </p>
         </div>
         
         <div class="flex items-center gap-2">
-          <!-- Create Holiday Button (Owner only) -->
-          <ModalLink
-            v-if="canManageHolidays"
-            :href="route('tenant.management.holidays.create', tenantParams)"
-            class="inline-flex items-center gap-2 rounded-md bg-neutral-900 px-4 py-2 text-white transition-colors hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100"
-          >
-            <CalendarPlus class="h-4 w-4" />
-            Add Holiday
-          </ModalLink>
+          <Button @click="createLeaveRequest" class="bg-blue-600 hover:bg-blue-700 text-white">
+            <CalendarPlus class="h-4 w-4 mr-2" />
+            Request Leave
+          </Button>
 
           <Button @click="goToToday" variant="outline" size="sm">
             <CalendarDays class="mr-2 h-4 w-4" />
@@ -702,12 +514,12 @@ watch(selectedTeamMembers, () => {
         </CardContent>
       </Card>
 
-      <!-- Filters and Controls -->
+      <!-- Filters -->
       <Card>
         <CardHeader>
           <CardTitle class="flex items-center gap-2">
             <Filter class="h-5 w-5" />
-            Filters & Controls
+            Filter My Requests
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -716,7 +528,7 @@ watch(selectedTeamMembers, () => {
             <div class="flex-1 min-w-0">
               <div class="relative">
                 <Search class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-neutral-600 dark:text-neutral-400" />
-                <Input v-model="searchQuery" placeholder="Search leaves by type, reason..." class="pl-10" />
+                <Input v-model="searchQuery" placeholder="Search your leave requests..." class="pl-10" />
               </div>
             </div>
 
@@ -748,91 +560,10 @@ watch(selectedTeamMembers, () => {
                 </SelectContent>
               </Select>
 
-              <!-- Date Range -->
-              <div class="w-64">
-                <DateRangePicker
-                  v-model="filters.date_range"
-                  placeholder="Filter by date range"
-                  class="w-full"
-                />
-              </div>
-
-              <!-- Team Member Filter (Management only) -->
-              <div v-if="canManageLeave && teamMembers.length > 0" class="relative team-filter-container">
-                <Button
-                  @click="showTeamFilter = !showTeamFilter"
-                  variant="outline"
-                  class="w-40 justify-between"
-                >
-                  <div class="flex items-center gap-2">
-                    <Users class="h-4 w-4" />
-                    <span>Team Filter</span>
-                  </div>
-                  <ChevronDown class="h-4 w-4" />
-                </Button>
-
-                <!-- Team Filter Dropdown -->
-                <div v-if="showTeamFilter" class="absolute right-0 top-full z-50 mt-2 w-64 rounded-lg border border-neutral-200 bg-white p-3 shadow-lg dark:border-neutral-700 dark:bg-neutral-800">
-                  <div class="max-h-64 space-y-2 overflow-y-auto">
-                    <label class="flex items-center space-x-2 rounded p-2 transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-700">
-                      <input
-                        type="checkbox"
-                        :checked="selectedTeamMembers.length === 0"
-                        @change="selectedTeamMembers = []"
-                        class="rounded border-neutral-300 dark:border-neutral-600"
-                      />
-                      <span class="text-sm font-medium text-neutral-700 dark:text-neutral-300">All Team Members</span>
-                    </label>
-                    <hr class="border-neutral-200 dark:border-neutral-600" />
-                    <label
-                      v-for="member in teamMembers"
-                      :key="member.id"
-                      class="flex cursor-pointer items-center space-x-2 rounded p-2 transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-700"
-                    >
-                      <input
-                        type="checkbox"
-                        :value="member.id"
-                        v-model="selectedTeamMembers"
-                        class="rounded border-neutral-300 dark:border-neutral-600"
-                      />
-                      <span class="text-sm text-neutral-600 dark:text-neutral-400">{{ member.name }}</span>
-                    </label>
-                  </div>
-                </div>
-              </div>
-
               <!-- Clear Filters -->
               <Button @click="clearFilters" variant="outline" size="icon">
                 <RotateCcw class="h-4 w-4" />
               </Button>
-
-              <!-- Actions Dropdown -->
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="icon">
-                    <MoreHorizontal class="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" class="w-56">
-                  <!-- Team Utilization (Management only) -->
-                  <DropdownMenuItem v-if="canManageLeave" @click="loadUtilizationData">
-                    <BarChart3 class="mr-2 h-4 w-4" />
-                    Team Utilization
-                  </DropdownMenuItem>
-                  
-                  <DropdownMenuSeparator v-if="canManageLeave" />
-                  
-                  <!-- Export Options -->
-                  <DropdownMenuItem @click="exportCalendar('ics')">
-                    <Download class="mr-2 h-4 w-4" />
-                    Export as .ics
-                  </DropdownMenuItem>
-                  <DropdownMenuItem @click="exportCalendar('csv')">
-                    <Download class="mr-2 h-4 w-4" />
-                    Export as .csv
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
             </div>
           </div>
         </CardContent>
@@ -869,27 +600,27 @@ watch(selectedTeamMembers, () => {
           <div class="flex flex-wrap gap-4">
             <div class="flex items-center gap-2">
               <div class="h-4 w-4 rounded bg-green-500"></div>
-              <span class="text-sm">Approved</span>
+              <span class="text-sm">Approved Leave</span>
             </div>
             <div class="flex items-center gap-2">
               <div class="h-4 w-4 rounded bg-yellow-500"></div>
-              <span class="text-sm">Pending</span>
+              <span class="text-sm">Pending Leave</span>
             </div>
             <div class="flex items-center gap-2">
               <div class="h-4 w-4 rounded bg-red-500"></div>
-              <span class="text-sm">Rejected</span>
+              <span class="text-sm">Rejected Leave</span>
             </div>
             <div class="flex items-center gap-2">
               <div class="h-4 w-4 rounded bg-gray-500"></div>
-              <span class="text-sm">Cancelled</span>
+              <span class="text-sm">Cancelled Leave</span>
             </div>
             <div class="flex items-center gap-2">
               <div class="h-4 w-4 rounded border border-blue-300 bg-blue-100"></div>
-              <span class="text-sm">Holidays</span>
+              <span class="text-sm">Company Holidays</span>
             </div>
-            <div v-if="canManageLeave" class="flex items-center gap-2">
-              <div class="h-4 w-4 rounded bg-blue-500"></div>
-              <span class="text-sm">Team Requests</span>
+            <div class="flex items-center gap-2">
+              <div class="h-4 w-4 rounded bg-purple-500"></div>
+              <span class="text-sm">Company Events</span>
             </div>
           </div>
         </CardContent>
@@ -905,14 +636,6 @@ watch(selectedTeamMembers, () => {
         </div>
       </div>
     </div>
-
-    <!-- Local Date Action Modal -->
-    <DateActionModal
-      :workspace="workspace"
-      :selected-date="selectedDate"
-      :can-manage-holidays="canManageHolidays"
-      @child-closed="handleChildModalClosed"
-    />
   </TenantLayout>
 </template>
 
@@ -971,6 +694,16 @@ watch(selectedTeamMembers, () => {
   font-style: italic;
 }
 
+.calendar-container .fc-event-mandatory {
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.9);
+  text-transform: uppercase;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 1px 4px;
+  border-radius: 3px;
+  margin-top: 2px;
+}
+
 .calendar-container .fc-holiday-event {
   font-size: 0.7rem;
   color: #374151;
@@ -997,51 +730,6 @@ watch(selectedTeamMembers, () => {
 .calendar-container .status-cancelled {
   background-color: #6b7280 !important;
   border-color: #4b5563 !important;
-}
-
-.calendar-container .status-reviewed {
-  background-color: #8b5cf6 !important;
-  border-color: #7c3aed !important;
-}
-
-.calendar-container .status-rescheduled {
-  background-color: #06b6d4 !important;
-  border-color: #0891b2 !important;
-}
-
-/* Mobile responsiveness */
-@media (max-width: 768px) {
-  .calendar-container .fc-header-toolbar {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  .calendar-container .fc-toolbar-chunk {
-    display: flex;
-    justify-content: center;
-  }
-
-  .calendar-container .fc-event-title {
-    font-size: 0.7rem;
-  }
-
-  .calendar-container .fc-event-status,
-  .calendar-container .fc-event-period {
-    font-size: 0.6rem;
-  }
-}
-
-/* List view enhancements */
-.calendar-container .fc-list-event:hover {
-  background-color: rgba(0, 0, 0, 0.05);
-}
-
-.calendar-container .fc-list-event-title {
-  font-weight: 600;
-}
-
-.calendar-container .fc-list-event-time {
-  color: #6b7280;
 }
 
 /* Day grid enhancements */

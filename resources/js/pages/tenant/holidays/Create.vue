@@ -68,16 +68,16 @@ watch(() => form.type, (newType) => {
       form.recurrence_pattern = 'yearly';
     }
   }
-  
+
   // Auto-suggest colors based on holiday type
   const colorMap = {
     'National Holiday': '#dc2626', // Red
-    'Religious Holiday': '#7c3aed', // Purple  
+    'Religious Holiday': '#7c3aed', // Purple
     'Company Holiday': '#2563eb', // Blue
     'Floating Holiday': '#059669', // Green
     'Company Closure': '#ea580c', // Orange
   };
-  
+
   if (colorMap[newType] && form.color === '#ef4444') {
     form.color = colorMap[newType];
   }
@@ -111,7 +111,7 @@ const getNamePlaceholder = () => {
     'Floating Holiday': 'e.g., Personal Choice Day, Flexible PTO',
     'Company Closure': 'e.g., Year-End Shutdown, Office Renovation',
   };
-  
+
   return examples[form.type] || 'e.g., Christmas Day, Independence Day';
 };
 
@@ -129,17 +129,13 @@ const handleSubmit = (close: () => void, modalEmit: (event: string, ...args: any
 };
 
 const handleCancel = (close: () => void, modalEmit: (event: string, ...args: any[]) => void) => {
-  close(); // Close the modal
-  router.visit(route('tenant.management.holidays.index', { 
-    tenant_slug: workspace.slug, 
-    tenant_uuid: workspace.uuid 
-  }));
+  close();
 };
 </script>
 
 <template>
   <Head title="Add Holiday" />
-  
+
   <FormModal
     title="Add Holiday"
     subtitle="Create a new company holiday or observance"
@@ -154,7 +150,7 @@ const handleCancel = (close: () => void, modalEmit: (event: string, ...args: any
     <!-- Form Content -->
     <div class="space-y-6">
       <h2 class="text-lg font-medium text-neutral-900 dark:text-neutral-100">Holiday Details</h2>
-        
+
         <!-- Name -->
         <div class="space-y-2">
           <Label for="name">Holiday Name *</Label>
@@ -276,21 +272,21 @@ const handleCancel = (close: () => void, modalEmit: (event: string, ...args: any
               This holiday repeats annually
             </Label>
           </div>
-          
+
           <div v-if="form.is_recurring" class="ml-6 space-y-3 p-3 bg-muted/30 rounded-md">
             <p class="text-xs text-muted-foreground">
               <strong>Example:</strong> Christmas Day will appear on December 25th every year
             </p>
-            
+
             <div v-if="holidayType === 'date_range'" class="text-xs text-amber-600 bg-amber-50 dark:bg-amber-900/20 p-2 rounded">
-              <strong>Note:</strong> Multi-day recurring holidays will maintain the same duration each year. 
+              <strong>Note:</strong> Multi-day recurring holidays will maintain the same duration each year.
               For example, a 3-day company shutdown will always be 3 days starting from the recurring date.
             </div>
 
             <!-- Auto-set recurrence pattern based on context -->
             <input type="hidden" v-model="form.recurrence_pattern" value="yearly" />
           </div>
-          
+
           <p v-else class="text-xs text-muted-foreground ml-6">
             This will be a one-time holiday for the specified date(s) only
           </p>

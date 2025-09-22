@@ -15,7 +15,6 @@ import { Link, usePage } from '@inertiajs/vue3';
 import AppLogo from './AppLogo.vue';
 import { type NavItem } from '@/types';
 
-// Import all necessary icons
 import {
   LayoutDashboard,
   UsersIcon,
@@ -23,15 +22,14 @@ import {
   FileText,
   SettingsIcon,
   Building2,
-  BadgeDollarSign,
   ShieldCheck,
-  TrendingUp,
   CalendarIcon,
   ClipboardList,
   BarChart3,
   Users,
   Home,
-  Star
+  Star,
+  Calendar
 } from 'lucide-vue-next';
 
 interface WorkspaceData {
@@ -85,22 +83,22 @@ const getUserPrimaryRole = (): 'owner' | 'manager' | 'hr' | 'employee' => {
 
   // Check for roles in priority order
   const roles = user.value.roles.map((role: any) => role.name.toLowerCase());
-  
+
   if (roles.includes('manager')) {
     return 'manager';
   }
-  
+
   if (roles.includes('hr') || roles.includes('human resources')) {
     return 'hr';
   }
-  
+
   return 'employee';
 };
 
 // Define navigation items based on user role
 const getNavItemsForRole = (role: string): NavItem[] => {
   const baseParams = tenantParams.value;
-  
+
   switch (role) {
     case 'owner':
       return [
@@ -131,6 +129,13 @@ const getNavItemsForRole = (role: string): NavItem[] => {
             ? route('tenant.management.calendar.index', baseParams)
             : '#',
           icon: CalendarIcon,
+        },
+        {
+          title: 'Events',
+          href: baseParams.tenant_slug && baseParams.tenant_uuid
+            ? route('tenant.management.events.index', baseParams)
+            : '#',
+          icon: Calendar,
         },
         {
           title: 'Leave Types',
@@ -206,6 +211,13 @@ const getNavItemsForRole = (role: string): NavItem[] => {
           icon: CalendarIcon,
         },
         {
+          title: 'Events',
+          href: baseParams.tenant_slug && baseParams.tenant_uuid
+            ? route('tenant.management.events.index', baseParams)
+            : '#',
+          icon: Calendar,
+        },
+        {
           title: 'Leave Types',
           href: baseParams.tenant_slug && baseParams.tenant_uuid
             ? route('tenant.management.leave-types.index', baseParams)
@@ -263,6 +275,13 @@ const getNavItemsForRole = (role: string): NavItem[] => {
             ? route('tenant.management.calendar.index', baseParams)
             : '#',
           icon: CalendarIcon,
+        },
+        {
+          title: 'Events',
+          href: baseParams.tenant_slug && baseParams.tenant_uuid
+            ? route('tenant.management.events.index', baseParams)
+            : '#',
+          icon: Calendar,
         },
         {
           title: 'Leave Types',
@@ -326,9 +345,9 @@ const navItems = computed(() => getNavItemsForRole(primaryRole.value));
 const userRoleDisplay = computed(() => {
   switch (primaryRole.value) {
     case 'owner': return 'Owner';
-    case 'manager': return 'Manager'; 
+    case 'manager': return 'Manager';
     case 'hr': return 'HR';
-    case 'employee': 
+    case 'employee':
     default: return 'Employee';
   }
 });
@@ -339,12 +358,12 @@ const dashboardRoute = computed(() => {
   if (!tenantParams.value.tenant_slug || !tenantParams.value.tenant_uuid) {
     return '#';
   }
-  
+
   // Management roles use management dashboard
   if (['owner', 'manager', 'hr'].includes(primaryRole.value)) {
     return route('tenant.management.dashboard', tenantParams.value);
   }
-  
+
   // Employees use regular dashboard
   return route('tenant.dashboard', tenantParams.value);
 });

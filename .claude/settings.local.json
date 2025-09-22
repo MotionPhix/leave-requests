@@ -16,7 +16,9 @@
       "Bash(vendor/bin/pint.bat:*)",
       "Bash(npm run build:*)",
       "mcp__herd__get_site_information",
-      "mcp__laravel-boost__get-absolute-url"
+      "mcp__laravel-boost__get-absolute-url",
+      "Bash(cat:*)",
+      "Bash(php artisan make:model:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

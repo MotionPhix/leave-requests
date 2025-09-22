@@ -93,6 +93,18 @@ Route::prefix('{tenant_slug}/{tenant_uuid}')
                         Route::post('/bulk', [\App\Http\Controllers\Tenant\HolidayController::class, 'bulk'])->name('tenant.management.holidays.bulk');
                     });
 
+                // Events Management (Owner/Manager/HR only)
+                Route::prefix('events')
+                    ->group(function () {
+                        Route::get('/', [\App\Http\Controllers\Tenant\EventController::class, 'index'])->name('tenant.management.events.index');
+                        Route::get('/create', [\App\Http\Controllers\Tenant\EventController::class, 'create'])->name('tenant.management.events.create');
+                        Route::post('/', [\App\Http\Controllers\Tenant\EventController::class, 'store'])->name('tenant.management.events.store');
+                        Route::get('/{event:uuid}', [\App\Http\Controllers\Tenant\EventController::class, 'show'])->name('tenant.management.events.show');
+                        Route::get('/{event:uuid}/edit', [\App\Http\Controllers\Tenant\EventController::class, 'edit'])->name('tenant.management.events.edit');
+                        Route::put('/{event:uuid}', [\App\Http\Controllers\Tenant\EventController::class, 'update'])->name('tenant.management.events.update');
+                        Route::delete('/{event:uuid}', [\App\Http\Controllers\Tenant\EventController::class, 'destroy'])->name('tenant.management.events.destroy');
+                    });
+
                 // Leave Requests Management (approve/reject/view all)
                 Route::prefix('leave-requests')
                     ->group(function () {
@@ -128,6 +140,12 @@ Route::prefix('{tenant_slug}/{tenant_uuid}')
                 Route::post('/', [\App\Http\Controllers\Tenant\LeaveRequestController::class, 'store'])->name('tenant.leave-requests.store');
                 Route::get('/{leaveRequest}', [\App\Http\Controllers\Tenant\LeaveRequestController::class, 'show'])->name('tenant.leave-requests.show');
                 Route::patch('/{leaveRequest}/cancel', [\App\Http\Controllers\Tenant\LeaveRequestController::class, 'cancel'])->name('tenant.leave-requests.cancel');
+            });
+
+        // Events for employees (read-only access)
+        Route::prefix('events')
+            ->group(function () {
+                Route::get('/{event:uuid}', [\App\Http\Controllers\Tenant\EventController::class, 'show'])->name('tenant.events.show');
             });
 
         // Team members (view-only for regular employees, can be accessed by all)

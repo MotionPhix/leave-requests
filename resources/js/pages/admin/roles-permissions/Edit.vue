@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import AdminLayout from '@/layouts/AdminLayout.vue';
+import AppLayout from '@/layouts/AppLayout.vue';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,7 +11,7 @@ import { Link, useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
 defineOptions({
-    layout: AdminLayout,
+    layout: AppLayout,
 });
 
 interface Permission {
